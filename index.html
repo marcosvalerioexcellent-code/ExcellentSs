@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Excellent Services - Sistema de Gestão</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
     <style>
         :root {
             --primary: #1e293b; 
@@ -199,11 +203,8 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // Configuração Firebase da Excellent Services
+    <script>
+        // Configuração Firebase fornecida
         const firebaseConfig = {
             apiKey: "AIzaSyAg4rb4M6U6ne9n2ZAkXYPHcLiaR4xeOcw",
             authDomain: "excellentss.firebaseapp.com",
@@ -213,10 +214,11 @@
             appId: "1:908565431868:web:d3a1cc359fa748fff3e539"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const dbFirestore = getFirestore(app);
+        // Inicialização através do SDK Compat integrado
+        firebase.initializeApp(firebaseConfig);
+        const dbFirestore = firebase.firestore();
 
-        // Estado da Aplicação Global
+        // Estado Global da Aplicação
         window.db = { contatos: [], vendas: [], fila: [] };
         window.currentTab = 'dashboard';
         window.editingId = null;
@@ -224,24 +226,28 @@
         let lineChartInstance = null;
         let mixedChartInstance = null;
 
-        // --- FUNÇÕES DE INICIALIZAÇÃO FIREBASE ---
+        // --- CARREGAMENTO EM TEMPO REAL ---
         async function loadDataFromFirebase() {
             try {
-                const contatosSnap = await getDocs(collection(dbFirestore, "contatos"));
+                // Contatos
+                const contatosSnap = await dbFirestore.collection("contatos").get();
                 window.db.contatos = contatosSnap.docs.map(d => d.data());
 
-                const vendasSnap = await getDocs(collection(dbFirestore, "vendas"));
+                // Vendas
+                const vendasSnap = await dbFirestore.collection("vendas").get();
                 window.db.vendas = vendasSnap.docs.map(d => d.data());
 
-                const filaSnap = await getDocs(collection(dbFirestore, "fila"));
+                // Fila
+                const filaSnap = await dbFirestore.collection("fila").get();
                 window.db.fila = filaSnap.docs.map(d => d.data());
 
+                // Atualizar indicador visual no cabeçalho
                 document.getElementById('db-status').classList.add('online');
                 document.getElementById('db-status-text').innerText = 'Online';
                 
                 window.renderCurrentTab();
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
+                console.error("Erro ao conectar com Firebase:", error);
                 document.getElementById('db-status-text').innerText = 'Erro de Conexão';
                 document.getElementById('db-status-text').style.color = 'var(--danger)';
             }
@@ -252,7 +258,7 @@
         window.formatCurrency = function(value) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); }
         window.formatDate = function(dateString) { const [y, m, d] = dateString.split('-'); return `${d}/${m}/${y}`; }
 
-        // --- NAVEGAÇÃO ---
+        // --- CONTROLO DE ABAS ---
         window.toggleMenu = function() { document.getElementById('sidebar').classList.toggle('open'); }
 
         window.switchTab = function(tabName) {
@@ -279,7 +285,7 @@
             if (window.currentTab === 'fila') window.renderFila();
         }
 
-        // --- LÓGICA DOS GRÁFICOS ---
+        // --- FILTROS DE GRÁFICOS ---
         function getChartData() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const aggregates = {};
@@ -315,7 +321,7 @@
             };
         }
 
-        // --- RENDERIZADORES ---
+        // --- PAINEL MONITOR ---
         window.renderDashboard = function() {
             let entradas = 0; let saidas = 0;
             window.db.vendas.forEach(v => {
@@ -431,7 +437,7 @@
             });
         }
 
-        // --- FORMULÁRIOS DINÂMICOS ---
+        // --- CONSTRUTOR DE FORMULÁRIOS ---
         window.openCurrentModal = function() {
             window.editingId = null;
             document.getElementById('modal-title').innerText = `Adicionar em ${window.currentTab.charAt(0).toUpperCase() + window.currentTab.slice(1)}`;
@@ -474,11 +480,11 @@
             container.innerHTML = html;
         }
 
-        // --- SALVAR NO FIREBASE ---
+        // --- SUBMISSÃO E ENVIO AO CLOUD FIRESTORE ---
         window.handleFormSubmit = async function(e, type) {
             e.preventDefault();
             const submitBtn = e.target.querySelector('.btn-submit');
-            submitBtn.innerText = 'Salvando...';
+            submitBtn.innerText = 'A guardar na Nuvem...';
             submitBtn.disabled = true;
 
             let newItem = { id: window.editingId || window.generateId() };
@@ -500,10 +506,9 @@
             }
 
             try {
-                // Atualiza Firestore
-                await setDoc(doc(dbFirestore, type, newItem.id), newItem);
+                // Guarda diretamente no Firebase usando padrão Compat
+                await dbFirestore.collection(type).doc(newItem.id).set(newItem);
                 
-                // Atualiza Estado Local
                 if (window.editingId) {
                     const index = window.db[type].findIndex(i => i.id === window.editingId); 
                     window.db[type][index] = newItem;
@@ -515,13 +520,13 @@
                 window.closeModal();
             } catch (error) {
                 console.error("Erro ao salvar:", error);
-                alert("Erro ao conectar com o banco de dados.");
+                alert("Falha na ligação à base de dados cloud.");
                 submitBtn.innerText = 'Tentar Novamente';
                 submitBtn.disabled = false;
             }
         }
 
-        // --- DELETAR DO FIREBASE ---
+        // --- EDICÃO E REMOÇÃO ---
         window.editItem = function(type, id) {
             const item = window.db[type].find(i => i.id === id); window.editingId = id;
             document.getElementById('modal-title').innerText = 'Editar Registro';
@@ -533,35 +538,33 @@
             const container = document.getElementById('modal-body');
             document.getElementById('modal-title').innerText = 'Confirmar Exclusão';
             container.innerHTML = `
-                <p style="margin-bottom: 20px; color: var(--text-main);">Tem certeza que deseja excluir? O banco de dados na nuvem será atualizado.</p>
+                <p style="margin-bottom: 20px; color: var(--text-main);">Tem certeza que deseja apagar? A base de dados na nuvem será sincronizada imediatamente.</p>
                 <div style="display: flex; gap: 10px;">
                     <button onclick="window.closeModal()" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:white; cursor:pointer;">Cancelar</button>
-                    <button id="btn-confirm-del" onclick="window.confirmDelete('${type}', '${id}')" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--danger); color:white; cursor:pointer;">Sim, Excluir</button>
+                    <button id="btn-confirm-del" onclick="window.confirmDelete('${type}', '${id}')" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--danger); color:white; cursor:pointer;">Sim, Eliminar</button>
                 </div>`;
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
         window.confirmDelete = async function(type, id) {
             const btn = document.getElementById('btn-confirm-del');
-            btn.innerText = 'Excluindo...'; btn.disabled = true;
+            btn.innerText = 'A eliminar...'; btn.disabled = true;
 
             try {
-                // Deleta do Firestore
-                await deleteDoc(doc(dbFirestore, type, id));
+                // Apaga do Cloud Firestore
+                await dbFirestore.collection(type).doc(id).delete();
                 
-                // Remove Localmente
                 window.db[type] = window.db[type].filter(i => i.id !== id);
-                
                 window.renderCurrentTab(); 
                 window.closeModal();
             } catch (error) {
-                console.error("Erro ao deletar:", error);
-                alert("Erro ao conectar com o banco de dados.");
-                btn.innerText = 'Sim, Excluir'; btn.disabled = false;
+                console.error("Erro ao eliminar:", error);
+                alert("Erro de comunicação com o servidor.");
+                btn.innerText = 'Sim, Eliminar'; btn.disabled = false;
             }
         }
 
-        // Inicialização
+        // Execução Inicial automática ao carregar a página
         document.getElementById('main-fab').style.display = 'none';
         window.onload = () => { loadDataFromFirebase(); };
     </script>
