@@ -8,9 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #1e293b; /* Corporate Navy */
+            --primary: #1e293b; 
             --secondary: #cbd5e1;
-            --accent: #d97706; /* Elegant Amber/Gold */
+            --accent: #d97706; 
             --bg-color: #f8fafc;
             --surface: #ffffff;
             --text-main: #334155;
@@ -39,6 +39,12 @@
         header { background: var(--surface); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h1 { font-size: 1.5rem; font-weight: 600; }
         
+        /* Status do Sistema */
+        .system-status { font-size: 0.85rem; color: var(--text-light); display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        .status-dot.online { background-color: var(--success); animation: none; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
         /* Floating Action Button */
         .fab { background-color: var(--accent); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: var(--shadow); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         .fab:hover { transform: translateY(-2px); background-color: #b46305; }
@@ -108,20 +114,23 @@
     <nav class="sidebar" id="sidebar">
         <div class="logo">EXCELLENT<span>SERVICES</span></div>
         <ul class="nav-links">
-            <li class="active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
-            <li onclick="switchTab('contatos')"><i class="fas fa-address-book"></i> Contatos</li>
-            <li onclick="switchTab('vendas')"><i class="fas fa-wallet"></i> Vendas</li>
-            <li onclick="switchTab('fila')"><i class="fas fa-tasks"></i> Fila</li>
+            <li class="active" onclick="window.switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
+            <li onclick="window.switchTab('contatos')"><i class="fas fa-address-book"></i> Contatos</li>
+            <li onclick="window.switchTab('vendas')"><i class="fas fa-wallet"></i> Vendas</li>
+            <li onclick="window.switchTab('fila')"><i class="fas fa-tasks"></i> Fila</li>
         </ul>
     </nav>
 
     <main class="main-content">
         <header>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <button class="mobile-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+                <button class="mobile-toggle" onclick="window.toggleMenu()"><i class="fas fa-bars"></i></button>
                 <h1 id="page-title">Dashboard</h1>
             </div>
-            <button class="fab" id="main-fab" onclick="openCurrentModal()" title="Adicionar Novo"><i class="fas fa-plus"></i></button>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="system-status"><span class="status-dot" id="db-status"></span> <span id="db-status-text">Conectando...</span></div>
+                <button class="fab" id="main-fab" onclick="window.openCurrentModal()" title="Adicionar Novo"><i class="fas fa-plus"></i></button>
+            </div>
         </header>
 
         <section id="dashboard" class="tab-content active">
@@ -155,14 +164,7 @@
         <section id="contatos" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Número</th>
-                            <th>Potencial</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Nome</th><th>Número</th><th>Potencial</th><th>Ações</th></tr></thead>
                     <tbody id="contatos-body"></tbody>
                 </table>
             </div>
@@ -171,15 +173,7 @@
         <section id="vendas" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Descrição</th>
-                            <th>Tipo</th>
-                            <th>Valor</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Ações</th></tr></thead>
                     <tbody id="vendas-body"></tbody>
                 </table>
             </div>
@@ -188,18 +182,7 @@
         <section id="fila" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Projeto</th>
-                            <th>Cliente</th>
-                            <th>Telefone</th>
-                            <th>Início</th>
-                            <th>Prazo (Dias)</th>
-                            <th>Fim Previsto</th>
-                            <th>Status (Restam)</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Projeto</th><th>Cliente</th><th>Telefone</th><th>Início</th><th>Prazo (Dias)</th><th>Fim Previsto</th><th>Status (Restam)</th><th>Ações</th></tr></thead>
                     <tbody id="fila-body"></tbody>
                 </table>
             </div>
@@ -210,47 +193,70 @@
         <div class="modal">
             <div class="modal-header">
                 <h2 id="modal-title">Adicionar</h2>
-                <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
+                <button class="close-modal" onclick="window.closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <div id="modal-body"></div>
         </div>
     </div>
 
-    <script>
-        // --- ESTADO DA APLICAÇÃO ---
-        let db = {
-            contatos: JSON.parse(localStorage.getItem('es_contatos')) || [],
-            vendas: JSON.parse(localStorage.getItem('es_vendas')) || [],
-            fila: JSON.parse(localStorage.getItem('es_fila')) || []
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Configuração Firebase da Excellent Services
+        const firebaseConfig = {
+            apiKey: "AIzaSyAg4rb4M6U6ne9n2ZAkXYPHcLiaR4xeOcw",
+            authDomain: "excellentss.firebaseapp.com",
+            projectId: "excellentss",
+            storageBucket: "excellentss.firebasestorage.app",
+            messagingSenderId: "908565431868",
+            appId: "1:908565431868:web:d3a1cc359fa748fff3e539"
         };
 
-        let currentTab = 'dashboard';
-        let editingId = null;
+        const app = initializeApp(firebaseConfig);
+        const dbFirestore = getFirestore(app);
+
+        // Estado da Aplicação Global
+        window.db = { contatos: [], vendas: [], fila: [] };
+        window.currentTab = 'dashboard';
+        window.editingId = null;
         
-        // Instâncias dos gráficos para evitar bugs de sobreposição ao re-renderizar
         let lineChartInstance = null;
         let mixedChartInstance = null;
 
-        // --- FUNÇÕES UTILITÁRIAS ---
-        function saveDB() {
-            localStorage.setItem('es_contatos', JSON.stringify(db.contatos));
-            localStorage.setItem('es_vendas', JSON.stringify(db.vendas));
-            localStorage.setItem('es_fila', JSON.stringify(db.fila));
-            renderCurrentTab(); 
+        // --- FUNÇÕES DE INICIALIZAÇÃO FIREBASE ---
+        async function loadDataFromFirebase() {
+            try {
+                const contatosSnap = await getDocs(collection(dbFirestore, "contatos"));
+                window.db.contatos = contatosSnap.docs.map(d => d.data());
+
+                const vendasSnap = await getDocs(collection(dbFirestore, "vendas"));
+                window.db.vendas = vendasSnap.docs.map(d => d.data());
+
+                const filaSnap = await getDocs(collection(dbFirestore, "fila"));
+                window.db.fila = filaSnap.docs.map(d => d.data());
+
+                document.getElementById('db-status').classList.add('online');
+                document.getElementById('db-status-text').innerText = 'Online';
+                
+                window.renderCurrentTab();
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                document.getElementById('db-status-text').innerText = 'Erro de Conexão';
+                document.getElementById('db-status-text').style.color = 'var(--danger)';
+            }
         }
 
-        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-        function formatCurrency(value) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); }
-        function formatDate(dateString) { 
-            const [y, m, d] = dateString.split('-'); 
-            return `${d}/${m}/${y}`; 
-        }
+        // --- FUNÇÕES UTILITÁRIAS ---
+        window.generateId = function() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+        window.formatCurrency = function(value) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); }
+        window.formatDate = function(dateString) { const [y, m, d] = dateString.split('-'); return `${d}/${m}/${y}`; }
 
         // --- NAVEGAÇÃO ---
-        function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
+        window.toggleMenu = function() { document.getElementById('sidebar').classList.toggle('open'); }
 
-        function switchTab(tabName) {
-            currentTab = tabName;
+        window.switchTab = function(tabName) {
+            window.currentTab = tabName;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
             
@@ -262,23 +268,22 @@
             
             document.getElementById('main-fab').style.display = tabName === 'dashboard' ? 'none' : 'flex';
             
-            if(window.innerWidth <= 768) toggleMenu();
-            renderCurrentTab();
+            if(window.innerWidth <= 768) window.toggleMenu();
+            window.renderCurrentTab();
         }
 
-        function renderCurrentTab() {
-            if (currentTab === 'dashboard') renderDashboard();
-            if (currentTab === 'contatos') renderContatos();
-            if (currentTab === 'vendas') renderVendas();
-            if (currentTab === 'fila') renderFila();
+        window.renderCurrentTab = function() {
+            if (window.currentTab === 'dashboard') window.renderDashboard();
+            if (window.currentTab === 'contatos') window.renderContatos();
+            if (window.currentTab === 'vendas') window.renderVendas();
+            if (window.currentTab === 'fila') window.renderFila();
         }
 
-        // --- LÓGICA DE PROCESSAMENTO DOS GRÁFICOS ---
+        // --- LÓGICA DOS GRÁFICOS ---
         function getChartData() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const aggregates = {};
             
-            // Cria os últimos 6 meses por padrão (garante layout lindo mesmo sem dados iniciais)
             const today = new Date();
             for (let i = 5; i >= 0; i--) {
                 const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -286,8 +291,7 @@
                 aggregates[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, entrada: 0, saida: 0 };
             }
             
-            // Soma as vendas reais nos respectivos meses
-            db.vendas.forEach(v => {
+            window.db.vendas.forEach(v => {
                 if (!v.data) return;
                 const [year, month] = v.data.split('-');
                 const key = `${year}-${month}`;
@@ -302,7 +306,7 @@
                 else aggregates[key].saida += valor;
             });
             
-            const sortedKeys = Object.keys(aggregates).sort().slice(-6); // Pega apenas os últimos 6 meses cronológicos
+            const sortedKeys = Object.keys(aggregates).sort().slice(-6);
             
             return {
                 labels: sortedKeys.map(k => aggregates[k].label),
@@ -312,24 +316,23 @@
         }
 
         // --- RENDERIZADORES ---
-        function renderDashboard() {
+        window.renderDashboard = function() {
             let entradas = 0; let saidas = 0;
-            db.vendas.forEach(v => {
+            window.db.vendas.forEach(v => {
                 if (v.tipo === 'Entrada') entradas += parseFloat(v.valor);
                 else saidas += parseFloat(v.valor);
             });
             const saldo = entradas - saidas;
 
-            document.getElementById('dash-entradas').innerText = formatCurrency(entradas);
-            document.getElementById('dash-saidas').innerText = formatCurrency(saidas);
-            document.getElementById('dash-saldo').innerText = formatCurrency(saldo);
+            document.getElementById('dash-entradas').innerText = window.formatCurrency(entradas);
+            document.getElementById('dash-saidas').innerText = window.formatCurrency(saidas);
+            document.getElementById('dash-saldo').innerText = window.formatCurrency(saldo);
             document.getElementById('dash-saldo').style.color = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
             
-            // Atualiza os gráficos
-            renderCharts();
+            window.renderCharts();
         }
 
-        function renderCharts() {
+        window.renderCharts = function() {
             const data = getChartData();
             const ctxLine = document.getElementById('lineChart').getContext('2d');
             const ctxMixed = document.getElementById('mixedChart').getContext('2d');
@@ -337,7 +340,6 @@
             if (lineChartInstance) lineChartInstance.destroy();
             if (mixedChartInstance) mixedChartInstance.destroy();
 
-            // Efeito de Gradiente para o gráfico de linhas
             const gradIn = ctxLine.createLinearGradient(0, 0, 0, 250);
             gradIn.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
             gradIn.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
@@ -346,17 +348,11 @@
             gradOut.addColorStop(0, 'rgba(239, 68, 68, 0.20)');
             gradOut.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
 
-            // Configurações comuns de design limpo (Legenda desativada conforme solicitado)
             const commonOptions = {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        display: false // Legenda oculta para evitar poluição visual
-                    },
-                    tooltip: {
-                        padding: 12, backgroundColor: '#1e293b', titleFont: { size: 12 }, bodyFont: { size: 12 },
-                        callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` }
-                    }
+                    legend: { display: false },
+                    tooltip: { padding: 12, backgroundColor: '#1e293b', titleFont: { size: 12 }, bodyFont: { size: 12 }, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${window.formatCurrency(ctx.raw)}` } }
                 },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
@@ -364,20 +360,18 @@
                 }
             };
 
-            // 1. Gráfico de Linhas Modernas com Efeito (Saída agora pontilhada)
             lineChartInstance = new Chart(ctxLine, {
                 type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [
                         { label: 'Entradas', data: data.entradas, borderColor: '#10b981', backgroundColor: gradIn, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#10b981' },
-                        { label: 'Saídas', data: data.saidas, borderColor: '#ef4444', backgroundColor: gradOut, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444', borderDash: [6, 6] } // Linha pontilhada/tracejada
+                        { label: 'Saídas', data: data.saidas, borderColor: '#ef4444', backgroundColor: gradOut, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444', borderDash: [6, 6] }
                     ]
                 },
                 options: commonOptions
             });
 
-            // 2. Gráfico Misto (Saída em Barras, Entrada em Linha)
             mixedChartInstance = new Chart(ctxMixed, {
                 data: {
                     labels: data.labels,
@@ -390,34 +384,34 @@
             });
         }
 
-        function renderContatos() {
+        window.renderContatos = function() {
             const tbody = document.getElementById('contatos-body'); tbody.innerHTML = '';
-            db.contatos.forEach(c => {
+            window.db.contatos.forEach(c => {
                 tbody.innerHTML += `<tr><td><strong>${c.nome}</strong></td><td>${c.numero}</td><td>${c.potencial}</td>
                     <td class="actions">
-                        <button class="btn-edit" onclick="editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button>
-                        <button class="btn-delete" onclick="deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button>
+                        <button class="btn-edit" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn-delete" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button>
                     </td></tr>`;
             });
         }
 
-        function renderVendas() {
+        window.renderVendas = function() {
             const tbody = document.getElementById('vendas-body'); tbody.innerHTML = '';
-            const sorted = [...db.vendas].sort((a,b) => new Date(b.data) - new Date(a.data));
+            const sorted = [...window.db.vendas].sort((a,b) => new Date(b.data) - new Date(a.data));
             sorted.forEach(v => {
                 const badgeClass = v.tipo === 'Entrada' ? 'badge-entrada' : 'badge-saida';
-                tbody.innerHTML += `<tr><td>${formatDate(v.data)}</td><td>${v.descricao}</td><td><span class="badge ${badgeClass}">${v.tipo}</span></td><td><strong>${formatCurrency(v.valor)}</strong></td>
+                tbody.innerHTML += `<tr><td>${window.formatDate(v.data)}</td><td>${v.descricao}</td><td><span class="badge ${badgeClass}">${v.tipo}</span></td><td><strong>${window.formatCurrency(v.valor)}</strong></td>
                     <td class="actions">
-                        <button class="btn-edit" onclick="editItem('vendas', '${v.id}')"><i class="fas fa-pen"></i></button>
-                        <button class="btn-delete" onclick="deleteItem('vendas', '${v.id}')"><i class="fas fa-trash"></i></button>
+                        <button class="btn-edit" onclick="window.editItem('vendas', '${v.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn-delete" onclick="window.deleteItem('vendas', '${v.id}')"><i class="fas fa-trash"></i></button>
                     </td></tr>`;
             });
         }
 
-        function renderFila() {
+        window.renderFila = function() {
             const tbody = document.getElementById('fila-body'); tbody.innerHTML = '';
-            db.fila.forEach(f => {
-                const cliente = db.contatos.find(c => c.id === f.clienteId) || { nome: 'Desconhecido', numero: '-' };
+            window.db.fila.forEach(f => {
+                const cliente = window.db.contatos.find(c => c.id === f.clienteId) || { nome: 'Desconhecido', numero: '-' };
                 const inicioDate = new Date(f.inicio + 'T00:00:00');
                 const fimDate = new Date(inicioDate);
                 fimDate.setDate(fimDate.getDate() + parseInt(f.prazo));
@@ -428,28 +422,28 @@
                 let statusColor = restamDias < 0 ? 'var(--danger)' : (restamDias <= 3 ? 'var(--accent)' : 'var(--success)');
                 let statusText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)} dias)` : (restamDias === 0 ? 'Entrega Hoje' : `Restam ${restamDias} dias`);
 
-                tbody.innerHTML += `<tr><td><strong>${f.projeto}</strong></td><td>${cliente.nome}</td><td>${cliente.numero}</td><td>${formatDate(f.inicio)}</td><td>${f.prazo} dias</td><td>${fimDate.toLocaleDateString('pt-BR')}</td>
+                tbody.innerHTML += `<tr><td><strong>${f.projeto}</strong></td><td>${cliente.nome}</td><td>${cliente.numero}</td><td>${window.formatDate(f.inicio)}</td><td>${f.prazo} dias</td><td>${fimDate.toLocaleDateString('pt-BR')}</td>
                     <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
                     <td class="actions">
-                        <button class="btn-edit" onclick="editItem('fila', '${f.id}')"><i class="fas fa-pen"></i></button>
-                        <button class="btn-delete" onclick="deleteItem('fila', '${f.id}')"><i class="fas fa-trash"></i></button>
+                        <button class="btn-edit" onclick="window.editItem('fila', '${f.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn-delete" onclick="window.deleteItem('fila', '${f.id}')"><i class="fas fa-trash"></i></button>
                     </td></tr>`;
             });
         }
 
         // --- FORMULÁRIOS DINÂMICOS ---
-        function openCurrentModal() {
-            editingId = null;
-            document.getElementById('modal-title').innerText = `Adicionar em ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}`;
-            buildForm(currentTab);
+        window.openCurrentModal = function() {
+            window.editingId = null;
+            document.getElementById('modal-title').innerText = `Adicionar em ${window.currentTab.charAt(0).toUpperCase() + window.currentTab.slice(1)}`;
+            window.buildForm(window.currentTab);
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        window.closeModal = function() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        function buildForm(type, data = null) {
+        window.buildForm = function(type, data = null) {
             const container = document.getElementById('modal-body');
-            let html = `<form onsubmit="handleFormSubmit(event, '${type}')">`;
+            let html = `<form onsubmit="window.handleFormSubmit(event, '${type}')">`;
 
             if (type === 'contatos') {
                 html += `<div class="form-group"><label>Nome</label><input type="text" id="f-nome" required value="${data ? data.nome : ''}"></div>
@@ -468,7 +462,7 @@
                         <option value="Saída" ${data && data.tipo==='Saída'?'selected':''}>Saída (Despesa)</option>
                     </select></div>`;
             } else if (type === 'fila') {
-                let options = db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
+                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
                 if(!options) options = `<option value="" disabled selected>Cadastre um contato primeiro</option>`;
                 html += `<div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-projeto" required value="${data ? data.projeto : ''}"></div>
                     <div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div>
@@ -480,9 +474,14 @@
             container.innerHTML = html;
         }
 
-        function handleFormSubmit(e, type) {
+        // --- SALVAR NO FIREBASE ---
+        window.handleFormSubmit = async function(e, type) {
             e.preventDefault();
-            let newItem = { id: editingId || generateId() };
+            const submitBtn = e.target.querySelector('.btn-submit');
+            submitBtn.innerText = 'Salvando...';
+            submitBtn.disabled = true;
+
+            let newItem = { id: window.editingId || window.generateId() };
 
             if (type === 'contatos') {
                 newItem.nome = document.getElementById('f-nome').value;
@@ -500,42 +499,71 @@
                 newItem.prazo = document.getElementById('f-prazo').value;
             }
 
-            if (editingId) {
-                const index = db[type].findIndex(i => i.id === editingId); db[type][index] = newItem;
-            } else {
-                db[type].push(newItem);
+            try {
+                // Atualiza Firestore
+                await setDoc(doc(dbFirestore, type, newItem.id), newItem);
+                
+                // Atualiza Estado Local
+                if (window.editingId) {
+                    const index = window.db[type].findIndex(i => i.id === window.editingId); 
+                    window.db[type][index] = newItem;
+                } else {
+                    window.db[type].push(newItem);
+                }
+                
+                window.renderCurrentTab(); 
+                window.closeModal();
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                alert("Erro ao conectar com o banco de dados.");
+                submitBtn.innerText = 'Tentar Novamente';
+                submitBtn.disabled = false;
             }
-            saveDB(); closeModal();
         }
 
-        // --- EDIÇÃO E EXCLUSÃO (Popups customizados) ---
-        function editItem(type, id) {
-            const item = db[type].find(i => i.id === id); editingId = id;
+        // --- DELETAR DO FIREBASE ---
+        window.editItem = function(type, id) {
+            const item = window.db[type].find(i => i.id === id); window.editingId = id;
             document.getElementById('modal-title').innerText = 'Editar Registro';
-            buildForm(type, item);
+            window.buildForm(type, item);
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
-        function deleteItem(type, id) {
+        window.deleteItem = function(type, id) {
             const container = document.getElementById('modal-body');
             document.getElementById('modal-title').innerText = 'Confirmar Exclusão';
             container.innerHTML = `
-                <p style="margin-bottom: 20px; color: var(--text-main);">Tem certeza que deseja excluir esta informação? Os gráficos e dados serão recalculados imediatamente.</p>
+                <p style="margin-bottom: 20px; color: var(--text-main);">Tem certeza que deseja excluir? O banco de dados na nuvem será atualizado.</p>
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="closeModal()" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:white; cursor:pointer;">Cancelar</button>
-                    <button onclick="confirmDelete('${type}', '${id}')" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--danger); color:white; cursor:pointer;">Sim, Excluir</button>
+                    <button onclick="window.closeModal()" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:white; cursor:pointer;">Cancelar</button>
+                    <button id="btn-confirm-del" onclick="window.confirmDelete('${type}', '${id}')" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--danger); color:white; cursor:pointer;">Sim, Excluir</button>
                 </div>`;
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
-        function confirmDelete(type, id) {
-            db[type] = db[type].filter(i => i.id !== id);
-            saveDB(); closeModal();
+        window.confirmDelete = async function(type, id) {
+            const btn = document.getElementById('btn-confirm-del');
+            btn.innerText = 'Excluindo...'; btn.disabled = true;
+
+            try {
+                // Deleta do Firestore
+                await deleteDoc(doc(dbFirestore, type, id));
+                
+                // Remove Localmente
+                window.db[type] = window.db[type].filter(i => i.id !== id);
+                
+                window.renderCurrentTab(); 
+                window.closeModal();
+            } catch (error) {
+                console.error("Erro ao deletar:", error);
+                alert("Erro ao conectar com o banco de dados.");
+                btn.innerText = 'Sim, Excluir'; btn.disabled = false;
+            }
         }
 
-        // Inicialização Inicial
+        // Inicialização
         document.getElementById('main-fab').style.display = 'none';
-        window.onload = () => { renderDashboard(); };
+        window.onload = () => { loadDataFromFirebase(); };
     </script>
 </body>
 </html>
