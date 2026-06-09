@@ -89,7 +89,7 @@
 
         /* Charts Grid */
         .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-top: 5px; margin-bottom: 25px;}
-        .charts-container.triple { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); } /* ADDED FOR KPI */
+        .charts-container.triple { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
         .chart-box { background: var(--surface); padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; }
         .chart-box h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
         .chart-box h3 i { color: var(--accent); }
@@ -125,8 +125,6 @@
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; }
         .btn-submit:hover { background: #0f172a; }
 
-        /* Mobile Menu */
-        .mobile-toggle { display: none; background: none; border: none; font-size: 1.5rem; color: var(--primary); cursor: pointer; }
         @media (max-width: 768px) {
             .sidebar { position: absolute; left: -260px; height: 100%; }
             .sidebar.open { left: 0; }
@@ -143,6 +141,7 @@
         <div class="logo">EXCELLENT<span>SERVICES</span></div>
         <ul class="nav-links">
             <li class="active" onclick="window.switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
+            <li onclick="window.switchTab('conversoes')"><i class="fas fa-funnel-dollar"></i> Conversões</li>
             <li onclick="window.switchTab('contatos')"><i class="fas fa-address-book"></i> Contatos</li>
             <li onclick="window.switchTab('vendas')"><i class="fas fa-wallet"></i> Financeiro</li>
             <li onclick="window.switchTab('fila')"><i class="fas fa-tasks"></i> Fila</li>
@@ -161,6 +160,7 @@
             </div>
         </header>
 
+        <!-- DASHBOARD -->
         <section id="dashboard" class="tab-content active">
             <div class="dash-nav">
                 <span id="subnav-financeiro" class="active" onclick="window.switchDashSubTab('financeiro')">Análise Financeira</span>
@@ -168,6 +168,7 @@
                 <span id="subnav-desempenho" onclick="window.switchDashSubTab('desempenho')">Desempenho</span>
             </div>
 
+            <!-- SUBABA 1: ANÁLISE FINANCEIRA -->
             <div id="subtab-financeiro" class="subtab-container">
                 <div class="dashboard-cards">
                     <div class="card income"><h3>Total de Entradas</h3><p id="dash-entradas">R$ 0,00</p></div>
@@ -176,28 +177,17 @@
                 </div>
 
                 <div class="charts-container">
-                    <div class="chart-box">
-                        <h3><i class="fas fa-wave-square"></i> Fluxo de Caixa (Linhas Modernas)</h3>
-                        <canvas id="lineChart"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <h3><i class="fas fa-chart-bar"></i> Comparativo Dinâmico</h3>
-                        <canvas id="mixedChart"></canvas>
-                    </div>
+                    <div class="chart-box"><canvas id="lineChart"></canvas></div>
+                    <div class="chart-box"><canvas id="mixedChart"></canvas></div>
                 </div>
 
                 <div class="charts-container">
-                    <div class="chart-box">
-                        <h3><i class="fas fa-arrow-up"></i> Top Entradas (Por Nome)</h3>
-                        <canvas id="topEntradasChart"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <h3><i class="fas fa-arrow-down"></i> Top Saídas (Por Nome)</h3>
-                        <canvas id="topSaidasChart"></canvas>
-                    </div>
+                    <div class="chart-box"><h3><i class="fas fa-arrow-up"></i> Top Entradas (Por Nome)</h3><canvas id="topEntradasChart"></canvas></div>
+                    <div class="chart-box"><h3><i class="fas fa-arrow-down"></i> Top Saídas (Por Nome)</h3><canvas id="topSaidasChart"></canvas></div>
                 </div>
             </div>
 
+            <!-- SUBABA 2: KPI -->
             <div id="subtab-kpi" class="subtab-container" style="display: none;">
                 <div class="dashboard-cards">
                     <div class="card" style="border-left-color: var(--accent);">
@@ -210,22 +200,22 @@
                     </div>
                 </div>
 
+                <!-- LINHA 1 DE GRÁFICOS KPI (Financeiro/Tempo) -->
                 <div class="charts-container triple">
-                    <div class="chart-box">
-                        <h3><i class="fas fa-hand-holding-usd"></i> Receita Bruta por Mês</h3>
-                        <canvas id="kpiReceitaChart"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <h3><i class="fas fa-tags"></i> Ticket Médio por Projeto</h3>
-                        <canvas id="kpiTicketChart"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <h3><i class="fas fa-hourglass-half"></i> Tempo Médio de Entrega (Mês)</h3>
-                        <canvas id="kpiTempoChart"></canvas>
-                    </div>
+                    <div class="chart-box"><h3><i class="fas fa-hand-holding-usd"></i> Receita Bruta por Mês</h3><canvas id="kpiReceitaChart"></canvas></div>
+                    <div class="chart-box"><h3><i class="fas fa-tags"></i> Ticket Médio por Projeto</h3><canvas id="kpiTicketChart"></canvas></div>
+                    <div class="chart-box"><h3><i class="fas fa-hourglass-half"></i> Tempo Médio de Entrega (Mês)</h3><canvas id="kpiTempoChart"></canvas></div>
+                </div>
+                
+                <!-- LINHA 2 DE GRÁFICOS KPI (Novos Gráficos Conversão & Satisfação) -->
+                <div class="charts-container triple">
+                    <div class="chart-box"><h3><i class="fas fa-paper-plane"></i> Propostas Enviadas (Mês)</h3><canvas id="kpiPropostasChart"></canvas></div>
+                    <div class="chart-box"><h3><i class="fas fa-percentage"></i> Taxa de Conversão (%)</h3><canvas id="kpiConversaoChart"></canvas></div>
+                    <div class="chart-box"><h3><i class="fas fa-smile"></i> Nível de Satisfação (NPS)</h3><canvas id="kpiSatisfacaoChart"></canvas></div>
                 </div>
             </div>
 
+            <!-- SUBABA 3: DESEMPENHO -->
             <div id="subtab-desempenho" class="subtab-container" style="display: none;">
                 <div class="dashboard-cards">
                     <div class="card" style="border-left-color: var(--accent);"><h3>Projetos Ativos</h3><p id="perf-ativos">0</p></div>
@@ -246,6 +236,17 @@
             </div>
         </section>
 
+        <!-- CONVERSÕES (NOVA ABA Lateral) -->
+        <section id="conversoes" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Data</th><th>Ligações</th><th>Reuniões</th><th>Propostas</th><th>Fechamentos</th><th>Ações</th></tr></thead>
+                    <tbody id="conversoes-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CONTATOS -->
         <section id="contatos" class="tab-content">
             <div class="table-container">
                 <table>
@@ -255,6 +256,7 @@
             </div>
         </section>
 
+        <!-- FINANCEIRO -->
         <section id="vendas" class="tab-content">
             <div class="table-container">
                 <table>
@@ -264,6 +266,7 @@
             </div>
         </section>
 
+        <!-- FILA -->
         <section id="fila" class="tab-content">
             <div class="table-container">
                 <table>
@@ -271,14 +274,12 @@
                         <tr>
                             <th>Projeto</th>
                             <th>Cliente</th>
-                            <th>Telefone</th>
                             <th>Início</th>
                             <th>Prazo</th>
-                            <th>Fim Previsto</th>
                             <th>Restam</th>
                             <th>Status</th>
-                            <th>Entregue Em</th>
                             <th>Sinal</th>
+                            <th>Nota</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -288,6 +289,7 @@
         </section>
     </main>
 
+    <!-- MODAL DINÂMICO -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -311,33 +313,32 @@
         firebase.initializeApp(firebaseConfig);
         const dbFirestore = firebase.firestore();
 
-        window.db = { contatos: [], vendas: [], fila: [] };
+        window.db = { contatos: [], vendas: [], fila: [], conversoes: [] };
         window.currentTab = 'dashboard';
         window.currentSubTab = 'financeiro';
         window.editingId = null;
         
         // Instâncias de Gráficos
-        let lineChartInstance = null;
-        let mixedChartInstance = null;
-        let topEntradasInstance = null;
-        let topSaidasInstance = null;
+        let lineChartInstance = null; let mixedChartInstance = null;
+        let topEntradasInstance = null; let topSaidasInstance = null;
         let perfLineInstance = null;
         
-        // Novas Instâncias KPI
-        let kpiReceitaInstance = null;
-        let kpiTicketInstance = null;
-        let kpiTempoInstance = null;
+        // Instâncias KPI
+        let kpiReceitaInstance = null; let kpiTicketInstance = null; let kpiTempoInstance = null;
+        let kpiPropostasInstance = null; let kpiConversaoInstance = null; let kpiSatisfacaoInstance = null;
 
         async function loadDataFromFirebase() {
             try {
-                const [cSnap, vSnap, fSnap] = await Promise.all([
+                const [cSnap, vSnap, fSnap, convSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(),
                     dbFirestore.collection("vendas").get(),
-                    dbFirestore.collection("fila").get()
+                    dbFirestore.collection("fila").get(),
+                    dbFirestore.collection("conversoes").get()
                 ]);
                 window.db.contatos = cSnap.docs.map(d => d.data());
                 window.db.vendas = vSnap.docs.map(d => d.data());
                 window.db.fila = fSnap.docs.map(d => d.data());
+                window.db.conversoes = convSnap.docs.map(d => d.data());
 
                 document.getElementById('db-status').classList.add('online');
                 document.getElementById('db-status-text').innerText = 'Online';
@@ -364,7 +365,7 @@
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
             
-            const titles = { 'dashboard': 'Dashboard', 'contatos': 'Gestão de Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos' };
+            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'contatos': 'Gestão de Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos' };
             document.getElementById('page-title').innerText = titles[tabName];
             
             document.getElementById('main-fab').style.display = tabName === 'dashboard' ? 'none' : 'flex';
@@ -385,12 +386,12 @@
 
         window.renderCurrentTab = function() {
             if (window.currentTab === 'dashboard') window.renderDashboard();
+            if (window.currentTab === 'conversoes') window.renderConversoes();
             if (window.currentTab === 'contatos') window.renderContatos();
             if (window.currentTab === 'vendas') window.renderVendas();
             if (window.currentTab === 'fila') window.renderFila();
         }
 
-        // --- PAINEL ECONÔMICO ---
         function getFinancialChartData() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const aggregates = {};
@@ -418,7 +419,6 @@
             };
         }
 
-        // --- ROUTER DO DASHBOARD ---
         window.renderDashboard = function() {
             if (window.currentSubTab === 'financeiro') {
                 let entradas = 0; let saidas = 0;
@@ -433,7 +433,7 @@
                 
                 window.renderFinancialCharts();
             } else if (window.currentSubTab === 'kpi') {
-                window.renderKpiDashboard(); // Nova rota
+                window.renderKpiDashboard();
             } else {
                 window.renderPerformanceDashboard();
             }
@@ -473,19 +473,19 @@
             topSaidasInstance = new Chart(ctxTopS, { type: 'bar', data: { labels: topSaidas.map(i => i[0]), datasets: [{ data: topSaidas.map(i => i[1]), backgroundColor: '#ef4444', borderRadius: 4, barThickness: 15 }] }, options: barOpt });
         }
 
-        // --- PAINEL DE KPI (NOVO) ---
+        // --- PAINEL DE KPI (ATUALIZADO COM CONVERSÃO E SATISFAÇÃO) ---
         window.renderKpiDashboard = function() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const kpiStats = {}; const today = new Date();
             
-            // Inicializar cronologicamente os últimos 6 meses
+            // Inicializar últimos 6 meses
             for (let i = 5; i >= 0; i--) {
                 const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
                 const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                kpiStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, receitaBruta: 0, totalProjetosMes: 0, tempoEntregaTotalMes: 0, tempoEntregaCountMes: 0 };
+                kpiStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, receitaBruta: 0, totalProjetosMes: 0, tempoEntregaTotalMes: 0, tempoEntregaCountMes: 0, propostas: 0, fechamentos: 0 };
             }
 
-            // 1. Processar dados Financeiros
+            // 1. Financeiro
             let totalEntradasGeral = 0; let countEntradasGeral = 0;
             window.db.vendas.forEach(v => {
                 if(v.tipo === 'Entrada') {
@@ -493,74 +493,101 @@
                     totalEntradasGeral += valor; countEntradasGeral++;
                     if(v.data) {
                         const [y, m] = v.data.split('-'); const key = `${y}-${m}`;
-                        if(kpiStats[key]) {
-                            kpiStats[key].receitaBruta += valor;
-                            kpiStats[key].totalProjetosMes++;
-                        }
+                        if(kpiStats[key]) { kpiStats[key].receitaBruta += valor; kpiStats[key].totalProjetosMes++; }
                     }
                 }
             });
 
-            // 2. Processar dados de Tempo na Fila
+            // 2. Tempo na Fila + Satisfação (NPS)
             let totalDiasGeral = 0; let countConcluidosGeral = 0;
+            let satisfeito = 0; let parcial = 0; let insatisfeito = 0;
             window.db.fila.forEach(f => {
                 if(f.status === 'Concluído' && f.inicio && f.dataConclusao) {
-                    const inicioDate = new Date(f.inicio + 'T00:00:00');
-                    const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00');
+                    const inicioDate = new Date(f.inicio + 'T00:00:00'); const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00');
                     const diasUtilizados = Math.ceil((conclusaoDate - inicioDate) / (1000 * 60 * 60 * 24));
-                    
                     totalDiasGeral += diasUtilizados; countConcluidosGeral++;
 
                     const [y, m] = f.dataConclusao.split('-'); const key = `${y}-${m}`;
+                    if(kpiStats[key]) { kpiStats[key].tempoEntregaTotalMes += diasUtilizados; kpiStats[key].tempoEntregaCountMes++; }
+                }
+                
+                // Satisfação
+                if(f.nota !== undefined && f.nota !== '' && f.nota !== null) {
+                    const nota = parseFloat(f.nota);
+                    if(nota >= 8) satisfeito++;
+                    else if (nota >= 5) parcial++;
+                    else insatisfeito++;
+                }
+            });
+
+            // 3. Conversões Mensais
+            window.db.conversoes.forEach(c => {
+                if(c.data) {
+                    const [y, m] = c.data.split('-'); const key = `${y}-${m}`;
                     if(kpiStats[key]) {
-                        kpiStats[key].tempoEntregaTotalMes += diasUtilizados;
-                        kpiStats[key].tempoEntregaCountMes++;
+                        kpiStats[key].propostas += (parseInt(c.propostas) || 0);
+                        kpiStats[key].fechamentos += (parseInt(c.fechamentos) || 0);
                     }
                 }
             });
 
-            // 3. Renderizar Indicadores Estratégicos Fixos
+            // Indicadores Fixos
             const mediaGeralEntrega = countConcluidosGeral > 0 ? Math.round(totalDiasGeral / countConcluidosGeral) : 0;
             const ticketMedioGeral = countEntradasGeral > 0 ? totalEntradasGeral / countEntradasGeral : 0;
-
             document.getElementById('kpi-media-entrega-geral').innerText = `${mediaGeralEntrega} dias`;
             document.getElementById('kpi-ticket-geral').innerText = window.formatCurrency(ticketMedioGeral);
 
-            // 4. Montar vetores para os gráficos
+            // Preparação dos Gráficos
             const sortedKeys = Object.keys(kpiStats).sort();
             const labels = sortedKeys.map(k => kpiStats[k].label);
             const dadosReceita = sortedKeys.map(k => kpiStats[k].receitaBruta);
             const dadosTicket = sortedKeys.map(k => kpiStats[k].totalProjetosMes > 0 ? (kpiStats[k].receitaBruta / kpiStats[k].totalProjetosMes) : 0);
             const dadosTempo = sortedKeys.map(k => kpiStats[k].tempoEntregaCountMes > 0 ? Math.round(kpiStats[k].tempoEntregaTotalMes / kpiStats[k].tempoEntregaCountMes) : 0);
+            const dadosPropostas = sortedKeys.map(k => kpiStats[k].propostas);
+            const dadosConversao = sortedKeys.map(k => kpiStats[k].propostas > 0 ? Math.round((kpiStats[k].fechamentos / kpiStats[k].propostas) * 100) : 0);
 
-            if(kpiReceitaInstance) kpiReceitaInstance.destroy();
-            if(kpiTicketInstance) kpiTicketInstance.destroy();
-            if(kpiTempoInstance) kpiTempoInstance.destroy();
-
-            const ctxRec = document.getElementById('kpiReceitaChart').getContext('2d');
-            const ctxTick = document.getElementById('kpiTicketChart').getContext('2d');
-            const ctxTemp = document.getElementById('kpiTempoChart').getContext('2d');
+            if(kpiReceitaInstance) kpiReceitaInstance.destroy(); if(kpiTicketInstance) kpiTicketInstance.destroy(); if(kpiTempoInstance) kpiTempoInstance.destroy();
+            if(kpiPropostasInstance) kpiPropostasInstance.destroy(); if(kpiConversaoInstance) kpiConversaoInstance.destroy(); if(kpiSatisfacaoInstance) kpiSatisfacaoInstance.destroy();
 
             const optCommon = { responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } };
 
+            // Gráficos Linha 1
+            const ctxRec = document.getElementById('kpiReceitaChart').getContext('2d');
             let gradRec = ctxRec.createLinearGradient(0, 0, 0, 200); gradRec.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); gradRec.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
             kpiReceitaInstance = new Chart(ctxRec, { type: 'line', data: { labels: labels, datasets: [{ data: dadosReceita, borderColor: '#10b981', backgroundColor: gradRec, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#10b981' }] }, options: optCommon });
 
+            const ctxTick = document.getElementById('kpiTicketChart').getContext('2d');
             let gradTick = ctxTick.createLinearGradient(0, 0, 0, 200); gradTick.addColorStop(0, 'rgba(30, 41, 59, 0.15)'); gradTick.addColorStop(1, 'rgba(30, 41, 59, 0.0)');
             kpiTicketInstance = new Chart(ctxTick, { type: 'line', data: { labels: labels, datasets: [{ data: dadosTicket, borderColor: '#1e293b', backgroundColor: gradTick, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#1e293b' }] }, options: optCommon });
 
+            const ctxTemp = document.getElementById('kpiTempoChart').getContext('2d');
             let gradTemp = ctxTemp.createLinearGradient(0, 0, 0, 200); gradTemp.addColorStop(0, 'rgba(217, 119, 6, 0.15)'); gradTemp.addColorStop(1, 'rgba(217, 119, 6, 0.0)');
             kpiTempoInstance = new Chart(ctxTemp, { type: 'line', data: { labels: labels, datasets: [{ data: dadosTempo, borderColor: '#d97706', backgroundColor: gradTemp, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#d97706' }] }, options: optCommon });
+
+            // Gráficos Linha 2 (Novos)
+            const ctxProp = document.getElementById('kpiPropostasChart').getContext('2d');
+            let gradProp = ctxProp.createLinearGradient(0, 0, 0, 200); gradProp.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); gradProp.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+            kpiPropostasInstance = new Chart(ctxProp, { type: 'line', data: { labels: labels, datasets: [{ data: dadosPropostas, borderColor: '#3b82f6', backgroundColor: gradProp, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#3b82f6' }] }, options: optCommon });
+
+            const ctxConv = document.getElementById('kpiConversaoChart').getContext('2d');
+            let gradConv = ctxConv.createLinearGradient(0, 0, 0, 200); gradConv.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradConv.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+            kpiConversaoInstance = new Chart(ctxConv, { type: 'line', data: { labels: labels, datasets: [{ data: dadosConversao, borderColor: '#8b5cf6', backgroundColor: gradConv, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: { ...optCommon, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b', callbacks: { label: (ctx) => ` ${ctx.raw}%` } } } } });
+
+            const ctxSat = document.getElementById('kpiSatisfacaoChart').getContext('2d');
+            kpiSatisfacaoInstance = new Chart(ctxSat, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'],
+                    datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2 }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12 } }, cutout: '70%' }
+            });
         }
 
-        // --- PAINEL DE DESEMPENHO (MENSAL EM LINHAS E ALERTAS) ---
         window.renderPerformanceDashboard = function() {
-            let ativos = 0; let concluidos = 0; let atrasados = 0;
-            const alertList = [];
-
+            let ativos = 0; let concluidos = 0; let atrasados = 0; const alertList = [];
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-            const monthlyStats = {};
-            const today = new Date();
+            const monthlyStats = {}; const today = new Date();
             
             for (let i = 5; i >= 0; i--) {
                 const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -569,42 +596,32 @@
             }
 
             window.db.fila.forEach(f => {
-                const status = f.status || 'Pendente';
-                const inicioDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
+                const status = f.status || 'Pendente'; const inicioDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
                 
                 if (status === 'Concluído') {
                     concluidos++;
-                    const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00');
-                    const fimDate = new Date(inicioDate);
+                    const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00'); const fimDate = new Date(inicioDate);
                     fimDate.setDate(fimDate.getDate() + (parseInt(f.prazo) || 0));
                     if (conclusaoDate > fimDate) atrasados++;
-
                     if (f.dataConclusao) {
-                        const [y, m] = f.dataConclusao.split('-');
-                        const keyConcl = `${y}-${m}`;
+                        const [y, m] = f.dataConclusao.split('-'); const keyConcl = `${y}-${m}`;
                         if (monthlyStats[keyConcl]) monthlyStats[keyConcl].finalizados++;
                     }
                 } else {
                     ativos++;
-                    const fimDate = new Date(inicioDate);
-                    const prazo = parseInt(f.prazo) || 1;
-                    fimDate.setDate(fimDate.getDate() + prazo);
-                    const hoje = new Date(); hoje.setHours(0,0,0,0);
+                    const fimDate = new Date(inicioDate); const prazo = parseInt(f.prazo) || 1;
+                    fimDate.setDate(fimDate.getDate() + prazo); const hoje = new Date(); hoje.setHours(0,0,0,0);
                     
                     const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
                     let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24));
                     if (totalDiasUtilizados < 0) totalDiasUtilizados = 0;
                     if (restamDias < 0) atrasados++;
 
-                    let perc = (totalDiasUtilizados / prazo) * 100;
-                    if(perc < 0) perc = 0; if(perc > 100) perc = 100;
-
+                    let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100;
                     alertList.push({ projeto: f.projeto, restamDias: restamDias, perc: perc });
                 }
-
                 if (f.inicio) {
-                    const [y, m] = f.inicio.split('-');
-                    const keyInic = `${y}-${m}`;
+                    const [y, m] = f.inicio.split('-'); const keyInic = `${y}-${m}`;
                     if (monthlyStats[keyInic]) monthlyStats[keyInic].iniciados++;
                 }
             });
@@ -613,12 +630,9 @@
             document.getElementById('perf-concluidos').innerText = concluidos;
             document.getElementById('perf-atrasados').innerText = atrasados;
 
-            alertList.sort((a, b) => a.restamDias - b.restamDias);
-            let htmlList = '';
+            alertList.sort((a, b) => a.restamDias - b.restamDias); let htmlList = '';
             alertList.forEach(p => {
-                let colorClass = 'var(--success)';
-                if (p.restamDias < 0) colorClass = 'var(--danger)';
-                else if (p.restamDias <= 3) colorClass = 'var(--accent)';
+                let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
                 let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Entrega Hoje' : `Restam ${p.restamDias}d`);
                 htmlList += `<div class="alert-item"><div class="alert-header"><span>${p.projeto}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
             });
@@ -626,39 +640,32 @@
             document.getElementById('alert-list-container').innerHTML = htmlList;
 
             const sortedKeys = Object.keys(monthlyStats).sort();
-            const labelsMensais = sortedKeys.map(k => monthlyStats[k].label);
-            const dadosIniciados = sortedKeys.map(k => monthlyStats[k].iniciados);
-            const dadosFinalizados = sortedKeys.map(k => monthlyStats[k].finalizados);
-
             const ctxLinePerf = document.getElementById('perfLineChart').getContext('2d');
             if (perfLineInstance) perfLineInstance.destroy();
 
-            const gradInic = ctxLinePerf.createLinearGradient(0, 0, 0, 250);
-            gradInic.addColorStop(0, 'rgba(30, 41, 59, 0.15)');
-            gradInic.addColorStop(1, 'rgba(30, 41, 59, 0.00)');
-
-            const gradFin = ctxLinePerf.createLinearGradient(0, 0, 0, 250);
-            gradFin.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
-            gradFin.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+            let gradInic = ctxLinePerf.createLinearGradient(0, 0, 0, 250); gradInic.addColorStop(0, 'rgba(30, 41, 59, 0.15)'); gradInic.addColorStop(1, 'rgba(30, 41, 59, 0.00)');
+            let gradFin = ctxLinePerf.createLinearGradient(0, 0, 0, 250); gradFin.addColorStop(0, 'rgba(16, 185, 129, 0.20)'); gradFin.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
 
             perfLineInstance = new Chart(ctxLinePerf, {
                 type: 'line',
                 data: {
-                    labels: labelsMensais,
-                    datasets: [
-                        { label: 'Iniciados', data: dadosIniciados, borderColor: '#1e293b', backgroundColor: gradInic, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#1e293b' },
-                        { label: 'Finalizados', data: dadosFinalizados, borderColor: '#10b981', backgroundColor: gradFin, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#10b981', borderDash: [5, 5] }
-                    ]
+                    labels: sortedKeys.map(k => monthlyStats[k].label),
+                    datasets: [{ label: 'Iniciados', data: sortedKeys.map(k => monthlyStats[k].iniciados), borderColor: '#1e293b', backgroundColor: gradInic, fill: true, tension: 0.4, borderWidth: 3 },
+                               { label: 'Finalizados', data: sortedKeys.map(k => monthlyStats[k].finalizados), borderColor: '#10b981', backgroundColor: gradFin, fill: true, tension: 0.4, borderWidth: 3, borderDash: [5, 5] }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b' } },
-                    scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, precision: 0 } } }
-                }
+                options: { responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, precision: 0 } } } }
             });
         }
 
-        // --- RENDERIZADORES DE TABELA ---
+        // --- RENDERIZADORES DE TABELAS ---
+        window.renderConversoes = function() {
+            const tbody = document.getElementById('conversoes-body'); tbody.innerHTML = '';
+            const sorted = [...window.db.conversoes].sort((a,b) => new Date(b.data) - new Date(a.data));
+            sorted.forEach(c => {
+                tbody.innerHTML += `<tr><td><strong>${window.formatDate(c.data)}</strong></td><td>${c.ligacoes}</td><td>${c.reunioes}</td><td>${c.propostas}</td><td>${c.fechamentos}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('conversoes', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('conversoes', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+            });
+        }
+
         window.renderContatos = function() {
             const tbody = document.getElementById('contatos-body'); tbody.innerHTML = '';
             window.db.contatos.forEach(c => {
@@ -670,8 +677,7 @@
             const tbody = document.getElementById('vendas-body'); tbody.innerHTML = '';
             const sorted = [...window.db.vendas].sort((a,b) => new Date(b.data) - new Date(a.data));
             sorted.forEach(v => {
-                const badgeClass = v.tipo === 'Entrada' ? 'badge-entrada' : 'badge-saida';
-                const nomeExibicao = v.nome && v.nome.trim() !== '' ? v.nome : '-';
+                const badgeClass = v.tipo === 'Entrada' ? 'badge-entrada' : 'badge-saida'; const nomeExibicao = v.nome && v.nome.trim() !== '' ? v.nome : '-';
                 tbody.innerHTML += `<tr><td>${window.formatDate(v.data)}</td><td>${v.descricao}</td><td><strong>${nomeExibicao}</strong></td><td><span class="badge ${badgeClass}">${v.tipo}</span></td><td><strong>${window.formatCurrency(v.valor)}</strong></td><td class="actions"><button class="btn-edit" onclick="window.editItem('vendas', '${v.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('vendas', '${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
             });
         }
@@ -680,56 +686,29 @@
             const tbody = document.getElementById('fila-body'); tbody.innerHTML = '';
             window.db.fila.forEach(f => {
                 const cliente = window.db.contatos.find(c => c.id === f.clienteId) || { nome: 'Desconhecido', numero: '-' };
-                const status = f.status || 'Pendente';
-                const dataConclusao = f.dataConclusao || null;
+                const status = f.status || 'Pendente'; const dataConclusao = f.dataConclusao || null;
+                const inicioDate = new Date(f.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate);
+                fimDate.setDate(fimDate.getDate() + parseInt(f.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
+                
+                const notaDisplay = (f.nota !== undefined && f.nota !== null && f.nota !== '') ? f.nota : '-';
 
-                const inicioDate = new Date(f.inicio + 'T00:00:00');
-                const fimDate = new Date(inicioDate);
-                fimDate.setDate(fimDate.getDate() + parseInt(f.prazo));
-                const hoje = new Date(); hoje.setHours(0,0,0,0);
-
-                let restamDiasText = '-'; let entregueEmText = '-'; let sinalClass = 'signal-green';
+                let restamDiasText = '-'; let sinalClass = 'signal-green';
 
                 if (status === 'Concluído') {
                     const conclusaoDate = new Date(dataConclusao + 'T00:00:00');
-                    const diasCalculados = Math.ceil((conclusaoDate - inicioDate) / (1000 * 60 * 60 * 24));
                     const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
-                    
                     restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`;
-                    entregueEmText = `${diasCalculados} dias`;
                     sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
                 } else {
                     const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
                     restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
-                    entregueEmText = 'Em andamento';
-
-                    if (restamDias < 0) sinalClass = 'signal-red';
-                    else if (restamDias <= 3) sinalClass = 'signal-yellow';
-                    else sinalClass = 'signal-green';
+                    if (restamDias < 0) sinalClass = 'signal-red'; else if (restamDias <= 3) sinalClass = 'signal-yellow'; else sinalClass = 'signal-green';
                 }
 
                 const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido';
-                const toggleIcon = status === 'Pendente' ? 'fa-check-circle' : 'fa-undo';
-                const toggleTitle = status === 'Pendente' ? 'Marcar como Concluído' : 'Reabrir Projeto';
-                const nextStatus = status === 'Pendente' ? 'Concluído' : 'Pendente';
 
-                tbody.innerHTML += `<tr><td><strong>${f.projeto}</strong></td><td>${cliente.nome}</td><td>${cliente.numero}</td><td>${window.formatDate(f.inicio)}</td><td>${f.prazo} dias</td><td>${fimDate.toLocaleDateString('pt-BR')}</td><td>${restamDiasText}</td><td><span class="badge ${badgeStatusClass}">${status}</span></td><td>${entregueEmText}</td><td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td><td class="actions"><button class="btn-edit" onclick="window.toggleFilaStatus('${f.id}', '${nextStatus}')" title="${toggleTitle}"><i class="fas ${toggleIcon}" style="color: ${status === 'Pendente' ? 'var(--success)' : 'var(--text-light)'}"></i></button><button class="btn-edit" onclick="window.editItem('fila', '${f.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('fila', '${f.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+                tbody.innerHTML += `<tr><td><strong>${f.projeto}</strong></td><td>${cliente.nome}</td><td>${window.formatDate(f.inicio)}</td><td>${f.prazo} dias</td><td>${restamDiasText}</td><td><span class="badge ${badgeStatusClass}">${status}</span></td><td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td><td style="text-align: center;"><strong>${notaDisplay}</strong></td><td class="actions"><button class="btn-edit" onclick="window.editItem('fila', '${f.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('fila', '${f.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
             });
-        }
-
-        window.toggleFilaStatus = async function(id, newStatus) {
-            const item = window.db.fila.find(i => i.id === id);
-            if (!item) return;
-
-            item.status = newStatus;
-            if (newStatus === 'Concluído') {
-                const hoje = new Date();
-                item.dataConclusao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
-            } else {
-                item.dataConclusao = null;
-            }
-
-            try { await dbFirestore.collection("fila").doc(id).set(item); window.renderCurrentTab(); } catch (error) { alert("Erro ao atualizar status na nuvem."); }
         }
 
         // --- MANIPULAÇÃO DE DIÁLOGOS (MODAL) ---
@@ -750,7 +729,9 @@
             } else if (type === 'fila') {
                 let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
                 if(!options) options = `<option value="" disabled selected>Cadastre um contato primeiro</option>`;
-                html += `<div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-projeto" required value="${data ? data.projeto : ''}"></div><div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status Inicial</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div>`;
+                html += `<div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-projeto" required value="${data ? data.projeto : ''}"></div><div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div><div class="form-group"><label>Nota do Cliente (0 a 10 - Opcional)</label><input type="number" id="f-nota" min="0" max="10" value="${data && data.nota !== undefined ? data.nota : ''}"></div>`;
+            } else if (type === 'conversoes') {
+                html += `<div class="form-group"><label>Data</label><input type="date" id="f-data-conv" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Ligações</label><input type="number" id="f-ligacoes" required value="${data ? data.ligacoes : '0'}"></div><div class="form-group"><label>Reuniões</label><input type="number" id="f-reunioes" required value="${data ? data.reunioes : '0'}"></div><div class="form-group"><label>Propostas Enviadas</label><input type="number" id="f-propostas" required value="${data ? data.propostas : '0'}"></div><div class="form-group"><label>Fechamentos</label><input type="number" id="f-fechamentos" required value="${data ? data.fechamentos : '0'}"></div>`;
             }
 
             html += `<button type="submit" class="btn-submit">${data ? 'Salvar Alterações' : 'Cadastrar'}</button></form>`;
@@ -766,10 +747,12 @@
             } else if (type === 'vendas') {
                 newItem.data = document.getElementById('f-data').value; newItem.descricao = document.getElementById('f-descricao').value; newItem.nome = document.getElementById('f-nome-fin').value; newItem.valor = parseFloat(document.getElementById('f-valor').value); newItem.tipo = document.getElementById('f-tipo').value;
             } else if (type === 'fila') {
-                newItem.projeto = document.getElementById('f-projeto').value; newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value;
+                newItem.projeto = document.getElementById('f-projeto').value; newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value; newItem.nota = document.getElementById('f-nota').value;
                 const oldItem = window.db.fila.find(i => i.id === window.editingId);
                 if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
                 else newItem.dataConclusao = null;
+            } else if (type === 'conversoes') {
+                newItem.data = document.getElementById('f-data-conv').value; newItem.ligacoes = parseInt(document.getElementById('f-ligacoes').value) || 0; newItem.reunioes = parseInt(document.getElementById('f-reunioes').value) || 0; newItem.propostas = parseInt(document.getElementById('f-propostas').value) || 0; newItem.fechamentos = parseInt(document.getElementById('f-fechamentos').value) || 0;
             }
 
             try {
