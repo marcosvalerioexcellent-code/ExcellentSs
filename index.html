@@ -101,7 +101,7 @@
         .chart-box h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
         .chart-box h3 i { color: var(--accent); }
         
-        /* Contenedores de Gráficos (Fixando alturas para não deformar grid) */
+        /* Contenedores de Gráficos */
         .chart-wrapper { position: relative; height: 250px; width: 100%; display: flex; justify-content: center; }
 
         /* Tables */
@@ -113,6 +113,10 @@
         .actions button { background: none; border: none; cursor: pointer; margin-right: 8px; font-size: 1rem; transition: 0.2s; }
         .btn-edit { color: var(--text-light); } .btn-edit:hover { color: var(--primary); }
         .btn-delete { color: var(--text-light); } .btn-delete:hover { color: var(--danger); }
+        .btn-clip { color: var(--text-light); } .btn-clip:hover { color: var(--accent); } 
+        .btn-clip.attached { color: var(--accent); } /* Clip colorido quando tem anexo */
+        .row-clickable { cursor: pointer; } /* Classe para faixa clicável */
+        
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
         .badge-entrada { background: #d1fae5; color: #065f46; }
         .badge-saida { background: #fee2e2; color: #991b1b; }
@@ -122,6 +126,7 @@
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: var(--surface); width: 90%; max-width: 500px; border-radius: var(--radius); box-shadow: var(--shadow); padding: 30px; animation: scaleUp 0.2s; }
+        .modal-large { max-width: 800px; height: 85vh; display: flex; flex-direction: column; }
         @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-header h2 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
@@ -131,6 +136,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
         .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; transition: 0.2s; }
+        .form-group input[type="file"] { padding: 6px; }
         .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1); }
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-submit:hover { background: #0f172a; }
@@ -183,12 +189,10 @@
                     <div class="card expense"><h3>Total de Saídas</h3><p id="dash-saidas">R$ 0,00</p></div>
                     <div class="card"><h3>Saldo Atual</h3><p id="dash-saldo">R$ 0,00</p></div>
                 </div>
-
                 <div class="charts-container">
                     <div class="chart-box"><canvas id="lineChart"></canvas></div>
                     <div class="chart-box"><canvas id="mixedChart"></canvas></div>
                 </div>
-
                 <div class="charts-container">
                     <div class="chart-box"><h3><i class="fas fa-arrow-up"></i> Top Entradas (Por Nome)</h3><canvas id="topEntradasChart"></canvas></div>
                     <div class="chart-box"><h3><i class="fas fa-arrow-down"></i> Top Saídas (Por Nome)</h3><canvas id="topSaidasChart"></canvas></div>
@@ -310,14 +314,8 @@
             </div>
             <div id="modal-pdf-body">
                 <form onsubmit="window.generatePDF(event)">
-                    <div class="form-group">
-                        <label>Período Inicial (Opcional)</label>
-                        <input type="date" id="pdf-start">
-                    </div>
-                    <div class="form-group">
-                        <label>Período Final (Opcional)</label>
-                        <input type="date" id="pdf-end">
-                    </div>
+                    <div class="form-group"><label>Período Inicial (Opcional)</label><input type="date" id="pdf-start"></div>
+                    <div class="form-group"><label>Período Final (Opcional)</label><input type="date" id="pdf-end"></div>
                     <div class="form-group">
                         <label>Tipo de Transação</label>
                         <select id="pdf-tipo">
@@ -328,6 +326,42 @@
                     </div>
                     <button type="submit" class="btn-submit" style="margin-top: 25px;"><i class="fas fa-download"></i> Gerar e Baixar PDF</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-attach">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-paperclip" style="color: var(--accent);"></i> Anexar Contrato</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-attach').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-attach-body">
+                <div class="form-group">
+                    <label>Selecione o arquivo PDF</label>
+                    <input type="file" id="file-contrato" accept="application/pdf">
+                    <small style="color: var(--text-light); display: block; margin-top: 8px;">
+                        Para armazenamento nativo sem custos, o limite do banco de dados é de aproximadamente 700KB por contrato.
+                    </small>
+                </div>
+                <button class="btn-submit" onclick="window.saveContrato()">Salvar Anexo</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-view-contract">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-contract" style="color: var(--accent);"></i> Contrato do Projeto</h2>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button id="btn-download-contract" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer; transition: 0.2s;" title="Baixar Contrato PDF" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-main)'">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="close-modal" onclick="document.getElementById('modal-view-contract').style.display='none'"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div style="flex-grow: 1; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+                <iframe id="contract-frame" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
         </div>
     </div>
@@ -349,6 +383,7 @@
         window.currentTab = 'dashboard';
         window.currentSubTab = 'financeiro';
         window.editingId = null;
+        window.attachingId = null; // Variável de controle para anexo
         
         // Instâncias de Gráficos
         let lineChartInstance = null; let mixedChartInstance = null;
@@ -493,6 +528,8 @@
         }
 
         window.renderKpiDashboard = function() {
+            // (Lógica do KPI inalterada - Omitido para não exceder limites de contexto desnecessários, 
+            // mas o código original é mantido perfeitamente aqui para a integração plena)
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const kpiStats = {}; const today = new Date();
             for (let i = 5; i >= 0; i--) {
@@ -694,8 +731,98 @@
                 }
 
                 const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido';
-                tbody.innerHTML += `<tr><td><strong>${f.projeto}</strong></td><td>${cliente.nome}</td><td>${window.formatDate(f.inicio)}</td><td>${f.prazo} dias</td><td>${restamDiasText}</td><td><span class="badge ${badgeStatusClass}">${status}</span></td><td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td><td style="text-align: center;"><strong>${notaDisplay}</strong></td><td class="actions"><button class="btn-edit" onclick="window.editItem('fila', '${f.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('fila', '${f.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+                
+                // Validação de Contrato Existente
+                const hasContract = !!f.contrato;
+                const clipClass = hasContract ? 'attached' : '';
+                const rowClass = hasContract ? 'row-clickable' : '';
+                const rowClick = hasContract ? `onclick="window.viewContract('${f.id}')"` : '';
+
+                tbody.innerHTML += `<tr class="${rowClass}" ${rowClick}>
+                    <td><strong>${f.projeto}</strong></td>
+                    <td>${cliente.nome}</td>
+                    <td>${window.formatDate(f.inicio)}</td>
+                    <td>${f.prazo} dias</td>
+                    <td>${restamDiasText}</td>
+                    <td><span class="badge ${badgeStatusClass}">${status}</span></td>
+                    <td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td>
+                    <td style="text-align: center;"><strong>${notaDisplay}</strong></td>
+                    <td class="actions">
+                        <button class="btn-clip ${clipClass}" onclick="event.stopPropagation(); window.openAttachModal('${f.id}')" title="Anexar ou Substituir Contrato"><i class="fas fa-paperclip"></i></button>
+                        <button class="btn-edit" onclick="event.stopPropagation(); window.editItem('fila', '${f.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button class="btn-delete" onclick="event.stopPropagation(); window.deleteItem('fila', '${f.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
             });
+        }
+
+        // LÓGICA DE CONTRATOS (Anexar PDF como Base64 no Firestore)
+        window.openAttachModal = function(id) {
+            window.attachingId = id;
+            document.getElementById('file-contrato').value = '';
+            document.getElementById('modal-attach').style.display = 'flex';
+        }
+
+        window.saveContrato = function() {
+            const fileInput = document.getElementById('file-contrato');
+            if (!fileInput.files.length) return alert('Selecione um arquivo PDF para anexar.');
+            
+            const file = fileInput.files[0];
+            
+            // Trava de segurança: 700KB (Para evitar estourar o 1MB limite de doc do Firestore com a sobrecarga do Base64)
+            if (file.size > 700 * 1024) {
+                return alert('O arquivo selecionado é muito grande. Para salvar gratuitamente no banco de dados, o PDF deve ter no máximo 700KB.');
+            }
+
+            const btn = document.querySelector('#modal-attach .btn-submit');
+            btn.innerText = 'Salvando na Nuvem...'; btn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Str = e.target.result;
+                try {
+                    // Salvar campo contrato no documento da fila no Firestore
+                    await dbFirestore.collection('fila').doc(window.attachingId).update({
+                        contrato: base64Str
+                    });
+
+                    // Atualizar estado local
+                    const item = window.db.fila.find(i => i.id === window.attachingId);
+                    if (item) item.contrato = base64Str;
+
+                    window.renderFila();
+                    document.getElementById('modal-attach').style.display = 'none';
+                } catch (error) {
+                    console.error("Erro ao salvar anexo:", error);
+                    alert("Falha ao salvar anexo. Pode ter ocorrido por tamanho excedido (Limite Firestore).");
+                } finally {
+                    btn.innerText = 'Salvar Anexo'; btn.disabled = false;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        window.viewContract = function(id) {
+            const item = window.db.fila.find(i => i.id === id);
+            if (!item || !item.contrato) return;
+
+            // Injetar base64 no iframe
+            const iframe = document.getElementById('contract-frame');
+            iframe.src = item.contrato;
+
+            // Configurar botão de Download
+            const btnDownload = document.getElementById('btn-download-contract');
+            btnDownload.onclick = function() {
+                const link = document.createElement('a');
+                link.href = item.contrato;
+                // Formatar nome do arquivo de forma elegante
+                const safeName = item.projeto.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                link.download = `Contrato_${safeName}.pdf`;
+                link.click();
+            };
+
+            document.getElementById('modal-view-contract').style.display = 'flex';
         }
 
         window.openPdfModal = function() {
@@ -803,6 +930,9 @@
             } else if (type === 'fila') {
                 newItem.projeto = document.getElementById('f-projeto').value; newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value; newItem.nota = document.getElementById('f-nota').value;
                 const oldItem = window.db.fila.find(i => i.id === window.editingId);
+                // Preservar o contrato em caso de edição de projeto já existente
+                if (oldItem && oldItem.contrato) newItem.contrato = oldItem.contrato; 
+                
                 if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
                 else newItem.dataConclusao = null;
             } else if (type === 'conversoes') {
@@ -810,7 +940,8 @@
             }
 
             try {
-                await dbFirestore.collection(type).doc(newItem.id).set(newItem);
+                // Ao criar/editar mantemos mesclagem para não sobrescrever acidentalmente campos soltos
+                await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
                 if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } 
                 else { window.db[type].push(newItem); }
                 window.renderCurrentTab(); window.closeModal();
