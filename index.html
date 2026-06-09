@@ -7,7 +7,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Firebase SDK versões Compat -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     
@@ -139,7 +138,6 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="logo">EXCELLENT<span>SERVICES</span></div>
         <ul class="nav-links">
@@ -150,7 +148,6 @@
         </ul>
     </nav>
 
-    <!-- Main Content -->
     <main class="main-content">
         <header>
             <div style="display: flex; align-items: center; gap: 15px;">
@@ -163,14 +160,12 @@
             </div>
         </header>
 
-        <!-- DASHBOARD -->
         <section id="dashboard" class="tab-content active">
             <div class="dash-nav">
                 <span id="subnav-financeiro" class="active" onclick="window.switchDashSubTab('financeiro')">Análise Financeira</span>
                 <span id="subnav-desempenho" onclick="window.switchDashSubTab('desempenho')">Desempenho</span>
             </div>
 
-            <!-- SUBABA 1: ANÁLISE FINANCEIRA -->
             <div id="subtab-financeiro" class="subtab-container">
                 <div class="dashboard-cards">
                     <div class="card income"><h3>Total de Entradas</h3><p id="dash-entradas">R$ 0,00</p></div>
@@ -189,7 +184,6 @@
                     </div>
                 </div>
 
-                <!-- Novos Gráficos: Por Nome -->
                 <div class="charts-container">
                     <div class="chart-box">
                         <h3><i class="fas fa-arrow-up"></i> Top Entradas (Por Nome)</h3>
@@ -202,7 +196,6 @@
                 </div>
             </div>
 
-            <!-- SUBABA 2: DESEMPENHO -->
             <div id="subtab-desempenho" class="subtab-container" style="display: none;">
                 <div class="dashboard-cards">
                     <div class="card" style="border-left-color: var(--accent);"><h3>Projetos Ativos</h3><p id="perf-ativos">0</p></div>
@@ -211,22 +204,18 @@
                 </div>
 
                 <div class="charts-container">
-                    <!-- Lista de Alertas Organizada -->
                     <div class="chart-box">
                         <h3><i class="fas fa-traffic-light"></i> Visão de Alertas (Sinais de Prazo)</h3>
-                        <div id="alert-list-container" style="flex-grow: 1; overflow-y: auto; padding-right: 5px; max-height: 350px;">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="alert-list-container" style="flex-grow: 1; overflow-y: auto; padding-right: 5px; max-height: 350px;"></div>
                     </div>
                     <div class="chart-box">
-                        <h3><i class="fas fa-business-time"></i> Tempo de Execução (Estimado vs Real)</h3>
-                        <canvas id="perfBarChart"></canvas>
+                        <h3><i class="fas fa-calendar-check"></i> Monitoramento Mensal de Projetos</h3>
+                        <canvas id="perfLineChart"></canvas>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- CONTATOS -->
         <section id="contatos" class="tab-content">
             <div class="table-container">
                 <table>
@@ -236,7 +225,6 @@
             </div>
         </section>
 
-        <!-- FINANCEIRO (Antigo Vendas) -->
         <section id="vendas" class="tab-content">
             <div class="table-container">
                 <table>
@@ -246,7 +234,6 @@
             </div>
         </section>
 
-        <!-- FILA -->
         <section id="fila" class="tab-content">
             <div class="table-container">
                 <table>
@@ -271,7 +258,6 @@
         </section>
     </main>
 
-    <!-- MODAL DINÂMICO -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -305,7 +291,7 @@
         let mixedChartInstance = null;
         let topEntradasInstance = null;
         let topSaidasInstance = null;
-        let perfBarInstance = null;
+        let perfLineInstance = null;
 
         async function loadDataFromFirebase() {
             try {
@@ -369,7 +355,7 @@
             if (window.currentTab === 'fila') window.renderFila();
         }
 
-        // --- DASHBOARD: FINANCEIRO ---
+        // --- PAINEL ECONÔMICO ---
         function getFinancialChartData() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const aggregates = {};
@@ -417,8 +403,6 @@
 
         window.renderFinancialCharts = function() {
             const data = getFinancialChartData();
-            
-            // 1. Gráficos de Fluxo de Caixa e Barras
             const ctxLine = document.getElementById('lineChart').getContext('2d');
             const ctxMixed = document.getElementById('mixedChart').getContext('2d');
             if (lineChartInstance) lineChartInstance.destroy();
@@ -429,7 +413,6 @@
             lineChartInstance = new Chart(ctxLine, { type: 'line', data: { labels: data.labels, datasets: [{ label: 'Entradas', data: data.entradas, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 3 }, { label: 'Saídas', data: data.saidas, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, tension: 0.4, borderWidth: 3, borderDash: [6, 6] }] }, options: commonOpt });
             mixedChartInstance = new Chart(ctxMixed, { data: { labels: data.labels, datasets: [{ type: 'line', label: 'Entradas', data: data.entradas, borderColor: '#1e293b', borderWidth: 3, fill: false, tension: 0.3 }, { type: 'bar', label: 'Saídas', data: data.saidas, backgroundColor: 'rgba(239, 68, 68, 0.8)', borderRadius: 4, barThickness: 22 }] }, options: commonOpt });
 
-            // 2. Gráficos de Ranking por Nome
             const aggEntradas = {}; const aggSaidas = {};
             window.db.vendas.forEach(v => {
                 const nome = v.nome && v.nome.trim() !== '' ? v.nome : 'Sem Nome';
@@ -438,7 +421,6 @@
                 else aggSaidas[nome] = (aggSaidas[nome] || 0) + valor;
             });
 
-            // Ordena do Maior para o Menor
             const topEntradas = Object.entries(aggEntradas).sort((a,b) => b[1] - a[1]).slice(0, 8);
             const topSaidas = Object.entries(aggSaidas).sort((a,b) => b[1] - a[1]).slice(0, 8);
 
@@ -453,43 +435,63 @@
             topSaidasInstance = new Chart(ctxTopS, { type: 'bar', data: { labels: topSaidas.map(i => i[0]), datasets: [{ data: topSaidas.map(i => i[1]), backgroundColor: '#ef4444', borderRadius: 4, barThickness: 15 }] }, options: barOpt });
         }
 
-        // --- DASHBOARD: DESEMPENHO ---
+        // --- PAINEL DE DESEMPENHO (MENSAL EM LINHAS E ALERTAS) ---
         window.renderPerformanceDashboard = function() {
             let ativos = 0; let concluidos = 0; let atrasados = 0;
-            const projectNames = []; const estimatedDays = []; const realDaysUsed = [];
             const alertList = [];
+
+            // Estrutura para consolidação cronológica dos últimos 6 meses
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            const monthlyStats = {};
+            const today = new Date();
+            
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                monthlyStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, iniciados: 0, finalizados: 0 };
+            }
 
             window.db.fila.forEach(f => {
                 const status = f.status || 'Pendente';
-                const inicioDate = new Date(f.inicio + 'T00:00:00');
-                const fimDate = new Date(inicioDate);
-                const prazo = parseInt(f.prazo) || 1;
-                fimDate.setDate(fimDate.getDate() + prazo);
-                const hoje = new Date(); hoje.setHours(0,0,0,0);
+                const inicioDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
                 
-                let totalDiasUtilizados = 0;
-
+                // 1. Contagem Geral de Cartões
                 if (status === 'Concluído') {
                     concluidos++;
                     const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00');
-                    totalDiasUtilizados = Math.ceil((conclusaoDate - inicioDate) / (1000 * 60 * 60 * 24));
+                    const fimDate = new Date(inicioDate);
+                    fimDate.setDate(fimDate.getDate() + (parseInt(f.prazo) || 0));
                     if (conclusaoDate > fimDate) atrasados++;
+
+                    // Agrupar entrega mensal
+                    if (f.dataConclusao) {
+                        const [y, m] = f.dataConclusao.split('-');
+                        const keyConcl = `${y}-${m}`;
+                        if (monthlyStats[keyConcl]) monthlyStats[keyConcl].finalizados++;
+                    }
                 } else {
                     ativos++;
+                    const fimDate = new Date(inicioDate);
+                    const prazo = parseInt(f.prazo) || 1;
+                    fimDate.setDate(fimDate.getDate() + prazo);
+                    const hoje = new Date(); hoje.setHours(0,0,0,0);
+                    
                     const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
-                    totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24));
+                    let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24));
                     if (totalDiasUtilizados < 0) totalDiasUtilizados = 0;
                     if (restamDias < 0) atrasados++;
 
-                    // Regra da Barra de Progresso
                     let perc = (totalDiasUtilizados / prazo) * 100;
                     if(perc < 0) perc = 0; if(perc > 100) perc = 100;
 
                     alertList.push({ projeto: f.projeto, restamDias: restamDias, perc: perc });
                 }
 
-                if(projectNames.length < 8) {
-                    projectNames.push(f.projeto); estimatedDays.push(prazo); realDaysUsed.push(totalDiasUtilizados);
+                // Agrupar início mensal
+                if (f.inicio) {
+                    const [y, m] = f.inicio.split('-');
+                    const keyInic = `${y}-${m}`;
+                    if (monthlyStats[keyInic]) monthlyStats[keyInic].iniciados++;
                 }
             });
 
@@ -497,32 +499,54 @@
             document.getElementById('perf-concluidos').innerText = concluidos;
             document.getElementById('perf-atrasados').innerText = atrasados;
 
-            // 1. Gerar Lista de Alertas Organizada (Mais urgente/atrasado para o menos urgente)
+            // 1. Renderizar Lista de Alertas (Esquerda)
             alertList.sort((a, b) => a.restamDias - b.restamDias);
             let htmlList = '';
             alertList.forEach(p => {
                 let colorClass = 'var(--success)';
                 if (p.restamDias < 0) colorClass = 'var(--danger)';
                 else if (p.restamDias <= 3) colorClass = 'var(--accent)';
-
                 let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Entrega Hoje' : `Restam ${p.restamDias}d`);
-
-                htmlList += `
-                    <div class="alert-item">
-                        <div class="alert-header"><span>${p.projeto}</span><span style="color: ${colorClass}">${textRestam}</span></div>
-                        <div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div>
-                    </div>`;
+                htmlList += `<div class="alert-item"><div class="alert-header"><span>${p.projeto}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
             });
-            if(htmlList === '') htmlList = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto pendente.</p>';
+            if(htmlList === '') htmlList = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto pendente ativo.</p>';
             document.getElementById('alert-list-container').innerHTML = htmlList;
 
-            // 2. Gráfico de Barras de Tempo
-            const ctxBar = document.getElementById('perfBarChart').getContext('2d');
-            if (perfBarInstance) perfBarInstance.destroy();
-            perfBarInstance = new Chart(ctxBar, { type: 'bar', data: { labels: projectNames, datasets: [{ label: 'Prazo Estimado', data: estimatedDays, backgroundColor: '#cbd5e1', borderRadius: 4 }, { label: 'Dias Decorridos', data: realDaysUsed, backgroundColor: '#1e293b', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 12 } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } } });
+            // 2. Renderizar Novo Gráfico Mensal de Linhas com Efeitos (Direita)
+            const sortedKeys = Object.keys(monthlyStats).sort();
+            const labelsMensais = sortedKeys.map(k => monthlyStats[k].label);
+            const dadosIniciados = sortedKeys.map(k => monthlyStats[k].iniciados);
+            const dadosFinalizados = sortedKeys.map(k => monthlyStats[k].finalizados);
+
+            const ctxLinePerf = document.getElementById('perfLineChart').getContext('2d');
+            if (perfLineInstance) perfLineInstance.destroy();
+
+            const gradInic = ctxLinePerf.createLinearGradient(0, 0, 0, 250);
+            gradInic.addColorStop(0, 'rgba(30, 41, 59, 0.15)');
+            gradInic.addColorStop(1, 'rgba(30, 41, 59, 0.00)');
+
+            const gradFin = ctxLinePerf.createLinearGradient(0, 0, 0, 250);
+            gradFin.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
+            gradFin.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+
+            perfLineInstance = new Chart(ctxLinePerf, {
+                type: 'line',
+                data: {
+                    labels: labelsMensais,
+                    datasets: [
+                        { label: 'Iniciados', data: dadosIniciados, borderColor: '#1e293b', backgroundColor: gradInic, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#1e293b' },
+                        { label: 'Finalizados', data: dadosFinalizados, borderColor: '#10b981', backgroundColor: gradFin, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#10b981', borderDash: [5, 5] }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b' } },
+                    scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, precision: 0 } } }
+                }
+            });
         }
 
-        // --- RENDERIZAR TABELAS ---
+        // --- RENDERIZADORES DE TABELA ---
         window.renderContatos = function() {
             const tbody = document.getElementById('contatos-body'); tbody.innerHTML = '';
             window.db.contatos.forEach(c => {
@@ -544,7 +568,6 @@
             const tbody = document.getElementById('fila-body'); tbody.innerHTML = '';
             window.db.fila.forEach(f => {
                 const cliente = window.db.contatos.find(c => c.id === f.clienteId) || { nome: 'Desconhecido', numero: '-' };
-                
                 const status = f.status || 'Pendente';
                 const dataConclusao = f.dataConclusao || null;
 
@@ -558,12 +581,10 @@
                 if (status === 'Concluído') {
                     const conclusaoDate = new Date(dataConclusao + 'T00:00:00');
                     const diasCalculados = Math.ceil((conclusaoDate - inicioDate) / (1000 * 60 * 60 * 24));
-                    
-                    // CONGELAR RESTAM
                     const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
+                    
                     restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`;
                     entregueEmText = `${diasCalculados} dias`;
-                    
                     sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
                 } else {
                     const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
@@ -591,8 +612,7 @@
             item.status = newStatus;
             if (newStatus === 'Concluído') {
                 const hoje = new Date();
-                const y = hoje.getFullYear(); const m = String(hoje.getMonth() + 1).padStart(2, '0'); const d = String(hoje.getDate()).padStart(2, '0');
-                item.dataConclusao = `${y}-${m}-${d}`;
+                item.dataConclusao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
             } else {
                 item.dataConclusao = null;
             }
@@ -600,7 +620,7 @@
             try { await dbFirestore.collection("fila").doc(id).set(item); window.renderCurrentTab(); } catch (error) { alert("Erro ao atualizar status na nuvem."); }
         }
 
-        // --- FORMULÁRIOS ---
+        // --- MANIPULAÇÃO DE DIÁLOGOS (MODAL) ---
         window.openCurrentModal = function() {
             window.editingId = null; document.getElementById('modal-title').innerText = `Adicionar Registro`; window.buildForm(window.currentTab); document.getElementById('modal-overlay').style.display = 'flex';
         }
@@ -613,7 +633,7 @@
 
             if (type === 'contatos') {
                 html += `<div class="form-group"><label>Nome</label><input type="text" id="f-nome" required value="${data ? data.nome : ''}"></div><div class="form-group"><label>Número (WhatsApp)</label><input type="text" id="f-numero" required value="${data ? data.numero : ''}"></div><div class="form-group"><label>Potencial do Cliente</label><select id="f-potencial"><option value="Alto" ${data && data.potencial==='Alto'?'selected':''}>Alto</option><option value="Médio" ${data && data.potencial==='Médio'?'selected':''}>Médio</option><option value="Baixo" ${data && data.potencial==='Baixo'?'selected':''}>Baixo</option></select></div>`;
-            } else if (type === 'vendas') { // Aba Financeiro
+            } else if (type === 'vendas') {
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Descrição</label><input type="text" id="f-descricao" required value="${data ? data.descricao : ''}"></div><div class="form-group"><label>Nome do Cliente/Fornecedor</label><input type="text" id="f-nome-fin" required value="${data && data.nome ? data.nome : ''}"></div><div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="f-valor" required value="${data ? data.valor : ''}"></div><div class="form-group"><label>Tipo</label><select id="f-tipo"><option value="Entrada" ${data && data.tipo==='Entrada'?'selected':''}>Entrada (Receita)</option><option value="Saída" ${data && data.tipo==='Saída'?'selected':''}>Saída (Despesa)</option></select></div>`;
             } else if (type === 'fila') {
                 let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
