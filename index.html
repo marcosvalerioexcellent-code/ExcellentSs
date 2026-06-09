@@ -59,7 +59,7 @@
         .status-dot.online { background-color: var(--success); animation: none; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        /* Semáforo Sinais da Fila */
+        /* Semáforo Sinais da Fila/Suporte */
         .signal-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: middle; }
         .signal-green { background-color: var(--success); box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
         .signal-yellow { background-color: var(--accent); box-shadow: 0 0 8px rgba(217, 119, 6, 0.6); }
@@ -97,6 +97,10 @@
         /* Charts Grid */
         .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-top: 5px; margin-bottom: 25px;}
         .charts-container.triple { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+        
+        /* Grid Desempenho (Novo Layout) */
+        .desempenho-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 25px; margin-top: 5px; margin-bottom: 25px; }
+        
         .chart-box { background: var(--surface); padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; }
         .chart-box h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
         .chart-box h3 i { color: var(--accent); }
@@ -114,8 +118,8 @@
         .btn-edit { color: var(--text-light); } .btn-edit:hover { color: var(--primary); }
         .btn-delete { color: var(--text-light); } .btn-delete:hover { color: var(--danger); }
         .btn-clip { color: var(--text-light); } .btn-clip:hover { color: var(--accent); } 
-        .btn-clip.attached { color: var(--accent); } /* Clip colorido quando tem anexo */
-        .row-clickable { cursor: pointer; } /* Classe para faixa clicável */
+        .btn-clip.attached { color: var(--accent); } 
+        .row-clickable { cursor: pointer; } 
         
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
         .badge-entrada { background: #d1fae5; color: #065f46; }
@@ -141,6 +145,11 @@
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-submit:hover { background: #0f172a; }
 
+        @media (max-width: 1024px) {
+            .desempenho-grid { grid-template-columns: 1fr 1fr; }
+            .desempenho-grid > .chart-box:last-child { grid-column: span 2; }
+        }
+
         @media (max-width: 768px) {
             .sidebar { position: absolute; left: -260px; height: 100%; }
             .sidebar.open { left: 0; }
@@ -148,6 +157,8 @@
             header { padding: 15px; }
             .tab-content { padding: 15px; }
             .charts-container { grid-template-columns: 1fr !important; gap: 15px; }
+            .desempenho-grid { grid-template-columns: 1fr !important; gap: 15px; }
+            .desempenho-grid > .chart-box:last-child { grid-column: span 1; }
         }
     </style>
 </head>
@@ -160,7 +171,8 @@
             <li onclick="window.switchTab('conversoes')"><i class="fas fa-funnel-dollar"></i> Conversões</li>
             <li onclick="window.switchTab('contatos')"><i class="fas fa-address-book"></i> Contatos</li>
             <li onclick="window.switchTab('vendas')"><i class="fas fa-wallet"></i> Financeiro</li>
-            <li onclick="window.switchTab('fila')"><i class="fas fa-tasks"></i> Fila</li>
+            <li onclick="window.switchTab('fila')"><i class="fas fa-tasks"></i> Fila de Projetos</li>
+            <li onclick="window.switchTab('suporte')"><i class="fas fa-headset"></i> Suporte</li>
         </ul>
     </nav>
 
@@ -231,10 +243,14 @@
                     <div class="card" style="border-left-color: var(--danger);"><h3>Projetos em Atraso</h3><p id="perf-atrasados">0</p></div>
                 </div>
 
-                <div class="charts-container">
+                <div class="desempenho-grid">
                     <div class="chart-box">
-                        <h3><i class="fas fa-traffic-light"></i> Visão de Alertas (Sinais de Prazo)</h3>
+                        <h3><i class="fas fa-traffic-light"></i> Visão de Alertas (Projetos)</h3>
                         <div id="alert-list-container" style="flex-grow: 1; overflow-y: auto; padding-right: 5px; max-height: 350px;"></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3><i class="fas fa-headset"></i> Alertas de Suporte</h3>
+                        <div id="alert-list-suporte-container" style="flex-grow: 1; overflow-y: auto; padding-right: 5px; max-height: 350px;"></div>
                     </div>
                     <div class="chart-box">
                         <h3><i class="fas fa-calendar-check"></i> Monitoramento Mensal de Projetos</h3>
@@ -291,6 +307,25 @@
                         </tr>
                     </thead>
                     <tbody id="fila-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="suporte" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Início</th>
+                            <th>Prazo</th>
+                            <th>Restam</th>
+                            <th>Status</th>
+                            <th>Sinal</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suporte-body"></tbody>
                 </table>
             </div>
         </section>
@@ -379,13 +414,12 @@
         firebase.initializeApp(firebaseConfig);
         const dbFirestore = firebase.firestore();
 
-        window.db = { contatos: [], vendas: [], fila: [], conversoes: [] };
+        window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [] };
         window.currentTab = 'dashboard';
         window.currentSubTab = 'financeiro';
         window.editingId = null;
-        window.attachingId = null; // Variável de controle para anexo
+        window.attachingId = null; 
         
-        // Instâncias de Gráficos
         let lineChartInstance = null; let mixedChartInstance = null;
         let topEntradasInstance = null; let topSaidasInstance = null;
         let perfLineInstance = null;
@@ -395,16 +429,18 @@
 
         async function loadDataFromFirebase() {
             try {
-                const [cSnap, vSnap, fSnap, convSnap] = await Promise.all([
+                const [cSnap, vSnap, fSnap, convSnap, supSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(),
                     dbFirestore.collection("vendas").get(),
                     dbFirestore.collection("fila").get(),
-                    dbFirestore.collection("conversoes").get()
+                    dbFirestore.collection("conversoes").get(),
+                    dbFirestore.collection("suporte").get()
                 ]);
                 window.db.contatos = cSnap.docs.map(d => d.data());
                 window.db.vendas = vSnap.docs.map(d => d.data());
                 window.db.fila = fSnap.docs.map(d => d.data());
                 window.db.conversoes = convSnap.docs.map(d => d.data());
+                window.db.suporte = supSnap ? supSnap.docs.map(d => d.data()) : [];
 
                 document.getElementById('db-status').classList.add('online');
                 document.getElementById('db-status-text').innerText = 'Online';
@@ -431,7 +467,7 @@
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
             
-            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'contatos': 'Gestão de Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos' };
+            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'contatos': 'Gestão de Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos', 'suporte': 'Suporte a Clientes' };
             document.getElementById('page-title').innerText = titles[tabName];
             
             document.getElementById('main-fab').style.display = tabName === 'dashboard' ? 'none' : 'flex';
@@ -456,6 +492,7 @@
             if (window.currentTab === 'contatos') window.renderContatos();
             if (window.currentTab === 'vendas') window.renderVendas();
             if (window.currentTab === 'fila') window.renderFila();
+            if (window.currentTab === 'suporte') window.renderSuporte();
         }
 
         function getFinancialChartData() {
@@ -528,8 +565,6 @@
         }
 
         window.renderKpiDashboard = function() {
-            // (Lógica do KPI inalterada - Omitido para não exceder limites de contexto desnecessários, 
-            // mas o código original é mantido perfeitamente aqui para a integração plena)
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const kpiStats = {}; const today = new Date();
             for (let i = 5; i >= 0; i--) {
@@ -616,7 +651,9 @@
         }
 
         window.renderPerformanceDashboard = function() {
-            let ativos = 0; let concluidos = 0; let atrasados = 0; const alertList = [];
+            let ativos = 0; let concluidos = 0; let atrasados = 0; 
+            const alertListFila = []; const alertListSuporte = [];
+            
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const monthlyStats = {}; const today = new Date();
             for (let i = 5; i >= 0; i--) {
@@ -625,6 +662,7 @@
                 monthlyStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, iniciados: 0, finalizados: 0 };
             }
 
+            // Processa FILA de Projetos
             window.db.fila.forEach(f => {
                 const status = f.status || 'Pendente'; const inicioDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
                 
@@ -648,7 +686,7 @@
                     if (restamDias < 0) atrasados++;
 
                     let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100;
-                    alertList.push({ projeto: f.projeto, restamDias: restamDias, perc: perc });
+                    alertListFila.push({ nome: f.projeto, restamDias: restamDias, perc: perc });
                 }
                 if (f.inicio) {
                     const [y, m] = f.inicio.split('-'); const keyInic = `${y}-${m}`;
@@ -656,19 +694,51 @@
                 }
             });
 
+            // Processa SUPORTE
+            window.db.suporte.forEach(s => {
+                const status = s.status || 'Pendente'; 
+                if (status !== 'Concluído') {
+                    const inicioDate = s.inicio ? new Date(s.inicio + 'T00:00:00') : null;
+                    const cliente = window.db.contatos.find(c => c.id === s.clienteId);
+                    const nomeCliente = cliente ? cliente.nome : 'Desconhecido';
+                    
+                    const fimDate = new Date(inicioDate); const prazo = parseInt(s.prazo) || 1;
+                    fimDate.setDate(fimDate.getDate() + prazo); const hoje = new Date(); hoje.setHours(0,0,0,0);
+                    
+                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
+                    let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24));
+                    if (totalDiasUtilizados < 0) totalDiasUtilizados = 0;
+
+                    let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100;
+                    alertListSuporte.push({ nome: nomeCliente, restamDias: restamDias, perc: perc });
+                }
+            });
+
             document.getElementById('perf-ativos').innerText = ativos;
             document.getElementById('perf-concluidos').innerText = concluidos;
             document.getElementById('perf-atrasados').innerText = atrasados;
 
-            alertList.sort((a, b) => a.restamDias - b.restamDias); let htmlList = '';
-            alertList.forEach(p => {
+            // Renderiza Alertas Fila
+            alertListFila.sort((a, b) => a.restamDias - b.restamDias); let htmlListFila = '';
+            alertListFila.forEach(p => {
                 let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
                 let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Entrega Hoje' : `Restam ${p.restamDias}d`);
-                htmlList += `<div class="alert-item"><div class="alert-header"><span>${p.projeto}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
+                htmlListFila += `<div class="alert-item"><div class="alert-header"><span>${p.nome}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
             });
-            if(htmlList === '') htmlList = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto pendente ativo.</p>';
-            document.getElementById('alert-list-container').innerHTML = htmlList;
+            if(htmlListFila === '') htmlListFila = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto ativo.</p>';
+            document.getElementById('alert-list-container').innerHTML = htmlListFila;
 
+            // Renderiza Alertas Suporte
+            alertListSuporte.sort((a, b) => a.restamDias - b.restamDias); let htmlListSuporte = '';
+            alertListSuporte.forEach(p => {
+                let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
+                let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Expira Hoje' : `Restam ${p.restamDias}d`);
+                htmlListSuporte += `<div class="alert-item"><div class="alert-header"><span>${p.nome}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
+            });
+            if(htmlListSuporte === '') htmlListSuporte = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum suporte ativo.</p>';
+            document.getElementById('alert-list-suporte-container').innerHTML = htmlListSuporte;
+
+            // Gráfico de Linha Mensal
             const sortedKeys = Object.keys(monthlyStats).sort();
             const ctxLinePerf = document.getElementById('perfLineChart').getContext('2d');
             if (perfLineInstance) perfLineInstance.destroy();
@@ -731,8 +801,6 @@
                 }
 
                 const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido';
-                
-                // Validação de Contrato Existente
                 const hasContract = !!f.contrato;
                 const clipClass = hasContract ? 'attached' : '';
                 const rowClass = hasContract ? 'row-clickable' : '';
@@ -756,7 +824,44 @@
             });
         }
 
-        // LÓGICA DE CONTRATOS (Anexar PDF como Base64 no Firestore)
+        window.renderSuporte = function() {
+            const tbody = document.getElementById('suporte-body'); tbody.innerHTML = '';
+            window.db.suporte.forEach(s => {
+                const cliente = window.db.contatos.find(c => c.id === s.clienteId) || { nome: 'Desconhecido', numero: '-' };
+                const status = s.status || 'Pendente'; const dataConclusao = s.dataConclusao || null;
+                const inicioDate = new Date(s.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate);
+                fimDate.setDate(fimDate.getDate() + parseInt(s.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
+                
+                let restamDiasText = '-'; let sinalClass = 'signal-green';
+
+                if (status === 'Concluído') {
+                    const conclusaoDate = new Date(dataConclusao + 'T00:00:00');
+                    const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
+                    restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`;
+                    sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
+                } else {
+                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
+                    restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
+                    if (restamDias < 0) sinalClass = 'signal-red'; else if (restamDias <= 3) sinalClass = 'signal-yellow'; else sinalClass = 'signal-green';
+                }
+
+                const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido';
+
+                tbody.innerHTML += `<tr>
+                    <td><strong>${cliente.nome}</strong></td>
+                    <td>${window.formatDate(s.inicio)}</td>
+                    <td>${s.prazo} dias</td>
+                    <td>${restamDiasText}</td>
+                    <td><span class="badge ${badgeStatusClass}">${status}</span></td>
+                    <td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td>
+                    <td class="actions">
+                        <button class="btn-edit" onclick="window.editItem('suporte', '${s.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button class="btn-delete" onclick="window.deleteItem('suporte', '${s.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
         window.openAttachModal = function(id) {
             window.attachingId = id;
             document.getElementById('file-contrato').value = '';
@@ -769,7 +874,6 @@
             
             const file = fileInput.files[0];
             
-            // Trava de segurança: 700KB (Para evitar estourar o 1MB limite de doc do Firestore com a sobrecarga do Base64)
             if (file.size > 700 * 1024) {
                 return alert('O arquivo selecionado é muito grande. Para salvar gratuitamente no banco de dados, o PDF deve ter no máximo 700KB.');
             }
@@ -781,15 +885,9 @@
             reader.onload = async function(e) {
                 const base64Str = e.target.result;
                 try {
-                    // Salvar campo contrato no documento da fila no Firestore
-                    await dbFirestore.collection('fila').doc(window.attachingId).update({
-                        contrato: base64Str
-                    });
-
-                    // Atualizar estado local
+                    await dbFirestore.collection('fila').doc(window.attachingId).update({ contrato: base64Str });
                     const item = window.db.fila.find(i => i.id === window.attachingId);
                     if (item) item.contrato = base64Str;
-
                     window.renderFila();
                     document.getElementById('modal-attach').style.display = 'none';
                 } catch (error) {
@@ -807,16 +905,13 @@
             const item = window.db.fila.find(i => i.id === id);
             if (!item || !item.contrato) return;
 
-            // Injetar base64 no iframe
             const iframe = document.getElementById('contract-frame');
             iframe.src = item.contrato;
 
-            // Configurar botão de Download
             const btnDownload = document.getElementById('btn-download-contract');
             btnDownload.onclick = function() {
                 const link = document.createElement('a');
                 link.href = item.contrato;
-                // Formatar nome do arquivo de forma elegante
                 const safeName = item.projeto.replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 link.download = `Contrato_${safeName}.pdf`;
                 link.click();
@@ -912,6 +1007,10 @@
                 let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
                 if(!options) options = `<option value="" disabled selected>Cadastre um contato primeiro</option>`;
                 html += `<div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-projeto" required value="${data ? data.projeto : ''}"></div><div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div><div class="form-group"><label>Nota do Cliente (0 a 10 - Opcional)</label><input type="number" id="f-nota" min="0" max="10" value="${data && data.nota !== undefined ? data.nota : ''}"></div>`;
+            } else if (type === 'suporte') {
+                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
+                if(!options) options = `<option value="" disabled selected>Cadastre um contato primeiro</option>`;
+                html += `<div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div>`;
             } else if (type === 'conversoes') {
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data-conv" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Ligações</label><input type="number" id="f-ligacoes" required value="${data ? data.ligacoes : '0'}"></div><div class="form-group"><label>Reuniões</label><input type="number" id="f-reunioes" required value="${data ? data.reunioes : '0'}"></div><div class="form-group"><label>Propostas Enviadas</label><input type="number" id="f-propostas" required value="${data ? data.propostas : '0'}"></div><div class="form-group"><label>Fechamentos</label><input type="number" id="f-fechamentos" required value="${data ? data.fechamentos : '0'}"></div>`;
             }
@@ -930,9 +1029,12 @@
             } else if (type === 'fila') {
                 newItem.projeto = document.getElementById('f-projeto').value; newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value; newItem.nota = document.getElementById('f-nota').value;
                 const oldItem = window.db.fila.find(i => i.id === window.editingId);
-                // Preservar o contrato em caso de edição de projeto já existente
                 if (oldItem && oldItem.contrato) newItem.contrato = oldItem.contrato; 
-                
+                if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
+                else newItem.dataConclusao = null;
+            } else if (type === 'suporte') {
+                newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value;
+                const oldItem = window.db.suporte.find(i => i.id === window.editingId);
                 if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
                 else newItem.dataConclusao = null;
             } else if (type === 'conversoes') {
@@ -940,7 +1042,6 @@
             }
 
             try {
-                // Ao criar/editar mantemos mesclagem para não sobrescrever acidentalmente campos soltos
                 await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
                 if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } 
                 else { window.db[type].push(newItem); }
