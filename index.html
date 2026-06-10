@@ -322,43 +322,7 @@
                             </tr>
                         </thead>
                         <tbody id="ads-campaign-body">
-                            <tr>
-                                <td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
-                                <td><strong>Campanha Simple+</strong></td>
-                                <td style="text-align: center;"><span class="signal-dot signal-green" title="Ativo"></span></td>
-                                <td>4.230</td>
-                                <td>1.25</td>
-                                <td>R$ 1,21</td>
-                                <td>R$ 20,00/dia</td>
-                                <td><strong>R$ 12,50</strong></td>
-                                <td>Contínuo</td>
-                                <td>5.287</td>
-                                <td>R$ 18,91</td>
-                                <td>78</td>
-                                <td>-</td>
-                                <td>R$ 1,28</td>
-                                <td>1.47%</td>
-                                <td>82</td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: center;"><label class="toggle-switch"><input type="checkbox"><span class="slider"></span></label></td>
-                                <td style="color: var(--text-light);">Automação B2B (Pausada)</td>
-                                <td style="text-align: center;"><span class="signal-dot signal-red" title="Inativo"></span></td>
-                                <td>0</td>
-                                <td>0.00</td>
-                                <td>R$ 0,00</td>
-                                <td>R$ 0,00/dia</td>
-                                <td><strong>R$ 0,00</strong></td>
-                                <td>15/05/2026</td>
-                                <td>0</td>
-                                <td>R$ 0,00</td>
-                                <td>0</td>
-                                <td>-</td>
-                                <td>R$ 0,00</td>
-                                <td>0.00%</td>
-                                <td>0</td>
-                            </tr>
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
 
@@ -636,73 +600,109 @@
             if (window.currentTab === 'suporte') window.renderSuporte();
         }
 
-        // ---------- MÓDULO DE CAMPANHAS ADS ----------
+        // ---------- MÓDULO DE CAMPANHAS ADS - REAL TIME E DINÂMICO ----------
         window.renderAdsDashboard = async function() {
             try {
                 const filter = document.getElementById('ads-date-filter').value;
                 const filterText = document.getElementById('ads-date-filter').options[document.getElementById('ads-date-filter').selectedIndex].text;
                 
-                // Atualiza Títulos
                 document.getElementById('ads-title-gasto').innerText = `Total Gasto (${filterText})`;
                 
-                // -------------------------------------------------------------
-                // 1. CONEXÃO RESTAURADA COM A SUA API REAL NA VERCEL
-                // -------------------------------------------------------------
-                // Aqui ele envia o filtro escolhido pelo usuário direto para o arquivo meta.js
                 const res = await fetch(`/api/meta?preset=${filter}`);
                 const apiData = await res.json();
                 
                 let labelsDiario = []; let gastosDiario = []; let cliquesDiario = []; let impressoesDiario = [];
                 let tGasto = 0; let tCliques = 0; let tImpressoes = 0;
 
-                if (apiData.error || !apiData.data) {
-                    console.warn("Erro ao puxar dados da API ou sem veiculação no período.");
-                } else {
-                    // Pega os dados reais e monta os totais e gráficos diários
-                    apiData.data.forEach(dia => {
+                if (!apiData.error && apiData.daily) {
+                    apiData.daily.forEach(dia => {
                         labelsDiario.push(window.formatDate(dia.date_start).substring(0,5)); 
-                        
                         let gas = parseFloat(dia.spend || 0);
                         let clq = parseInt(dia.clicks || 0);
                         let imp = parseInt(dia.impressions || 0);
-                        
                         gastosDiario.push(gas); tGasto += gas;
                         cliquesDiario.push(clq); tCliques += clq;
                         impressoesDiario.push(imp); tImpressoes += imp;
                     });
                 }
 
-                // Injeta os Totais Reais na tela (os seus R$ 12,50 devem aparecer perfeitamente aqui)
                 document.getElementById('ads-gasto-total').innerText = window.formatCurrency(tGasto);
                 document.getElementById('ads-cliques-total').innerText = tCliques.toLocaleString('pt-BR');
                 document.getElementById('ads-impressoes-total').innerText = tImpressoes.toLocaleString('pt-BR');
 
+                // Renderiza Tabela Dinâmica
+                const tbody = document.getElementById('ads-campaign-body');
+                tbody.innerHTML = '';
+
+                if(apiData.campaigns && apiData.campaigns.length > 0) {
+                    apiData.campaigns.forEach(camp => {
+                        const insight = (apiData.campaign_insights || []).find(i => i.campaign_id === camp.id) || {};
+                        
+                        const isActive = camp.status === 'ACTIVE';
+                        const statusClass = isActive ? 'signal-green' : 'signal-red';
+                        const statusTitle = isActive ? 'Ativo' : 'Inativo';
+
+                        let orcamentoText = '-';
+                        if (camp.daily_budget && camp.daily_budget !== "0") {
+                            orcamentoText = `R$ ${(parseInt(camp.daily_budget)/100).toLocaleString('pt-BR', {minimumFractionDigits: 2})}/dia`;
+                        } else if (camp.lifetime_budget && camp.lifetime_budget !== "0") {
+                            orcamentoText = `Vitalício`;
+                        } else {
+                            orcamentoText = 'Orç. Conjunto';
+                        }
+
+                        const formatMoney = (val) => val ? `R$ ${parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'R$ 0,00';
+                        const formatNum = (val) => val ? parseInt(val).toLocaleString('pt-BR') : '0';
+                        const formatDec = (val) => val ? parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-';
+                        const formatPerc = (val) => val ? parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%' : '0,00%';
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" ${isActive ? 'checked' : ''} disabled><span class="slider"></span></label></td>
+                                <td><strong style="${!isActive ? 'color: var(--text-light);' : 'color: var(--text-main);'}">${camp.name}</strong></td>
+                                <td style="text-align: center;"><span class="signal-dot ${statusClass}" title="${statusTitle}"></span></td>
+                                <td>${formatNum(insight.reach)}</td>
+                                <td>${formatDec(insight.frequency)}</td>
+                                <td>-</td>
+                                <td>${orcamentoText}</td>
+                                <td><strong>${formatMoney(insight.spend)}</strong></td>
+                                <td>-</td>
+                                <td>${formatNum(insight.impressions)}</td>
+                                <td>${formatMoney(insight.cpm)}</td>
+                                <td>${formatNum(insight.inline_link_clicks)}</td>
+                                <td>-</td>
+                                <td>${formatMoney(insight.cpc)}</td>
+                                <td>${formatPerc(insight.ctr)}</td>
+                                <td>${formatNum(insight.clicks)}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; padding: 20px; color: var(--text-light);">Nenhuma campanha encontrada ou sem resultados no período selecionado.</td></tr>`;
+                }
+
                 const optCommon = { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } };
 
-                // Gráfico Gasto Diário REAL
                 const ctxGas = document.getElementById('adsGastoChart').getContext('2d');
                 if(adsGastoInstance) adsGastoInstance.destroy();
                 let gradGas = ctxGas.createLinearGradient(0, 0, 0, 200); gradGas.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); gradGas.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
                 adsGastoInstance = new Chart(ctxGas, { type: 'line', data: { labels: labelsDiario, datasets: [{ data: gastosDiario, borderColor: '#ef4444', backgroundColor: gradGas, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444' }] }, options: optCommon });
 
-                // Gráfico Cliques Diário REAL
                 const ctxCli = document.getElementById('adsCliquesChart').getContext('2d');
                 if(adsCliquesInstance) adsCliquesInstance.destroy();
                 let gradCli = ctxCli.createLinearGradient(0, 0, 0, 200); gradCli.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); gradCli.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
                 adsCliquesInstance = new Chart(ctxCli, { type: 'line', data: { labels: labelsDiario, datasets: [{ data: cliquesDiario, borderColor: '#3b82f6', backgroundColor: gradCli, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#3b82f6' }] }, options: optCommon });
 
-                // Gráfico Impressões Diário REAL
                 const ctxImp = document.getElementById('adsImpressoesChart').getContext('2d');
                 if(adsImpressoesInstance) adsImpressoesInstance.destroy();
                 let gradImp = ctxImp.createLinearGradient(0, 0, 0, 200); gradImp.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradImp.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
                 adsImpressoesInstance = new Chart(ctxImp, { type: 'line', data: { labels: labelsDiario, datasets: [{ data: impressoesDiario, borderColor: '#8b5cf6', backgroundColor: gradImp, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: optCommon });
 
-
-                // --- GRÁFICOS MENSAIS (Mantidos puramente visuais para completar o layout da aba) ---
+                // Gráficos Mensais
                 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                const mockMesGasto = [0, 0, 0, 0, 0, 12.50, 0, 0, 0, 0, 0, 0];
-                const mockMesCliques = [0, 0, 0, 0, 0, 82, 0, 0, 0, 0, 0, 0];
-                const mockMesImpressoes = [0, 0, 0, 0, 0, 5287, 0, 0, 0, 0, 0, 0];
+                const mockMesGasto = [0, 0, 0, 0, 0, tGasto, 0, 0, 0, 0, 0, 0];
+                const mockMesCliques = [0, 0, 0, 0, 0, tCliques, 0, 0, 0, 0, 0, 0];
+                const mockMesImpressoes = [0, 0, 0, 0, 0, tImpressoes, 0, 0, 0, 0, 0, 0];
 
                 const ctxGasMes = document.getElementById('adsGastoMesChart').getContext('2d');
                 if(adsGastoMesInstance) adsGastoMesInstance.destroy();
