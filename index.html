@@ -600,6 +600,49 @@
             if (window.currentTab === 'suporte') window.renderSuporte();
         }
 
+        // ---------- FUNÇÃO NOVA: LIGAR E DESLIGAR CAMPANHAS ----------
+        window.toggleCampaignStatus = async function(campaignId, checkboxElement) {
+            const newStatus = checkboxElement.checked ? 'ACTIVE' : 'PAUSED';
+            
+            // Busca o bolinha de status para fazer um feedback visual imediato
+            const statusDot = checkboxElement.closest('tr').querySelector('.signal-dot');
+            const originalColorClass = statusDot.className;
+            
+            // Muda para amarelinho (processando)
+            statusDot.className = 'signal-dot signal-yellow';
+            checkboxElement.disabled = true; 
+
+            try {
+                const response = await fetch('/api/meta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaign_id: campaignId, status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Se deu certo, atualiza a bolinha com a cor final e o texto do nome
+                    statusDot.className = checkboxElement.checked ? 'signal-dot signal-green' : 'signal-dot signal-red';
+                    statusDot.title = checkboxElement.checked ? 'Ativo' : 'Inativo';
+                    
+                    const nameText = checkboxElement.closest('tr').querySelector('strong');
+                    if(nameText) nameText.style.color = checkboxElement.checked ? 'var(--text-main)' : 'var(--text-light)';
+                } else {
+                    // Se o Facebook recusou, volta a chave pra posição de antes e avisa
+                    alert('Erro do Facebook: ' + (result.error || 'Falha ao atualizar'));
+                    checkboxElement.checked = !checkboxElement.checked;
+                    statusDot.className = originalColorClass;
+                }
+            } catch (error) {
+                alert('Erro de conexão ao tentar alterar a campanha.');
+                checkboxElement.checked = !checkboxElement.checked;
+                statusDot.className = originalColorClass;
+            } finally {
+                checkboxElement.disabled = false;
+            }
+        }
+
         // ---------- MÓDULO DE CAMPANHAS ADS - REAL TIME E DINÂMICO ----------
         window.renderAdsDashboard = async function() {
             try {
@@ -658,7 +701,7 @@
 
                         tbody.innerHTML += `
                             <tr>
-                                <td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" ${isActive ? 'checked' : ''} disabled><span class="slider"></span></label></td>
+                                <td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" ${isActive ? 'checked' : ''} onchange="window.toggleCampaignStatus('${camp.id}', this)"><span class="slider"></span></label></td>
                                 <td><strong style="${!isActive ? 'color: var(--text-light);' : 'color: var(--text-main);'}">${camp.name}</strong></td>
                                 <td style="text-align: center;"><span class="signal-dot ${statusClass}" title="${statusTitle}"></span></td>
                                 <td>${formatNum(insight.reach)}</td>
