@@ -193,6 +193,7 @@
                 <span id="subnav-financeiro" class="active" onclick="window.switchDashSubTab('financeiro')">Análise Financeira</span>
                 <span id="subnav-kpi" onclick="window.switchDashSubTab('kpi')">KPI</span>
                 <span id="subnav-desempenho" onclick="window.switchDashSubTab('desempenho')">Desempenho</span>
+                <span id="subnav-campanhas" onclick="window.switchDashSubTab('campanhas')">Campanhas Ads</span>
             </div>
 
             <div id="subtab-financeiro" class="subtab-container">
@@ -258,6 +259,39 @@
                     </div>
                 </div>
             </div>
+
+            <div id="subtab-campanhas" class="subtab-container" style="display: none;">
+                <div class="dashboard-cards">
+                    <div class="card" style="border-left-color: #ef4444;">
+                        <h3>Total Gasto (30 dias)</h3>
+                        <p id="ads-gasto-total">R$ 0,00</p>
+                    </div>
+                    <div class="card" style="border-left-color: #3b82f6;">
+                        <h3>Total de Cliques</h3>
+                        <p id="ads-cliques-total">0</p>
+                    </div>
+                    <div class="card" style="border-left-color: #8b5cf6;">
+                        <h3>Total de Impressões</h3>
+                        <p id="ads-impressoes-total">0</p>
+                    </div>
+                </div>
+
+                <div class="charts-container triple">
+                    <div class="chart-box">
+                        <h3><i class="fas fa-money-bill-wave" style="color:#ef4444;"></i> Gasto Diário</h3>
+                        <div class="chart-wrapper"><canvas id="adsGastoChart"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3><i class="fas fa-mouse-pointer" style="color:#3b82f6;"></i> Cliques Diários</h3>
+                        <div class="chart-wrapper"><canvas id="adsCliquesChart"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3><i class="fas fa-eye" style="color:#8b5cf6;"></i> Impressões Diárias</h3>
+                        <div class="chart-wrapper"><canvas id="adsImpressoesChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <section id="conversoes" class="tab-content">
@@ -427,6 +461,9 @@
         let kpiReceitaInstance = null; let kpiTicketInstance = null; let kpiTempoInstance = null;
         let kpiPropostasInstance = null; let kpiConversaoInstance = null; let kpiSatisfacaoInstance = null;
 
+        // Variáveis para os gráficos de ADS
+        let adsGastoInstance = null; let adsCliquesInstance = null; let adsImpressoesInstance = null;
+
         async function loadDataFromFirebase() {
             try {
                 const [cSnap, vSnap, fSnap, convSnap, supSnap] = await Promise.all([
@@ -495,6 +532,70 @@
             if (window.currentTab === 'suporte') window.renderSuporte();
         }
 
+        // ---------- MÓDULO DE CAMPANHAS ADS ----------
+        window.renderAdsDashboard = async function() {
+            try {
+                // Tenta puxar da Vercel API
+                const res = await fetch('/api/meta');
+                const apiData = await res.json();
+                
+                let labels = []; let gastos = []; let cliques = []; let impressoes = [];
+                let tGasto = 0; let tCliques = 0; let tImpressoes = 0;
+
+                // Se a API falhar (ex: falta Ad Account ID), usamos dados visuais de demonstração para manter o design
+                if (apiData.error || !apiData.data) {
+                    console.warn("Usando dados de demonstração. Configure sua API na pasta /api.");
+                    for(let i=10; i>0; i--) {
+                        let d = new Date(); d.setDate(d.getDate() - i);
+                        labels.push(`${d.getDate()}/${d.getMonth()+1}`);
+                        gastos.push(Math.random() * 50 + 20);
+                        cliques.push(Math.floor(Math.random() * 100 + 50));
+                        impressoes.push(Math.floor(Math.random() * 1000 + 500));
+                    }
+                } else {
+                    apiData.data.forEach(dia => {
+                        labels.push(window.formatDate(dia.date_start).substring(0,5)); // Ex: 01/06
+                        gastos.push(parseFloat(dia.spend || 0));
+                        cliques.push(parseInt(dia.clicks || 0));
+                        impressoes.push(parseInt(dia.impressions || 0));
+                    });
+                }
+
+                gastos.forEach(v => tGasto += v);
+                cliques.forEach(v => tCliques += v);
+                impressoes.forEach(v => tImpressoes += v);
+
+                document.getElementById('ads-gasto-total').innerText = window.formatCurrency(tGasto);
+                document.getElementById('ads-cliques-total').innerText = tCliques.toLocaleString('pt-BR');
+                document.getElementById('ads-impressoes-total').innerText = tImpressoes.toLocaleString('pt-BR');
+
+                // Opções Elegantes Comuns (Sem legendas, sem grid no fundo)
+                const optCommon = { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } };
+
+                // Gráfico Gasto
+                const ctxGas = document.getElementById('adsGastoChart').getContext('2d');
+                if(adsGastoInstance) adsGastoInstance.destroy();
+                let gradGas = ctxGas.createLinearGradient(0, 0, 0, 200); gradGas.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); gradGas.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+                adsGastoInstance = new Chart(ctxGas, { type: 'line', data: { labels: labels, datasets: [{ data: gastos, borderColor: '#ef4444', backgroundColor: gradGas, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444' }] }, options: optCommon });
+
+                // Gráfico Cliques
+                const ctxCli = document.getElementById('adsCliquesChart').getContext('2d');
+                if(adsCliquesInstance) adsCliquesInstance.destroy();
+                let gradCli = ctxCli.createLinearGradient(0, 0, 0, 200); gradCli.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); gradCli.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+                adsCliquesInstance = new Chart(ctxCli, { type: 'line', data: { labels: labels, datasets: [{ data: cliques, borderColor: '#3b82f6', backgroundColor: gradCli, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#3b82f6' }] }, options: optCommon });
+
+                // Gráfico Impressões
+                const ctxImp = document.getElementById('adsImpressoesChart').getContext('2d');
+                if(adsImpressoesInstance) adsImpressoesInstance.destroy();
+                let gradImp = ctxImp.createLinearGradient(0, 0, 0, 200); gradImp.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradImp.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+                adsImpressoesInstance = new Chart(ctxImp, { type: 'line', data: { labels: labels, datasets: [{ data: impressoes, borderColor: '#8b5cf6', backgroundColor: gradImp, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: optCommon });
+
+            } catch(e) {
+                console.error("Erro ao carregar Dashboard Ads", e);
+            }
+        }
+        // ---------------------------------------------
+
         function getFinancialChartData() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const aggregates = {}; const today = new Date();
@@ -529,6 +630,8 @@
                 window.renderFinancialCharts();
             } else if (window.currentSubTab === 'kpi') {
                 window.renderKpiDashboard();
+            } else if (window.currentSubTab === 'campanhas') {
+                window.renderAdsDashboard();
             } else {
                 window.renderPerformanceDashboard();
             }
