@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const APP_SECRET = "33d10a23b4407496726bc8e0d0850403";
   
   // ATENÇÃO: Substitua o valor abaixo pelo ID da sua Conta de Anúncios!
-  const AD_ACCOUNT_ID = "act=754104033807907"; 
+  const AD_ACCOUNT_ID = "754104033807907"; 
 
   try {
     // Busca os dados de desempenho diário dos últimos 30 dias
