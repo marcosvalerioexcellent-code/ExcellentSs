@@ -42,7 +42,7 @@
         .nav-links li:hover, .nav-links li.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
         
         /* Main Content */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; position: relative; }
         header { background: var(--surface); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h1 { font-size: 1.5rem; font-weight: 600; }
         
@@ -101,12 +101,12 @@
         /* Grid Desempenho (Novo Layout) */
         .desempenho-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 25px; margin-top: 5px; margin-bottom: 25px; }
         
-        .chart-box { background: var(--surface); padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; }
+        .chart-box { background: var(--surface); padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
         .chart-box h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
         .chart-box h3 i { color: var(--accent); }
         
         /* Contenedores de Gráficos */
-        .chart-wrapper { position: relative; height: 250px; width: 100%; display: flex; justify-content: center; }
+        .chart-wrapper { position: relative; height: 250px; width: 100%; display: flex; justify-content: center; min-width: 0; }
 
         /* Tables */
         .table-container { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; border: 1px solid var(--border); }
@@ -196,6 +196,9 @@
             </div>
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div class="system-status"><span class="status-dot" id="db-status"></span> <span id="db-status-text">Conectando...</span></div>
+                
+                <button onclick="window.toggleFullScreen()" class="fab" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem;" title="Tela Cheia"><i class="fas fa-expand" id="fullscreen-icon"></i></button>
+
                 <button class="fab" id="main-fab" onclick="window.openCurrentModal()" title="Adicionar Novo"><i class="fas fa-plus"></i></button>
             </div>
         </header>
@@ -563,6 +566,21 @@
         window.formatDate = function(dateString) { if(!dateString) return '-'; const [y, m, d] = dateString.split('-'); return `${d}/${m}/${y}`; }
 
         window.toggleMenu = function() { document.getElementById('sidebar').classList.toggle('open'); }
+
+        // ---------- FUNÇÃO NOVA: TELA CHEIA ----------
+        window.toggleFullScreen = function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Erro ao tentar modo tela cheia: ${err.message}`);
+                });
+                document.getElementById('fullscreen-icon').classList.replace('fa-expand', 'fa-compress');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.getElementById('fullscreen-icon').classList.replace('fa-compress', 'fa-expand');
+                }
+            }
+        }
 
         window.switchTab = function(tabName) {
             window.currentTab = tabName;
