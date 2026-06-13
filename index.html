@@ -51,7 +51,8 @@
         .mobile-toggle:hover { color: var(--accent); }
 
         /* Submenu Dashboard */
-        .dash-nav { display: flex; gap: 25px; border-bottom: 1px solid var(--border); margin-bottom: 25px; padding-bottom: 5px; flex-wrap: wrap; }
+        .dash-nav { display: flex; gap: 25px; border-bottom: 1px solid var(--border); margin-bottom: 25px; padding-bottom: 5px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+        .dash-nav-tabs { display: flex; gap: 25px; flex-wrap: wrap; }
         .dash-nav span { cursor: pointer; color: var(--text-light); font-weight: 600; font-size: 0.95rem; transition: 0.2s; padding-bottom: 10px; position: relative; }
         .dash-nav span:hover { color: var(--primary); }
         .dash-nav span.active { color: var(--primary); }
@@ -166,6 +167,12 @@
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-submit:hover { background: #0f172a; }
 
+        /* Estilo para os checkboxes do filtro do relatorio */
+        .filter-checkbox-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: var(--radius); border: 1px solid var(--border); }
+        .filter-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.95rem; color: var(--text-main); font-weight: 500; transition: 0.2s; }
+        .filter-checkbox-label:hover { color: var(--accent); }
+        .filter-checkbox-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+
         @media (max-width: 1024px) {
             .desempenho-grid { grid-template-columns: 1fr 1fr; }
             .desempenho-grid > .chart-box:last-child { grid-column: span 2; }
@@ -180,6 +187,8 @@
             .charts-container { grid-template-columns: 1fr !important; gap: 15px; }
             .desempenho-grid { grid-template-columns: 1fr !important; gap: 15px; }
             .desempenho-grid > .chart-box:last-child { grid-column: span 1; }
+            .dash-nav { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .dash-nav .btn-export { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -215,10 +224,13 @@
 
         <section id="dashboard" class="tab-content active">
             <div class="dash-nav">
-                <span id="subnav-financeiro" class="active" onclick="window.switchDashSubTab('financeiro')">Análise Financeira</span>
-                <span id="subnav-kpi" onclick="window.switchDashSubTab('kpi')">KPI</span>
-                <span id="subnav-desempenho" onclick="window.switchDashSubTab('desempenho')">Desempenho</span>
-                <span id="subnav-campanhas" onclick="window.switchDashSubTab('campanhas')">Campanhas Ads</span>
+                <div class="dash-nav-tabs">
+                    <span id="subnav-financeiro" class="active" onclick="window.switchDashSubTab('financeiro')">Análise Financeira</span>
+                    <span id="subnav-kpi" onclick="window.switchDashSubTab('kpi')">KPI</span>
+                    <span id="subnav-desempenho" onclick="window.switchDashSubTab('desempenho')">Desempenho</span>
+                    <span id="subnav-campanhas" onclick="window.switchDashSubTab('campanhas')">Campanhas Ads</span>
+                </div>
+                <button class="btn-export" onclick="window.openDashPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório</button>
             </div>
 
             <div id="subtab-financeiro" class="subtab-container">
@@ -393,8 +405,7 @@
 
         <section id="leads" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="leads-counters">
-                    </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="leads-counters"></div>
                 <div style="display: flex; align-items: center; position: relative;">
                     <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
                     <input type="text" id="filter-leads" placeholder="Pesquisar contatos..." oninput="window.renderLeads()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 300px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s;">
@@ -402,16 +413,7 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Nome / Empresa</th>
-                            <th>Número</th>
-                            <th>Atuação</th>
-                            <th>Descrição</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Nome / Empresa</th><th>Número</th><th>Atuação</th><th>Descrição</th><th>Status</th><th>Ações</th></tr></thead>
                     <tbody id="leads-body"></tbody>
                 </table>
             </div>
@@ -432,19 +434,7 @@
         <section id="fila" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Projeto</th>
-                            <th>Cliente</th>
-                            <th>Início</th>
-                            <th>Prazo</th>
-                            <th>Restam</th>
-                            <th>Status</th>
-                            <th>Sinal</th>
-                            <th>Nota</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Projeto</th><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th>Nota</th><th>Ações</th></tr></thead>
                     <tbody id="fila-body"></tbody>
                 </table>
             </div>
@@ -453,17 +443,7 @@
         <section id="suporte" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Início</th>
-                            <th>Prazo</th>
-                            <th>Restam</th>
-                            <th>Status</th>
-                            <th>Sinal</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th>Ações</th></tr></thead>
                     <tbody id="suporte-body"></tbody>
                 </table>
             </div>
@@ -480,10 +460,41 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modal-pdf-dash">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Consolidado Dashboard</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-pdf-dash').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-pdf-dash-body">
+                <form onsubmit="window.generateFullDashboardPDF(event)">
+                    <p style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-light);">Selecione os módulos que deseja incluir na exportação do seu relatório executivo:</p>
+                    
+                    <div class="filter-checkbox-group">
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="chk-pdf-fin" checked> 1. Análise Financeira (Resumo e Evolução)
+                        </label>
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="chk-pdf-kpi" checked> 2. Indicadores de Performance (KPIs Globais)
+                        </label>
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="chk-pdf-des" checked> 3. Desempenho Operacional (Fila e Suporte)
+                        </label>
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="chk-pdf-ads" checked> 4. Campanhas Ads (Tráfego e Visibilidade)
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btn-gerar-dash-pdf"><i class="fas fa-download"></i> Gerar PDF Executivo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-pdf">
         <div class="modal">
             <div class="modal-header">
-                <h2><i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Financeiro</h2>
+                <h2><i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Financeiro Tabela</h2>
                 <button class="close-modal" onclick="document.getElementById('modal-pdf').style.display='none'"><i class="fas fa-times"></i></button>
             </div>
             <div id="modal-pdf-body">
@@ -528,9 +539,7 @@
             <div class="modal-header">
                 <h2><i class="fas fa-file-contract" style="color: var(--accent);"></i> Contrato do Projeto</h2>
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <button id="btn-download-contract" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer; transition: 0.2s;" title="Baixar Contrato PDF" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-main)'">
-                        <i class="fas fa-download"></i>
-                    </button>
+                    <button id="btn-download-contract" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer; transition: 0.2s;" title="Baixar Contrato PDF" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-main)'"><i class="fas fa-download"></i></button>
                     <button class="close-modal" onclick="document.getElementById('modal-view-contract').style.display='none'"><i class="fas fa-times"></i></button>
                 </div>
             </div>
@@ -553,7 +562,6 @@
         firebase.initializeApp(firebaseConfig);
         const dbFirestore = firebase.firestore();
 
-        // Adicionado "leads" para a nova aba
         window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [], leads: [] };
         window.currentTab = 'dashboard';
         window.currentSubTab = 'financeiro';
@@ -572,7 +580,6 @@
 
         async function loadDataFromFirebase() {
             try {
-                // Adicionado a busca para a nova aba (leads)
                 const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(),
                     dbFirestore.collection("vendas").get(),
@@ -628,7 +635,6 @@
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
             
-            // Títulos atualizados para as novas abas
             const titles = { 
                 'dashboard': 'Dashboard', 
                 'conversoes': 'Conversões', 
@@ -650,8 +656,8 @@
             document.querySelectorAll('.dash-nav span').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.subtab-container').forEach(el => el.style.display = 'none');
             
-            document.getElementById(`subnav-${subTabName}`).classList.add('active');
-            document.getElementById(`subtab-${subTabName}`).style.display = 'block';
+            if(document.getElementById(`subnav-${subTabName}`)) document.getElementById(`subnav-${subTabName}`).classList.add('active');
+            if(document.getElementById(`subtab-${subTabName}`)) document.getElementById(`subtab-${subTabName}`).style.display = 'block';
             
             window.renderDashboard();
         }
@@ -659,8 +665,8 @@
         window.renderCurrentTab = function() {
             if (window.currentTab === 'dashboard') window.renderDashboard();
             if (window.currentTab === 'conversoes') window.renderConversoes();
-            if (window.currentTab === 'clientes') window.renderClientes(); // Antigo Contatos
-            if (window.currentTab === 'leads') window.renderLeads(); // Novo Contatos CRM
+            if (window.currentTab === 'clientes') window.renderClientes(); 
+            if (window.currentTab === 'leads') window.renderLeads(); 
             if (window.currentTab === 'vendas') window.renderVendas();
             if (window.currentTab === 'fila') window.renderFila();
             if (window.currentTab === 'suporte') window.renderSuporte();
@@ -670,16 +676,11 @@
             const newStatus = checkboxElement.checked ? 'ACTIVE' : 'PAUSED';
             const statusDot = checkboxElement.closest('tr').querySelector('.signal-dot');
             const originalColorClass = statusDot.className;
-            
             statusDot.className = 'signal-dot signal-yellow';
             checkboxElement.disabled = true; 
 
             try {
-                const response = await fetch('/api/meta', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ campaign_id: campaignId, status: newStatus })
-                });
+                const response = await fetch('/api/meta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign_id: campaignId, status: newStatus }) });
                 const result = await response.json();
                 if (result.success) {
                     statusDot.className = checkboxElement.checked ? 'signal-dot signal-green' : 'signal-dot signal-red';
@@ -688,16 +689,12 @@
                     if(nameText) nameText.style.color = checkboxElement.checked ? 'var(--text-main)' : 'var(--text-light)';
                 } else {
                     alert('Erro do Facebook: ' + (result.error || 'Falha ao atualizar'));
-                    checkboxElement.checked = !checkboxElement.checked;
-                    statusDot.className = originalColorClass;
+                    checkboxElement.checked = !checkboxElement.checked; statusDot.className = originalColorClass;
                 }
             } catch (error) {
                 alert('Erro de conexão ao tentar alterar a campanha.');
-                checkboxElement.checked = !checkboxElement.checked;
-                statusDot.className = originalColorClass;
-            } finally {
-                checkboxElement.disabled = false;
-            }
+                checkboxElement.checked = !checkboxElement.checked; statusDot.className = originalColorClass;
+            } finally { checkboxElement.disabled = false; }
         }
 
         window.renderAdsDashboard = async function() {
@@ -715,12 +712,8 @@
                 if (!apiData.error && apiData.daily) {
                     apiData.daily.forEach(dia => {
                         labelsDiario.push(window.formatDate(dia.date_start).substring(0,5)); 
-                        let gas = parseFloat(dia.spend || 0);
-                        let clq = parseInt(dia.clicks || 0);
-                        let imp = parseInt(dia.impressions || 0);
-                        gastosDiario.push(gas); tGasto += gas;
-                        cliquesDiario.push(clq); tCliques += clq;
-                        impressoesDiario.push(imp); tImpressoes += imp;
+                        let gas = parseFloat(dia.spend || 0); let clq = parseInt(dia.clicks || 0); let imp = parseInt(dia.impressions || 0);
+                        gastosDiario.push(gas); tGasto += gas; cliquesDiario.push(clq); tCliques += clq; impressoesDiario.push(imp); tImpressoes += imp;
                     });
                 }
 
@@ -728,54 +721,24 @@
                 document.getElementById('ads-cliques-total').innerText = tCliques.toLocaleString('pt-BR');
                 document.getElementById('ads-impressoes-total').innerText = tImpressoes.toLocaleString('pt-BR');
 
-                const tbody = document.getElementById('ads-campaign-body');
-                tbody.innerHTML = '';
+                const tbody = document.getElementById('ads-campaign-body'); tbody.innerHTML = '';
 
                 if(apiData.campaigns && apiData.campaigns.length > 0) {
                     apiData.campaigns.forEach(camp => {
                         const insight = (apiData.campaign_insights || []).find(i => i.campaign_id === camp.id) || {};
-                        const isActive = camp.status === 'ACTIVE';
-                        const statusClass = isActive ? 'signal-green' : 'signal-red';
-                        const statusTitle = isActive ? 'Ativo' : 'Inativo';
-
+                        const isActive = camp.status === 'ACTIVE'; const statusClass = isActive ? 'signal-green' : 'signal-red'; const statusTitle = isActive ? 'Ativo' : 'Inativo';
                         let orcamentoText = '-';
-                        if (camp.daily_budget && camp.daily_budget !== "0") {
-                            orcamentoText = `R$ ${(parseInt(camp.daily_budget)/100).toLocaleString('pt-BR', {minimumFractionDigits: 2})}/dia`;
-                        } else if (camp.lifetime_budget && camp.lifetime_budget !== "0") {
-                            orcamentoText = `Vitalício`;
-                        } else {
-                            orcamentoText = 'Orç. Conjunto';
-                        }
+                        if (camp.daily_budget && camp.daily_budget !== "0") orcamentoText = `R$ ${(parseInt(camp.daily_budget)/100).toLocaleString('pt-BR', {minimumFractionDigits: 2})}/dia`;
+                        else if (camp.lifetime_budget && camp.lifetime_budget !== "0") orcamentoText = `Vitalício`; else orcamentoText = 'Orç. Conjunto';
 
                         const formatMoney = (val) => val ? `R$ ${parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'R$ 0,00';
                         const formatNum = (val) => val ? parseInt(val).toLocaleString('pt-BR') : '0';
                         const formatDec = (val) => val ? parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-';
                         const formatPerc = (val) => val ? parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%' : '0,00%';
 
-                        tbody.innerHTML += `
-                            <tr>
-                                <td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" ${isActive ? 'checked' : ''} onchange="window.toggleCampaignStatus('${camp.id}', this)"><span class="slider"></span></label></td>
-                                <td><strong style="${!isActive ? 'color: var(--text-light);' : 'color: var(--text-main);'}">${camp.name}</strong></td>
-                                <td style="text-align: center;"><span class="signal-dot ${statusClass}" title="${statusTitle}"></span></td>
-                                <td>${formatNum(insight.reach)}</td>
-                                <td>${formatDec(insight.frequency)}</td>
-                                <td>-</td>
-                                <td>${orcamentoText}</td>
-                                <td><strong>${formatMoney(insight.spend)}</strong></td>
-                                <td>-</td>
-                                <td>${formatNum(insight.impressions)}</td>
-                                <td>${formatMoney(insight.cpm)}</td>
-                                <td>${formatNum(insight.inline_link_clicks)}</td>
-                                <td>-</td>
-                                <td>${formatMoney(insight.cpc)}</td>
-                                <td>${formatPerc(insight.ctr)}</td>
-                                <td>${formatNum(insight.clicks)}</td>
-                            </tr>
-                        `;
+                        tbody.innerHTML += `<tr><td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" ${isActive ? 'checked' : ''} onchange="window.toggleCampaignStatus('${camp.id}', this)"><span class="slider"></span></label></td><td><strong style="${!isActive ? 'color: var(--text-light);' : 'color: var(--text-main);'}">${camp.name}</strong></td><td style="text-align: center;"><span class="signal-dot ${statusClass}" title="${statusTitle}"></span></td><td>${formatNum(insight.reach)}</td><td>${formatDec(insight.frequency)}</td><td>-</td><td>${orcamentoText}</td><td><strong>${formatMoney(insight.spend)}</strong></td><td>-</td><td>${formatNum(insight.impressions)}</td><td>${formatMoney(insight.cpm)}</td><td>${formatNum(insight.inline_link_clicks)}</td><td>-</td><td>${formatMoney(insight.cpc)}</td><td>${formatPerc(insight.ctr)}</td><td>${formatNum(insight.clicks)}</td></tr>`;
                     });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; padding: 20px; color: var(--text-light);">Nenhuma campanha encontrada ou sem resultados no período selecionado.</td></tr>`;
-                }
+                } else { tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; padding: 20px; color: var(--text-light);">Nenhuma campanha encontrada ou sem resultados no período selecionado.</td></tr>`; }
 
                 const optCommon = { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } };
 
@@ -799,16 +762,13 @@
                 const mockMesCliques = [0, 0, 0, 0, 0, tCliques, 0, 0, 0, 0, 0, 0];
                 const mockMesImpressoes = [0, 0, 0, 0, 0, tImpressoes, 0, 0, 0, 0, 0, 0];
 
-                const ctxGasMes = document.getElementById('adsGastoMesChart').getContext('2d');
-                if(adsGastoMesInstance) adsGastoMesInstance.destroy();
+                const ctxGasMes = document.getElementById('adsGastoMesChart').getContext('2d'); if(adsGastoMesInstance) adsGastoMesInstance.destroy();
                 adsGastoMesInstance = new Chart(ctxGasMes, { type: 'line', data: { labels: monthLabels, datasets: [{ data: mockMesGasto, borderColor: '#ef4444', backgroundColor: gradGas, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444' }] }, options: optCommon });
 
-                const ctxCliMes = document.getElementById('adsCliquesMesChart').getContext('2d');
-                if(adsCliquesMesInstance) adsCliquesMesInstance.destroy();
+                const ctxCliMes = document.getElementById('adsCliquesMesChart').getContext('2d'); if(adsCliquesMesInstance) adsCliquesMesInstance.destroy();
                 adsCliquesMesInstance = new Chart(ctxCliMes, { type: 'line', data: { labels: monthLabels, datasets: [{ data: mockMesCliques, borderColor: '#3b82f6', backgroundColor: gradCli, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#3b82f6' }] }, options: optCommon });
 
-                const ctxImpMes = document.getElementById('adsImpressoesMesChart').getContext('2d');
-                if(adsImpressoesMesInstance) adsImpressoesMesInstance.destroy();
+                const ctxImpMes = document.getElementById('adsImpressoesMesChart').getContext('2d'); if(adsImpressoesMesInstance) adsImpressoesMesInstance.destroy();
                 adsImpressoesMesInstance = new Chart(ctxImpMes, { type: 'line', data: { labels: monthLabels, datasets: [{ data: mockMesImpressoes, borderColor: '#8b5cf6', backgroundColor: gradImp, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: optCommon });
 
             } catch(e) { console.error("Erro ao carregar Dashboard Ads", e); }
@@ -827,8 +787,7 @@
                 const [year, month] = v.data.split('-'); const key = `${year}-${month}`;
                 if (aggregates[key]) {
                     const valor = parseFloat(v.valor) || 0;
-                    if (v.tipo === 'Entrada') aggregates[key].entrada += valor;
-                    else aggregates[key].saida += valor;
+                    if (v.tipo === 'Entrada') aggregates[key].entrada += valor; else aggregates[key].saida += valor;
                 }
             });
             const sortedKeys = Object.keys(aggregates).sort();
@@ -838,9 +797,7 @@
         window.renderDashboard = function() {
             if (window.currentSubTab === 'financeiro') {
                 let entradas = 0; let saidas = 0;
-                window.db.vendas.forEach(v => {
-                    if (v.tipo === 'Entrada') entradas += parseFloat(v.valor); else saidas += parseFloat(v.valor);
-                });
+                window.db.vendas.forEach(v => { if (v.tipo === 'Entrada') entradas += parseFloat(v.valor); else saidas += parseFloat(v.valor); });
                 document.getElementById('dash-entradas').innerText = window.formatCurrency(entradas);
                 document.getElementById('dash-saidas').innerText = window.formatCurrency(saidas);
                 document.getElementById('dash-saldo').innerText = window.formatCurrency(entradas - saidas);
@@ -857,8 +814,7 @@
 
         window.renderFinancialCharts = function() {
             const data = getFinancialChartData();
-            const ctxLine = document.getElementById('lineChart').getContext('2d');
-            const ctxMixed = document.getElementById('mixedChart').getContext('2d');
+            const ctxLine = document.getElementById('lineChart').getContext('2d'); const ctxMixed = document.getElementById('mixedChart').getContext('2d');
             if (lineChartInstance) lineChartInstance.destroy(); if (mixedChartInstance) mixedChartInstance.destroy();
 
             const commonOpt = { responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } };
@@ -875,8 +831,7 @@
             const topEntradas = Object.entries(aggEntradas).sort((a,b) => b[1] - a[1]).slice(0, 8);
             const topSaidas = Object.entries(aggSaidas).sort((a,b) => b[1] - a[1]).slice(0, 8);
 
-            const ctxTopE = document.getElementById('topEntradasChart').getContext('2d');
-            const ctxTopS = document.getElementById('topSaidasChart').getContext('2d');
+            const ctxTopE = document.getElementById('topEntradasChart').getContext('2d'); const ctxTopS = document.getElementById('topSaidasChart').getContext('2d');
             if (topEntradasInstance) topEntradasInstance.destroy(); if (topSaidasInstance) topSaidasInstance.destroy();
 
             const barOpt = { indexAxis: 'y', responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b', callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, scales: { x: { grid: { color: '#e2e8f0' } }, y: { grid: { display: false } } } };
@@ -902,8 +857,7 @@
                 }
             });
 
-            let totalDiasGeral = 0; let countConcluidosGeral = 0;
-            let satisfeito = 0; let parcial = 0; let insatisfeito = 0;
+            let totalDiasGeral = 0; let countConcluidosGeral = 0; let satisfeito = 0; let parcial = 0; let insatisfeito = 0;
             window.db.fila.forEach(f => {
                 if(f.status === 'Concluído' && f.inicio && f.dataConclusao) {
                     const inicioDate = new Date(f.inicio + 'T00:00:00'); const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00');
@@ -913,8 +867,7 @@
                     if(kpiStats[key]) { kpiStats[key].tempoEntregaTotalMes += diasUtilizados; kpiStats[key].tempoEntregaCountMes++; }
                 }
                 if(f.nota !== undefined && f.nota !== '' && f.nota !== null) {
-                    const nota = parseFloat(f.nota);
-                    if(nota >= 8) satisfeito++; else if (nota >= 5) parcial++; else insatisfeito++;
+                    const nota = parseFloat(f.nota); if(nota >= 8) satisfeito++; else if (nota >= 5) parcial++; else insatisfeito++;
                 }
             });
 
@@ -927,225 +880,105 @@
 
             const mediaGeralEntrega = countConcluidosGeral > 0 ? Math.round(totalDiasGeral / countConcluidosGeral) : 0;
             const ticketMedioGeral = countEntradasGeral > 0 ? totalEntradasGeral / countEntradasGeral : 0;
-            document.getElementById('kpi-media-entrega-geral').innerText = `${mediaGeralEntrega} dias`;
-            document.getElementById('kpi-ticket-geral').innerText = window.formatCurrency(ticketMedioGeral);
+            document.getElementById('kpi-media-entrega-geral').innerText = `${mediaGeralEntrega} dias`; document.getElementById('kpi-ticket-geral').innerText = window.formatCurrency(ticketMedioGeral);
 
-            const sortedKeys = Object.keys(kpiStats).sort();
-            const labels = sortedKeys.map(k => kpiStats[k].label);
-            const dadosReceita = sortedKeys.map(k => kpiStats[k].receitaBruta);
-            const dadosTicket = sortedKeys.map(k => kpiStats[k].totalProjetosMes > 0 ? (kpiStats[k].receitaBruta / kpiStats[k].totalProjetosMes) : 0);
+            const sortedKeys = Object.keys(kpiStats).sort(); const labels = sortedKeys.map(k => kpiStats[k].label);
+            const dadosReceita = sortedKeys.map(k => kpiStats[k].receitaBruta); const dadosTicket = sortedKeys.map(k => kpiStats[k].totalProjetosMes > 0 ? (kpiStats[k].receitaBruta / kpiStats[k].totalProjetosMes) : 0);
             const dadosTempo = sortedKeys.map(k => kpiStats[k].tempoEntregaCountMes > 0 ? Math.round(kpiStats[k].tempoEntregaTotalMes / kpiStats[k].tempoEntregaCountMes) : 0);
-            const dadosPropostas = sortedKeys.map(k => kpiStats[k].propostas);
-            const dadosConversao = sortedKeys.map(k => kpiStats[k].propostas > 0 ? Math.round((kpiStats[k].fechamentos / kpiStats[k].propostas) * 100) : 0);
+            const dadosPropostas = sortedKeys.map(k => kpiStats[k].propostas); const dadosConversao = sortedKeys.map(k => kpiStats[k].propostas > 0 ? Math.round((kpiStats[k].fechamentos / kpiStats[k].propostas) * 100) : 0);
 
             if(kpiReceitaInstance) kpiReceitaInstance.destroy(); if(kpiTicketInstance) kpiTicketInstance.destroy(); if(kpiTempoInstance) kpiTempoInstance.destroy();
             if(kpiPropostasInstance) kpiPropostasInstance.destroy(); if(kpiConversaoInstance) kpiConversaoInstance.destroy(); if(kpiSatisfacaoInstance) kpiSatisfacaoInstance.destroy();
 
             const optCommon = { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } } };
 
-            const ctxRec = document.getElementById('kpiReceitaChart').getContext('2d');
-            let gradRec = ctxRec.createLinearGradient(0, 0, 0, 200); gradRec.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); gradRec.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            const ctxRec = document.getElementById('kpiReceitaChart').getContext('2d'); let gradRec = ctxRec.createLinearGradient(0, 0, 0, 200); gradRec.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); gradRec.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
             kpiReceitaInstance = new Chart(ctxRec, { type: 'line', data: { labels: labels, datasets: [{ data: dadosReceita, borderColor: '#10b981', backgroundColor: gradRec, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#10b981' }] }, options: optCommon });
 
-            const ctxTick = document.getElementById('kpiTicketChart').getContext('2d');
-            let gradTick = ctxTick.createLinearGradient(0, 0, 0, 200); gradTick.addColorStop(0, 'rgba(30, 41, 59, 0.15)'); gradTick.addColorStop(1, 'rgba(30, 41, 59, 0.0)');
+            const ctxTick = document.getElementById('kpiTicketChart').getContext('2d'); let gradTick = ctxTick.createLinearGradient(0, 0, 0, 200); gradTick.addColorStop(0, 'rgba(30, 41, 59, 0.15)'); gradTick.addColorStop(1, 'rgba(30, 41, 59, 0.0)');
             kpiTicketInstance = new Chart(ctxTick, { type: 'line', data: { labels: labels, datasets: [{ data: dadosTicket, borderColor: '#1e293b', backgroundColor: gradTick, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#1e293b' }] }, options: optCommon });
 
-            const ctxTemp = document.getElementById('kpiTempoChart').getContext('2d');
-            let gradTemp = ctxTemp.createLinearGradient(0, 0, 0, 200); gradTemp.addColorStop(0, 'rgba(217, 119, 6, 0.15)'); gradTemp.addColorStop(1, 'rgba(217, 119, 6, 0.0)');
+            const ctxTemp = document.getElementById('kpiTempoChart').getContext('2d'); let gradTemp = ctxTemp.createLinearGradient(0, 0, 0, 200); gradTemp.addColorStop(0, 'rgba(217, 119, 6, 0.15)'); gradTemp.addColorStop(1, 'rgba(217, 119, 6, 0.0)');
             kpiTempoInstance = new Chart(ctxTemp, { type: 'line', data: { labels: labels, datasets: [{ data: dadosTempo, borderColor: '#d97706', backgroundColor: gradTemp, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#d97706' }] }, options: optCommon });
 
-            const ctxProp = document.getElementById('kpiPropostasChart').getContext('2d');
-            let gradProp = ctxProp.createLinearGradient(0, 0, 0, 200); gradProp.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); gradProp.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+            const ctxProp = document.getElementById('kpiPropostasChart').getContext('2d'); let gradProp = ctxProp.createLinearGradient(0, 0, 0, 200); gradProp.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); gradProp.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
             kpiPropostasInstance = new Chart(ctxProp, { type: 'line', data: { labels: labels, datasets: [{ data: dadosPropostas, borderColor: '#3b82f6', backgroundColor: gradProp, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#3b82f6' }] }, options: optCommon });
 
-            const ctxConv = document.getElementById('kpiConversaoChart').getContext('2d');
-            let gradConv = ctxConv.createLinearGradient(0, 0, 0, 200); gradConv.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradConv.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+            const ctxConv = document.getElementById('kpiConversaoChart').getContext('2d'); let gradConv = ctxConv.createLinearGradient(0, 0, 0, 200); gradConv.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradConv.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
             kpiConversaoInstance = new Chart(ctxConv, { type: 'line', data: { labels: labels, datasets: [{ data: dadosConversao, borderColor: '#8b5cf6', backgroundColor: gradConv, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: { ...optCommon, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b', callbacks: { label: (ctx) => ` ${ctx.raw}%` } } } } });
 
             const ctxSat = document.getElementById('kpiSatisfacaoChart').getContext('2d');
-            kpiSatisfacaoInstance = new Chart(ctxSat, {
-                type: 'doughnut',
-                data: { labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'], datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2 }] },
-                options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12 } }, cutout: '70%' }
-            });
+            kpiSatisfacaoInstance = new Chart(ctxSat, { type: 'doughnut', data: { labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'], datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12 } }, cutout: '70%' } });
         }
 
         window.renderPerformanceDashboard = function() {
             let ativos = 0; let concluidos = 0; let atrasados = 0; 
             const alertListFila = []; const alertListSuporte = [];
-            
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
             const monthlyStats = {}; const today = new Date();
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                monthlyStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, iniciados: 0, finalizados: 0 };
-            }
+            for (let i = 5; i >= 0; i--) { const d = new Date(today.getFullYear(), today.getMonth() - i, 1); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; monthlyStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, iniciados: 0, finalizados: 0 }; }
 
             window.db.fila.forEach(f => {
                 const status = f.status || 'Pendente'; const inicioDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
-                
                 if (status === 'Concluído') {
-                    concluidos++;
-                    const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00'); const fimDate = new Date(inicioDate);
-                    fimDate.setDate(fimDate.getDate() + (parseInt(f.prazo) || 0));
+                    concluidos++; const conclusaoDate = new Date(f.dataConclusao + 'T00:00:00'); const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + (parseInt(f.prazo) || 0));
                     if (conclusaoDate > fimDate) atrasados++;
-                    if (f.dataConclusao) {
-                        const [y, m] = f.dataConclusao.split('-'); const keyConcl = `${y}-${m}`;
-                        if (monthlyStats[keyConcl]) monthlyStats[keyConcl].finalizados++;
-                    }
+                    if (f.dataConclusao) { const [y, m] = f.dataConclusao.split('-'); const keyConcl = `${y}-${m}`; if (monthlyStats[keyConcl]) monthlyStats[keyConcl].finalizados++; }
                 } else {
-                    ativos++;
-                    const fimDate = new Date(inicioDate); const prazo = parseInt(f.prazo) || 1;
-                    fimDate.setDate(fimDate.getDate() + prazo); const hoje = new Date(); hoje.setHours(0,0,0,0);
-                    
-                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
-                    let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24));
-                    if (totalDiasUtilizados < 0) totalDiasUtilizados = 0;
-                    if (restamDias < 0) atrasados++;
-
-                    let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100;
-                    alertListFila.push({ nome: f.projeto, restamDias: restamDias, perc: perc });
+                    ativos++; const fimDate = new Date(inicioDate); const prazo = parseInt(f.prazo) || 1; fimDate.setDate(fimDate.getDate() + prazo); const hoje = new Date(); hoje.setHours(0,0,0,0);
+                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24)); let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24)); if (totalDiasUtilizados < 0) totalDiasUtilizados = 0; if (restamDias < 0) atrasados++;
+                    let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100; alertListFila.push({ nome: f.projeto, restamDias: restamDias, perc: perc });
                 }
-                if (f.inicio) {
-                    const [y, m] = f.inicio.split('-'); const keyInic = `${y}-${m}`;
-                    if (monthlyStats[keyInic]) monthlyStats[keyInic].iniciados++;
-                }
+                if (f.inicio) { const [y, m] = f.inicio.split('-'); const keyInic = `${y}-${m}`; if (monthlyStats[keyInic]) monthlyStats[keyInic].iniciados++; }
             });
 
             window.db.suporte.forEach(s => {
                 const status = s.status || 'Pendente'; 
                 if (status !== 'Concluído') {
-                    const inicioDate = s.inicio ? new Date(s.inicio + 'T00:00:00') : null;
-                    const cliente = window.db.contatos.find(c => c.id === s.clienteId);
-                    const nomeCliente = cliente ? cliente.nome : 'Desconhecido';
-                    
-                    const fimDate = new Date(inicioDate); const prazo = parseInt(s.prazo) || 1;
-                    fimDate.setDate(fimDate.getDate() + prazo); const hoje = new Date(); hoje.setHours(0,0,0,0);
-                    
-                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
-                    let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24));
-                    if (totalDiasUtilizados < 0) totalDiasUtilizados = 0;
-
-                    let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100;
-                    alertListSuporte.push({ nome: nomeCliente, restamDias: restamDias, perc: perc });
+                    const inicioDate = s.inicio ? new Date(s.inicio + 'T00:00:00') : null; const cliente = window.db.contatos.find(c => c.id === s.clienteId); const nomeCliente = cliente ? cliente.nome : 'Desconhecido';
+                    const fimDate = new Date(inicioDate); const prazo = parseInt(s.prazo) || 1; fimDate.setDate(fimDate.getDate() + prazo); const hoje = new Date(); hoje.setHours(0,0,0,0);
+                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24)); let totalDiasUtilizados = Math.ceil((hoje - inicioDate) / (1000 * 60 * 60 * 24)); if (totalDiasUtilizados < 0) totalDiasUtilizados = 0;
+                    let perc = (totalDiasUtilizados / prazo) * 100; if(perc < 0) perc = 0; if(perc > 100) perc = 100; alertListSuporte.push({ nome: nomeCliente, restamDias: restamDias, perc: perc });
                 }
             });
 
-            document.getElementById('perf-ativos').innerText = ativos;
-            document.getElementById('perf-concluidos').innerText = concluidos;
-            document.getElementById('perf-atrasados').innerText = atrasados;
+            document.getElementById('perf-ativos').innerText = ativos; document.getElementById('perf-concluidos').innerText = concluidos; document.getElementById('perf-atrasados').innerText = atrasados;
 
             alertListFila.sort((a, b) => a.restamDias - b.restamDias); let htmlListFila = '';
-            alertListFila.forEach(p => {
-                let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
-                let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Entrega Hoje' : `Restam ${p.restamDias}d`);
-                htmlListFila += `<div class="alert-item"><div class="alert-header"><span>${p.nome}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
-            });
-            if(htmlListFila === '') htmlListFila = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto ativo.</p>';
-            document.getElementById('alert-list-container').innerHTML = htmlListFila;
+            alertListFila.forEach(p => { let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)'; let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Entrega Hoje' : `Restam ${p.restamDias}d`); htmlListFila += `<div class="alert-item"><div class="alert-header"><span>${p.nome}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`; });
+            if(htmlListFila === '') htmlListFila = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto ativo.</p>'; document.getElementById('alert-list-container').innerHTML = htmlListFila;
 
             alertListSuporte.sort((a, b) => a.restamDias - b.restamDias); let htmlListSuporte = '';
-            alertListSuporte.forEach(p => {
-                let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
-                let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Expira Hoje' : `Restam ${p.restamDias}d`);
-                htmlListSuporte += `<div class="alert-item"><div class="alert-header"><span>${p.nome}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`;
-            });
-            if(htmlListSuporte === '') htmlListSuporte = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum suporte ativo.</p>';
-            document.getElementById('alert-list-suporte-container').innerHTML = htmlListSuporte;
+            alertListSuporte.forEach(p => { let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)'; let textRestam = p.restamDias < 0 ? `Atrasado (${Math.abs(p.restamDias)}d)` : (p.restamDias === 0 ? 'Expira Hoje' : `Restam ${p.restamDias}d`); htmlListSuporte += `<div class="alert-item"><div class="alert-header"><span>${p.nome}</span><span style="color: ${colorClass}">${textRestam}</span></div><div class="progress-wrapper"><div class="progress-fill" style="width: ${p.perc}%; background-color: ${colorClass}"></div></div></div>`; });
+            if(htmlListSuporte === '') htmlListSuporte = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum suporte ativo.</p>'; document.getElementById('alert-list-suporte-container').innerHTML = htmlListSuporte;
 
-            const sortedKeys = Object.keys(monthlyStats).sort();
-            const ctxLinePerf = document.getElementById('perfLineChart').getContext('2d');
-            if (perfLineInstance) perfLineInstance.destroy();
-
-            let gradInic = ctxLinePerf.createLinearGradient(0, 0, 0, 250); gradInic.addColorStop(0, 'rgba(30, 41, 59, 0.15)'); gradInic.addColorStop(1, 'rgba(30, 41, 59, 0.00)');
-            let gradFin = ctxLinePerf.createLinearGradient(0, 0, 0, 250); gradFin.addColorStop(0, 'rgba(16, 185, 129, 0.20)'); gradFin.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
-
-            perfLineInstance = new Chart(ctxLinePerf, {
-                type: 'line',
-                data: { labels: sortedKeys.map(k => monthlyStats[k].label), datasets: [{ label: 'Iniciados', data: sortedKeys.map(k => monthlyStats[k].iniciados), borderColor: '#1e293b', backgroundColor: gradInic, fill: true, tension: 0.4, borderWidth: 3 }, { label: 'Finalizados', data: sortedKeys.map(k => monthlyStats[k].finalizados), borderColor: '#10b981', backgroundColor: gradFin, fill: true, tension: 0.4, borderWidth: 3, borderDash: [5, 5] }] },
-                options: { responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, precision: 0 } } } }
-            });
+            const sortedKeys = Object.keys(monthlyStats).sort(); const ctxLinePerf = document.getElementById('perfLineChart').getContext('2d'); if (perfLineInstance) perfLineInstance.destroy();
+            let gradInic = ctxLinePerf.createLinearGradient(0, 0, 0, 250); gradInic.addColorStop(0, 'rgba(30, 41, 59, 0.15)'); gradInic.addColorStop(1, 'rgba(30, 41, 59, 0.00)'); let gradFin = ctxLinePerf.createLinearGradient(0, 0, 0, 250); gradFin.addColorStop(0, 'rgba(16, 185, 129, 0.20)'); gradFin.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+            perfLineInstance = new Chart(ctxLinePerf, { type: 'line', data: { labels: sortedKeys.map(k => monthlyStats[k].label), datasets: [{ label: 'Iniciados', data: sortedKeys.map(k => monthlyStats[k].iniciados), borderColor: '#1e293b', backgroundColor: gradInic, fill: true, tension: 0.4, borderWidth: 3 }, { label: 'Finalizados', data: sortedKeys.map(k => monthlyStats[k].finalizados), borderColor: '#10b981', backgroundColor: gradFin, fill: true, tension: 0.4, borderWidth: 3, borderDash: [5, 5] }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' }, ticks: { stepSize: 1, precision: 0 } } } } });
         }
 
         window.renderConversoes = function() {
             const tbody = document.getElementById('conversoes-body'); tbody.innerHTML = '';
             const sorted = [...window.db.conversoes].sort((a,b) => new Date(b.data) - new Date(a.data));
-            sorted.forEach(c => {
-                tbody.innerHTML += `<tr><td><strong>${window.formatDate(c.data)}</strong></td><td>${c.ligacoes}</td><td>${c.reunioes}</td><td>${c.propostas}</td><td>${c.fechamentos}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('conversoes', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('conversoes', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
-            });
+            sorted.forEach(c => { tbody.innerHTML += `<tr><td><strong>${window.formatDate(c.data)}</strong></td><td>${c.ligacoes}</td><td>${c.reunioes}</td><td>${c.propostas}</td><td>${c.fechamentos}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('conversoes', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('conversoes', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`; });
         }
 
-        // Função de renderização para "Clientes" (Antiga Contatos)
         window.renderClientes = function() {
             const tbody = document.getElementById('clientes-body'); tbody.innerHTML = '';
-            window.db.contatos.forEach(c => {
-                tbody.innerHTML += `<tr><td><strong>${c.nome}</strong></td><td>${c.numero}</td><td>${c.potencial}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
-            });
+            window.db.contatos.forEach(c => { tbody.innerHTML += `<tr><td><strong>${c.nome}</strong></td><td>${c.numero}</td><td>${c.potencial}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`; });
         }
 
-        // FUNÇÃO TOTALMENTE NOVA: Renderização para a aba "Contatos" (Leads / CRM)
         window.renderLeads = function() {
             const tbody = document.getElementById('leads-body'); tbody.innerHTML = '';
             const filterText = document.getElementById('filter-leads').value.toLowerCase();
+            let cInt = 0, cDes = 0, cSem = 0, cAgu = 0; let filtered = window.db.leads.filter(l => { const searchable = `${l.nome} ${l.numero} ${l.atuacao} ${l.descricao} ${l.status}`.toLowerCase(); return searchable.includes(filterText); });
+            filtered.forEach(l => { if(l.status === 'Interessado') cInt++; else if(l.status === 'Desinteressado') cDes++; else if(l.status === 'Sem Resposta') cSem++; else if(l.status === 'Aguardando') cAgu++; });
 
-            // Lógica de Filtro e Contadores
-            let cInt = 0, cDes = 0, cSem = 0, cAgu = 0;
-            let filtered = window.db.leads.filter(l => {
-                const searchable = `${l.nome} ${l.numero} ${l.atuacao} ${l.descricao} ${l.status}`.toLowerCase();
-                return searchable.includes(filterText);
-            });
+            document.getElementById('leads-counters').innerHTML = `<div class="mini-card" style="border-left-color: var(--primary);"><span class="label">Total</span><span class="value">${filtered.length}</span></div><div class="mini-card" style="border-left-color: var(--success);"><span class="label">Interessado</span><span class="value">${cInt}</span></div><div class="mini-card" style="border-left-color: var(--danger);"><span class="label">Desinteres.</span><span class="value">${cDes}</span></div><div class="mini-card" style="border-left-color: #64748b;"><span class="label">Sem Resp.</span><span class="value">${cSem}</span></div><div class="mini-card" style="border-left-color: var(--accent);"><span class="label">Aguardando</span><span class="value">${cAgu}</span></div>`;
 
             filtered.forEach(l => {
-                if(l.status === 'Interessado') cInt++;
-                else if(l.status === 'Desinteressado') cDes++;
-                else if(l.status === 'Sem Resposta') cSem++;
-                else if(l.status === 'Aguardando') cAgu++;
-            });
-
-            // Atualiza HTML dos Contadores com os Mini-Cards Executivos
-            document.getElementById('leads-counters').innerHTML = `
-                <div class="mini-card" style="border-left-color: var(--primary);">
-                    <span class="label">Total</span>
-                    <span class="value">${filtered.length}</span>
-                </div>
-                <div class="mini-card" style="border-left-color: var(--success);">
-                    <span class="label">Interessado</span>
-                    <span class="value">${cInt}</span>
-                </div>
-                <div class="mini-card" style="border-left-color: var(--danger);">
-                    <span class="label">Desinteres.</span>
-                    <span class="value">${cDes}</span>
-                </div>
-                <div class="mini-card" style="border-left-color: #64748b;">
-                    <span class="label">Sem Resp.</span>
-                    <span class="value">${cSem}</span>
-                </div>
-                <div class="mini-card" style="border-left-color: var(--accent);">
-                    <span class="label">Aguardando</span>
-                    <span class="value">${cAgu}</span>
-                </div>
-            `;
-
-            // Renderiza as linhas filtradas
-            filtered.forEach(l => {
-                let statusColor = '#64748b'; 
-                if(l.status === 'Interessado') statusColor = 'var(--success)';
-                else if(l.status === 'Desinteressado') statusColor = 'var(--danger)';
-                else if(l.status === 'Aguardando') statusColor = 'var(--accent)';
-
-                tbody.innerHTML += `<tr>
-                    <td><strong>${l.nome || '-'}</strong></td>
-                    <td>${l.numero || '-'}</td>
-                    <td>${l.atuacao || '-'}</td>
-                    <td>${l.descricao || '-'}</td>
-                    <td><span class="badge" style="background: ${statusColor}; color: white;">${l.status || '-'}</span></td>
-                    <td class="actions">
-                        <button class="btn-edit" onclick="window.editItem('leads', '${l.id}')"><i class="fas fa-pen"></i></button>
-                        <button class="btn-delete" onclick="window.deleteItem('leads', '${l.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
+                let statusColor = '#64748b'; if(l.status === 'Interessado') statusColor = 'var(--success)'; else if(l.status === 'Desinteressado') statusColor = 'var(--danger)'; else if(l.status === 'Aguardando') statusColor = 'var(--accent)';
+                tbody.innerHTML += `<tr><td><strong>${l.nome || '-'}</strong></td><td>${l.numero || '-'}</td><td>${l.atuacao || '-'}</td><td>${l.descricao || '-'}</td><td><span class="badge" style="background: ${statusColor}; color: white;">${l.status || '-'}</span></td><td class="actions"><button class="btn-edit" onclick="window.editItem('leads', '${l.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('leads', '${l.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
             });
         }
 
@@ -1163,45 +996,21 @@
             window.db.fila.forEach(f => {
                 const cliente = window.db.contatos.find(c => c.id === f.clienteId) || { nome: 'Desconhecido', numero: '-' };
                 const status = f.status || 'Pendente'; const dataConclusao = f.dataConclusao || null;
-                const inicioDate = new Date(f.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate);
-                fimDate.setDate(fimDate.getDate() + parseInt(f.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
-                
+                const inicioDate = new Date(f.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + parseInt(f.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
                 const notaDisplay = (f.nota !== undefined && f.nota !== null && f.nota !== '') ? f.nota : '-';
-
                 let restamDiasText = '-'; let sinalClass = 'signal-green';
 
                 if (status === 'Concluído') {
-                    const conclusaoDate = new Date(dataConclusao + 'T00:00:00');
-                    const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
-                    restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`;
-                    sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
+                    const conclusaoDate = new Date(dataConclusao + 'T00:00:00'); const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
+                    restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`; sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
                 } else {
-                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
-                    restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
+                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24)); restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
                     if (restamDias < 0) sinalClass = 'signal-red'; else if (restamDias <= 3) sinalClass = 'signal-yellow'; else sinalClass = 'signal-green';
                 }
 
-                const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido';
-                const hasContract = !!f.contrato;
-                const clipClass = hasContract ? 'attached' : '';
-                const rowClass = hasContract ? 'row-clickable' : '';
-                const rowClick = hasContract ? `onclick="window.viewContract('${f.id}')"` : '';
+                const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido'; const hasContract = !!f.contrato; const clipClass = hasContract ? 'attached' : ''; const rowClass = hasContract ? 'row-clickable' : ''; const rowClick = hasContract ? `onclick="window.viewContract('${f.id}')"` : '';
 
-                tbody.innerHTML += `<tr class="${rowClass}" ${rowClick}>
-                    <td><strong>${f.projeto}</strong></td>
-                    <td>${cliente.nome}</td>
-                    <td>${window.formatDate(f.inicio)}</td>
-                    <td>${f.prazo} dias</td>
-                    <td>${restamDiasText}</td>
-                    <td><span class="badge ${badgeStatusClass}">${status}</span></td>
-                    <td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td>
-                    <td style="text-align: center;"><strong>${notaDisplay}</strong></td>
-                    <td class="actions">
-                        <button class="btn-clip ${clipClass}" onclick="event.stopPropagation(); window.openAttachModal('${f.id}')" title="Anexar ou Substituir Contrato"><i class="fas fa-paperclip"></i></button>
-                        <button class="btn-edit" onclick="event.stopPropagation(); window.editItem('fila', '${f.id}')" title="Editar"><i class="fas fa-pen"></i></button>
-                        <button class="btn-delete" onclick="event.stopPropagation(); window.deleteItem('fila', '${f.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
+                tbody.innerHTML += `<tr class="${rowClass}" ${rowClick}><td><strong>${f.projeto}</strong></td><td>${cliente.nome}</td><td>${window.formatDate(f.inicio)}</td><td>${f.prazo} dias</td><td>${restamDiasText}</td><td><span class="badge ${badgeStatusClass}">${status}</span></td><td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td><td style="text-align: center;"><strong>${notaDisplay}</strong></td><td class="actions"><button class="btn-clip ${clipClass}" onclick="event.stopPropagation(); window.openAttachModal('${f.id}')" title="Anexar ou Substituir Contrato"><i class="fas fa-paperclip"></i></button><button class="btn-edit" onclick="event.stopPropagation(); window.editItem('fila', '${f.id}')" title="Editar"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="event.stopPropagation(); window.deleteItem('fila', '${f.id}')" title="Excluir"><i class="fas fa-trash"></i></button></td></tr>`;
             });
         }
 
@@ -1210,124 +1019,255 @@
             window.db.suporte.forEach(s => {
                 const cliente = window.db.contatos.find(c => c.id === s.clienteId) || { nome: 'Desconhecido', numero: '-' };
                 const status = s.status || 'Pendente'; const dataConclusao = s.dataConclusao || null;
-                const inicioDate = new Date(s.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate);
-                fimDate.setDate(fimDate.getDate() + parseInt(s.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
-                
+                const inicioDate = new Date(s.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + parseInt(s.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
                 let restamDiasText = '-'; let sinalClass = 'signal-green';
 
                 if (status === 'Concluído') {
-                    const conclusaoDate = new Date(dataConclusao + 'T00:00:00');
-                    const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
-                    restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`;
-                    sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
+                    const conclusaoDate = new Date(dataConclusao + 'T00:00:00'); const restamDiasFreeze = Math.ceil((fimDate - conclusaoDate) / (1000 * 60 * 60 * 24));
+                    restamDiasText = restamDiasFreeze < 0 ? `Atrasado (${Math.abs(restamDiasFreeze)}d)` : `${restamDiasFreeze} dias`; sinalClass = conclusaoDate > fimDate ? 'signal-red' : 'signal-green';
                 } else {
-                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
-                    restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
+                    const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24)); restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
                     if (restamDias < 0) sinalClass = 'signal-red'; else if (restamDias <= 3) sinalClass = 'signal-yellow'; else sinalClass = 'signal-green';
                 }
 
                 const badgeStatusClass = status === 'Pendente' ? 'badge-pendente' : 'badge-concluido';
-
-                tbody.innerHTML += `<tr>
-                    <td><strong>${cliente.nome}</strong></td>
-                    <td>${window.formatDate(s.inicio)}</td>
-                    <td>${s.prazo} dias</td>
-                    <td>${restamDiasText}</td>
-                    <td><span class="badge ${badgeStatusClass}">${status}</span></td>
-                    <td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td>
-                    <td class="actions">
-                        <button class="btn-edit" onclick="window.editItem('suporte', '${s.id}')" title="Editar"><i class="fas fa-pen"></i></button>
-                        <button class="btn-delete" onclick="window.deleteItem('suporte', '${s.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
+                tbody.innerHTML += `<tr><td><strong>${cliente.nome}</strong></td><td>${window.formatDate(s.inicio)}</td><td>${s.prazo} dias</td><td>${restamDiasText}</td><td><span class="badge ${badgeStatusClass}">${status}</span></td><td style="text-align: center;"><span class="signal-dot ${sinalClass}"></span></td><td class="actions"><button class="btn-edit" onclick="window.editItem('suporte', '${s.id}')" title="Editar"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('suporte', '${s.id}')" title="Excluir"><i class="fas fa-trash"></i></button></td></tr>`;
             });
         }
 
-        window.openAttachModal = function(id) {
-            window.attachingId = id;
-            document.getElementById('file-contrato').value = '';
-            document.getElementById('modal-attach').style.display = 'flex';
-        }
-
+        window.openAttachModal = function(id) { window.attachingId = id; document.getElementById('file-contrato').value = ''; document.getElementById('modal-attach').style.display = 'flex'; }
         window.saveContrato = function() {
-            const fileInput = document.getElementById('file-contrato');
-            if (!fileInput.files.length) return alert('Selecione um arquivo PDF para anexar.');
-            
-            const file = fileInput.files[0];
-            
-            if (file.size > 700 * 1024) {
-                return alert('O arquivo selecionado é muito grande. Para salvar gratuitamente no banco de dados, o PDF deve ter no máximo 700KB.');
-            }
-
-            const btn = document.querySelector('#modal-attach .btn-submit');
-            btn.innerText = 'Salvando na Nuvem...'; btn.disabled = true;
-
+            const fileInput = document.getElementById('file-contrato'); if (!fileInput.files.length) return alert('Selecione um arquivo PDF para anexar.');
+            const file = fileInput.files[0]; if (file.size > 700 * 1024) { return alert('O arquivo selecionado é muito grande. Para salvar gratuitamente no banco de dados, o PDF deve ter no máximo 700KB.'); }
+            const btn = document.querySelector('#modal-attach .btn-submit'); btn.innerText = 'Salvando na Nuvem...'; btn.disabled = true;
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const base64Str = e.target.result;
-                try {
-                    await dbFirestore.collection('fila').doc(window.attachingId).update({ contrato: base64Str });
-                    const item = window.db.fila.find(i => i.id === window.attachingId);
-                    if (item) item.contrato = base64Str;
-                    window.renderFila();
-                    document.getElementById('modal-attach').style.display = 'none';
-                } catch (error) {
-                    console.error("Erro ao salvar anexo:", error);
-                    alert("Falha ao salvar anexo. Pode ter ocorrido por tamanho excedido (Limite Firestore).");
-                } finally {
-                    btn.innerText = 'Salvar Anexo'; btn.disabled = false;
-                }
-            };
-            
-            reader.readAsDataURL(file);
+                try { await dbFirestore.collection('fila').doc(window.attachingId).update({ contrato: base64Str }); const item = window.db.fila.find(i => i.id === window.attachingId); if (item) item.contrato = base64Str; window.renderFila(); document.getElementById('modal-attach').style.display = 'none'; } 
+                catch (error) { alert("Falha ao salvar anexo. Pode ter ocorrido por tamanho excedido (Limite Firestore)."); } 
+                finally { btn.innerText = 'Salvar Anexo'; btn.disabled = false; }
+            }; reader.readAsDataURL(file);
         }
-
         window.viewContract = function(id) {
-            const item = window.db.fila.find(i => i.id === id);
-            if (!item || !item.contrato) return;
-
-            const iframe = document.getElementById('contract-frame');
-            iframe.src = item.contrato;
-
+            const item = window.db.fila.find(i => i.id === id); if (!item || !item.contrato) return;
+            const iframe = document.getElementById('contract-frame'); iframe.src = item.contrato;
             const btnDownload = document.getElementById('btn-download-contract');
-            btnDownload.onclick = function() {
-                const link = document.createElement('a');
-                link.href = item.contrato;
-                const safeName = item.projeto.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                link.download = `Contrato_${safeName}.pdf`;
-                link.click();
-            };
-
+            btnDownload.onclick = function() { const link = document.createElement('a'); link.href = item.contrato; link.download = `Contrato_${item.projeto.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`; link.click(); };
             document.getElementById('modal-view-contract').style.display = 'flex';
         }
 
-        window.openPdfModal = function() {
-            document.getElementById('modal-pdf').style.display = 'flex';
+        window.openPdfModal = function() { document.getElementById('modal-pdf').style.display = 'flex'; }
+        
+        window.openDashPdfModal = function() { document.getElementById('modal-pdf-dash').style.display = 'flex'; }
+        
+        window.generateFullDashboardPDF = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-gerar-dash-pdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando Relatório...';
+            btn.disabled = true;
+
+            const incFin = document.getElementById('chk-pdf-fin').checked;
+            const incKpi = document.getElementById('chk-pdf-kpi').checked;
+            const incDes = document.getElementById('chk-pdf-des').checked;
+            const incAds = document.getElementById('chk-pdf-ads').checked;
+
+            if(!incFin && !incKpi && !incDes && !incAds) {
+                alert('Selecione pelo menos um módulo para exportar.');
+                btn.innerHTML = originalText; btn.disabled = false; return;
+            }
+
+            Chart.defaults.animation = false;
+            
+            const containers = document.querySelectorAll('.subtab-container');
+            containers.forEach(el => { el.style.display = 'block'; });
+
+            window.renderFinancialCharts();
+            window.renderKpiDashboard();
+            window.renderPerformanceDashboard();
+            await new Promise(r => setTimeout(r, 600));
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const primaryColor = [30, 41, 59]; const accentColor = [217, 119, 6];
+            let yPos = 20;
+
+            doc.setFillColor(...primaryColor); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("EXCELLENT SERVICES", 14, yPos);
+            doc.setTextColor(...accentColor); doc.setFontSize(12); doc.setFont("helvetica", "normal"); doc.text("RELATÓRIO GERENCIAL EXECUTIVO", 14, yPos + 10);
+
+            doc.setTextColor(51, 65, 85); doc.setFontSize(10);
+            const hoje = new Date();
+            doc.text(`Data de Emissão: ${hoje.toLocaleDateString('pt-BR')} às ${hoje.toLocaleTimeString('pt-BR')}`, 14, 50);
+            yPos = 65;
+
+            // Função que injeta fundo branco garantindo que linhas não fiquem apagadas ou transparentes
+            const getHighQualityImage = (canvasId) => {
+                const c = document.getElementById(canvasId);
+                if(!c) return null;
+                const tempC = document.createElement('canvas');
+                tempC.width = c.width; tempC.height = c.height;
+                const ctx = tempC.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, tempC.width, tempC.height);
+                ctx.drawImage(c, 0, 0);
+                // Retorna ratio para calcularmos a altura certa dinamicamente
+                return { data: tempC.toDataURL('image/jpeg', 1.0), ratio: c.height / c.width };
+            };
+
+            const addSectionHeader = (title) => {
+                if(yPos > 260) { doc.addPage(); yPos = 20; }
+                doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(...primaryColor);
+                doc.text(title, 14, yPos);
+                doc.setDrawColor(226, 232, 240); doc.line(14, yPos + 3, 196, yPos + 3);
+                yPos += 10;
+            };
+
+            const addParagraph = (text) => {
+                doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(71, 85, 105);
+                const lines = doc.splitTextToSize(text, 182);
+                if (yPos + (lines.length * 5) > 280) { doc.addPage(); yPos = 20; }
+                doc.text(lines, 14, yPos);
+                yPos += (lines.length * 5) + 8;
+            };
+
+            const addSingleChart = (id, title) => {
+                const imgObj = getHighQualityImage(id);
+                if(!imgObj) return;
+                const targetWidth = 182;
+                const targetHeight = targetWidth * imgObj.ratio; // Usa a proporção original perfeita
+                
+                if(yPos + targetHeight + 15 > 280) { doc.addPage(); yPos = 20; }
+                
+                doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold"); doc.text(title, 14, yPos);
+                doc.addImage(imgObj.data, 'JPEG', 14, yPos + 5, targetWidth, targetHeight);
+                yPos += targetHeight + 15;
+            };
+
+            const addDualCharts = (id1, title1, id2, title2) => {
+                const imgObj1 = getHighQualityImage(id1); const imgObj2 = getHighQualityImage(id2);
+                if(!imgObj1 && !imgObj2) return;
+                
+                const targetWidth = 85;
+                const maxRatio = Math.max(imgObj1 ? imgObj1.ratio : 0, imgObj2 ? imgObj2.ratio : 0);
+                const targetHeight = targetWidth * maxRatio;
+                
+                if(yPos + targetHeight + 15 > 280) { doc.addPage(); yPos = 20; }
+                doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold");
+                
+                if(imgObj1) { doc.text(title1, 14, yPos); doc.addImage(imgObj1.data, 'JPEG', 14, yPos + 5, targetWidth, targetWidth * imgObj1.ratio); }
+                if(imgObj2) { doc.text(title2, 105, yPos); doc.addImage(imgObj2.data, 'JPEG', 105, yPos + 5, targetWidth, targetWidth * imgObj2.ratio); }
+                
+                yPos += targetHeight + 15;
+            };
+
+            if (incFin) {
+                addSectionHeader("1. Análise Financeira Geral");
+                let entradas = 0; let saidas = 0; window.db.vendas.forEach(v => { if (v.tipo === 'Entrada') entradas += parseFloat(v.valor || 0); else saidas += parseFloat(v.valor || 0); });
+                const saldo = entradas - saidas;
+                
+                addParagraph(`O panorama financeiro atual da operação revela uma movimentação total de entradas na ordem de ${window.formatCurrency(entradas)} contra despesas que somam ${window.formatCurrency(saidas)}. O resultado líquido (saldo) consolidado no momento é de ${window.formatCurrency(saldo)}. Este cenário exige acompanhamento contínuo para garantir a manutenção do fluxo de caixa e a margem de lucratividade dos serviços prestados. Os gráficos abaixo ilustram a evolução e os principais centros de custo e receita históricos.`);
+
+                doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(77, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(140, yPos, 55, 20, 3, 3, 'FD');
+                doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
+                doc.text("TOTAL DE ENTRADAS", 18, yPos + 7); doc.text("TOTAL DE SAÍDAS", 81, yPos + 7); doc.text("SALDO ATUAL", 144, yPos + 7);
+                doc.setFontSize(11); doc.setFont("helvetica", "bold");
+                doc.setTextColor(16, 185, 129); doc.text(window.formatCurrency(entradas), 18, yPos + 15);
+                doc.setTextColor(239, 68, 68); doc.text(window.formatCurrency(saidas), 81, yPos + 15);
+                doc.setTextColor(saldo >= 0 ? 16 : 239, saldo >= 0 ? 185 : 68, saldo >= 0 ? 129 : 68); doc.text(window.formatCurrency(saldo), 144, yPos + 15);
+                yPos += 28;
+
+                addSingleChart('lineChart', 'Evolução de Entradas e Saídas');
+                addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Nome)', 'topSaidasChart', 'Top 8 Saídas (Por Nome)');
+            }
+
+            if (incKpi) {
+                addSectionHeader("2. Indicadores de Performance (KPIs)");
+                let totalDiasGeral = 0; let countConcluidosGeral = 0; let totalEntradas = 0; let countEntradas = 0;
+                window.db.fila.forEach(f => { if(f.status === 'Concluído' && f.inicio && f.dataConclusao) { totalDiasGeral += Math.ceil((new Date(f.dataConclusao + 'T00:00:00') - new Date(f.inicio + 'T00:00:00')) / (1000 * 60 * 60 * 24)); countConcluidosGeral++; } });
+                window.db.vendas.forEach(v => { if(v.tipo === 'Entrada') { totalEntradas += parseFloat(v.valor); countEntradas++; } });
+                const mediaGeralEntrega = countConcluidosGeral > 0 ? Math.round(totalDiasGeral / countConcluidosGeral) : 0; const ticketMedioGeral = countEntradas > 0 ? totalEntradas / countEntradas : 0;
+
+                addParagraph(`Os Indicadores-Chave de Performance (KPIs) demonstram que a operação mantém um Ticket Médio de ${window.formatCurrency(ticketMedioGeral)} por projeto. O tempo médio de entrega dos serviços está fixado em ${mediaGeralEntrega} dias, refletindo o ritmo e a eficiência produtiva da equipe. Acompanhar a evolução da taxa de conversão e os níveis de satisfação é essencial para escalar a operação de forma sustentável.`);
+
+                doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 88, 20, 3, 3, 'FD'); doc.roundedRect(107, yPos, 88, 20, 3, 3, 'FD');
+                doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
+                doc.text("TEMPO MÉDIO DE ENTREGA GERAL", 18, yPos + 7); doc.text("TICKET MÉDIO GERAL", 111, yPos + 7);
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...primaryColor);
+                doc.text(`${mediaGeralEntrega} dias`, 18, yPos + 15); doc.text(window.formatCurrency(ticketMedioGeral), 111, yPos + 15);
+                yPos += 28;
+
+                addDualCharts('kpiReceitaChart', 'Receita Bruta (Mês a Mês)', 'kpiTicketChart', 'Ticket Médio (Mês a Mês)');
+                addDualCharts('kpiTempoChart', 'Tempo Médio de Entrega', 'kpiPropostasChart', 'Propostas Enviadas');
+                addDualCharts('kpiConversaoChart', 'Taxa de Conversão', 'kpiSatisfacaoChart', 'Nível de Satisfação');
+            }
+
+            if (incDes) {
+                addSectionHeader("3. Desempenho Operacional");
+                let ativos = 0; let concluidos = 0; let atrasados = 0;
+                window.db.fila.forEach(f => {
+                    const iDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
+                    if (f.status === 'Concluído') { concluidos++; const cDate = new Date(f.dataConclusao + 'T00:00:00'); const eDate = new Date(iDate); eDate.setDate(eDate.getDate() + (parseInt(f.prazo) || 0)); if (cDate > eDate) atrasados++; }
+                    else { ativos++; const eDate = new Date(iDate); eDate.setDate(eDate.getDate() + (parseInt(f.prazo) || 0)); if (new Date() > eDate) atrasados++; }
+                });
+
+                addParagraph(`No escopo operacional e controle de fila de atendimento, o sistema acusa ${ativos} projeto(s) atualmente em andamento e ${concluidos} projeto(s) já entregue(s) com sucesso. Adicionalmente, observa-se que existem ${atrasados} projeto(s) sinalizando atraso no prazo acordado. O controle de gargalos na esteira de produção é vital para minimizar desgastes com suporte ao cliente.`);
+
+                doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(77, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(140, yPos, 55, 20, 3, 3, 'FD');
+                doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
+                doc.text("PROJETOS ATIVOS", 18, yPos + 7); doc.text("PROJETOS CONCLUÍDOS", 81, yPos + 7); doc.text("PROJETOS EM ATRASO", 144, yPos + 7);
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...primaryColor);
+                doc.text(ativos.toString(), 18, yPos + 15); doc.text(concluidos.toString(), 81, yPos + 15); doc.setTextColor(239, 68, 68); doc.text(atrasados.toString(), 144, yPos + 15);
+                yPos += 28;
+
+                addSingleChart('perfLineChart', 'Monitoramento Mensal de Iniciados vs Finalizados');
+            }
+
+            if (incAds) {
+                addSectionHeader("4. Campanhas e Tráfego Pago");
+                const gastoTotalAds = document.getElementById('ads-gasto-total') ? document.getElementById('ads-gasto-total').innerText : 'R$ 0,00';
+                const cliquesTotalAds = document.getElementById('ads-cliques-total') ? document.getElementById('ads-cliques-total').innerText : '0';
+                const impressoesTotalAds = document.getElementById('ads-impressoes-total') ? document.getElementById('ads-impressoes-total').innerText : '0';
+
+                addParagraph(`Referente aos esforços de aquisição via tráfego pago, o sistema detectou um investimento recente de ${gastoTotalAds} em campanhas ativas. Esse alinhamento de orçamento gerou uma visibilidade massiva de ${impressoesTotalAds} impressões e atraiu ${cliquesTotalAds} interações em links. O acompanhamento gráfico diário e mensal permite compreender tendências e ajustar rapidamente as estratégias de alocação de verba.`);
+
+                doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(77, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(140, yPos, 55, 20, 3, 3, 'FD');
+                doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
+                doc.text("INVESTIMENTO TOTAL", 18, yPos + 7); doc.text("CLIQUES TOTAIS", 81, yPos + 7); doc.text("IMPRESSÕES TOTAIS", 144, yPos + 7);
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...primaryColor);
+                doc.text(gastoTotalAds, 18, yPos + 15); doc.text(cliquesTotalAds, 81, yPos + 15); doc.text(impressoesTotalAds, 144, yPos + 15);
+                yPos += 28;
+
+                addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal');
+                addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsImpressoesChart', 'Impressões Diárias');
+            }
+
+            containers.forEach(el => { el.style.display = 'none'; });
+            document.getElementById(`subtab-${window.currentSubTab}`).style.display = 'block';
+            Chart.defaults.animation = true;
+
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.setFont("helvetica", "normal");
+                doc.text(`Gerado pelo Sistema Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10);
+            }
+
+            doc.save('Relatorio_Executivo_Consolidado.pdf');
+            document.getElementById('modal-pdf-dash').style.display = 'none';
+            btn.innerHTML = originalText; btn.disabled = false;
         }
 
         window.generatePDF = function(e) {
             e.preventDefault();
-            const start = document.getElementById('pdf-start').value;
-            const end = document.getElementById('pdf-end').value;
-            const tipo = document.getElementById('pdf-tipo').value;
-
-            let dados = [...window.db.vendas];
-            if (start) dados = dados.filter(v => v.data >= start);
-            if (end) dados = dados.filter(v => v.data <= end);
-            if (tipo !== 'Todos') dados = dados.filter(v => v.tipo === tipo);
-
+            const start = document.getElementById('pdf-start').value; const end = document.getElementById('pdf-end').value; const tipo = document.getElementById('pdf-tipo').value;
+            let dados = [...window.db.vendas]; if (start) dados = dados.filter(v => v.data >= start); if (end) dados = dados.filter(v => v.data <= end); if (tipo !== 'Todos') dados = dados.filter(v => v.tipo === tipo);
             dados.sort((a,b) => new Date(a.data) - new Date(b.data));
 
             let entradas = 0; let saidas = 0;
-            dados.forEach(v => {
-                if(v.tipo === 'Entrada') entradas += parseFloat(v.valor);
-                else saidas += parseFloat(v.valor);
-            });
+            dados.forEach(v => { if(v.tipo === 'Entrada') entradas += parseFloat(v.valor); else saidas += parseFloat(v.valor); });
             const saldo = entradas - saidas;
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const primaryColor = [30, 41, 59]; const accentColor = [217, 119, 6];
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const primaryColor = [30, 41, 59]; const accentColor = [217, 119, 6];
 
             doc.setFillColor(...primaryColor); doc.rect(0, 0, 210, 40, 'F');
             doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("EXCELLENT SERVICES", 14, 20);
@@ -1355,20 +1295,13 @@
                 headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, alternateRowStyles: { fillColor: [248, 250, 252] },
                 styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85] },
                 columnStyles: { 4: { halign: 'right', fontStyle: 'bold' }, 3: { fontStyle: 'bold' } },
-                didParseCell: function (data) {
-                    if (data.section === 'body' && data.column.index === 3) {
-                        if (data.cell.raw === 'Entrada') data.cell.styles.textColor = [16, 185, 129]; else data.cell.styles.textColor = [239, 68, 68];
-                    }
-                }
+                didParseCell: function (data) { if (data.section === 'body' && data.column.index === 3) { if (data.cell.raw === 'Entrada') data.cell.styles.textColor = [16, 185, 129]; else data.cell.styles.textColor = [239, 68, 68]; } }
             });
 
             const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text(`Gerado pelo Sistema Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10);
-            }
+            for (let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text(`Gerado pelo Sistema Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10); }
 
-            doc.save('Relatorio_Financeiro_Excellent_Services.pdf');
-            document.getElementById('modal-pdf').style.display = 'none';
+            doc.save('Relatorio_Financeiro_Excellent_Services.pdf'); document.getElementById('modal-pdf').style.display = 'none';
         }
 
         window.openCurrentModal = function() {
@@ -1382,28 +1315,21 @@
 
             if (type === 'contatos') {
                 html += `<div class="form-group"><label>Nome</label><input type="text" id="f-nome" required value="${data ? data.nome : ''}"></div><div class="form-group"><label>Número (WhatsApp)</label><input type="text" id="f-numero" required value="${data ? data.numero : ''}"></div><div class="form-group"><label>Potencial do Cliente</label><select id="f-potencial"><option value="Alto" ${data && data.potencial==='Alto'?'selected':''}>Alto</option><option value="Médio" ${data && data.potencial==='Médio'?'selected':''}>Médio</option><option value="Baixo" ${data && data.potencial==='Baixo'?'selected':''}>Baixo</option></select></div>`;
-            } else if (type === 'leads') { // NOVA ABA (CONTATOS/CRM)
+            } else if (type === 'leads') { 
                 html += `<div class="form-group"><label>Nome / Empresa</label><input type="text" id="f-lead-nome" required value="${data && data.nome ? data.nome : ''}"></div>
                          <div class="form-group"><label>Número</label><input type="text" id="f-lead-numero" required value="${data && data.numero ? data.numero : ''}"></div>
                          <div class="form-group"><label>Atuação</label><input type="text" id="f-lead-atuacao" required value="${data && data.atuacao ? data.atuacao : ''}"></div>
                          <div class="form-group"><label>Descrição</label><input type="text" id="f-lead-descricao" required value="${data && data.descricao ? data.descricao : ''}"></div>
                          <div class="form-group"><label>Status</label>
-                            <select id="f-lead-status">
-                                <option value="Interessado" ${data && data.status==='Interessado'?'selected':''}>Interessado</option>
-                                <option value="Desinteressado" ${data && data.status==='Desinteressado'?'selected':''}>Desinteressado</option>
-                                <option value="Sem Resposta" ${data && data.status==='Sem Resposta'?'selected':''}>Sem Resposta</option>
-                                <option value="Aguardando" ${data && data.status==='Aguardando'?'selected':''}>Aguardando</option>
-                            </select>
+                            <select id="f-lead-status"><option value="Interessado" ${data && data.status==='Interessado'?'selected':''}>Interessado</option><option value="Desinteressado" ${data && data.status==='Desinteressado'?'selected':''}>Desinteressado</option><option value="Sem Resposta" ${data && data.status==='Sem Resposta'?'selected':''}>Sem Resposta</option><option value="Aguardando" ${data && data.status==='Aguardando'?'selected':''}>Aguardando</option></select>
                          </div>`;
             } else if (type === 'vendas') {
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Descrição</label><input type="text" id="f-descricao" required value="${data ? data.descricao : ''}"></div><div class="form-group"><label>Nome do Cliente/Fornecedor</label><input type="text" id="f-nome-fin" required value="${data && data.nome ? data.nome : ''}"></div><div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="f-valor" required value="${data ? data.valor : ''}"></div><div class="form-group"><label>Tipo</label><select id="f-tipo"><option value="Entrada" ${data && data.tipo==='Entrada'?'selected':''}>Entrada (Receita)</option><option value="Saída" ${data && data.tipo==='Saída'?'selected':''}>Saída (Despesa)</option></select></div>`;
             } else if (type === 'fila') {
-                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
-                if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro</option>`;
+                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join(''); if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro</option>`;
                 html += `<div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-projeto" required value="${data ? data.projeto : ''}"></div><div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div><div class="form-group"><label>Nota do Cliente (0 a 10 - Opcional)</label><input type="number" id="f-nota" min="0" max="10" value="${data && data.nota !== undefined ? data.nota : ''}"></div>`;
             } else if (type === 'suporte') {
-                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
-                if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro</option>`;
+                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join(''); if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro</option>`;
                 html += `<div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div>`;
             } else if (type === 'conversoes') {
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data-conv" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Ligações</label><input type="number" id="f-ligacoes" required value="${data ? data.ligacoes : '0'}"></div><div class="form-group"><label>Reuniões</label><input type="number" id="f-reunioes" required value="${data ? data.reunioes : '0'}"></div><div class="form-group"><label>Propostas Enviadas</label><input type="number" id="f-propostas" required value="${data ? data.propostas : '0'}"></div><div class="form-group"><label>Fechamentos</label><input type="number" id="f-fechamentos" required value="${data ? data.fechamentos : '0'}"></div>`;
@@ -1413,8 +1339,7 @@
         }
 
         window.handleFormSubmit = async function(e, type) {
-            e.preventDefault(); const submitBtn = e.target.querySelector('.btn-submit'); submitBtn.innerText = 'A guardar na Nuvem...'; submitBtn.disabled = true;
-            let newItem = { id: window.editingId || window.generateId() };
+            e.preventDefault(); const submitBtn = e.target.querySelector('.btn-submit'); submitBtn.innerText = 'A guardar na Nuvem...'; submitBtn.disabled = true; let newItem = { id: window.editingId || window.generateId() };
 
             if (type === 'contatos') {
                 newItem.nome = document.getElementById('f-nome').value; newItem.numero = document.getElementById('f-numero').value; newItem.potencial = document.getElementById('f-potencial').value;
@@ -1424,23 +1349,18 @@
                 newItem.data = document.getElementById('f-data').value; newItem.descricao = document.getElementById('f-descricao').value; newItem.nome = document.getElementById('f-nome-fin').value; newItem.valor = parseFloat(document.getElementById('f-valor').value); newItem.tipo = document.getElementById('f-tipo').value;
             } else if (type === 'fila') {
                 newItem.projeto = document.getElementById('f-projeto').value; newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value; newItem.nota = document.getElementById('f-nota').value;
-                const oldItem = window.db.fila.find(i => i.id === window.editingId);
-                if (oldItem && oldItem.contrato) newItem.contrato = oldItem.contrato; 
-                if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
-                else newItem.dataConclusao = null;
+                const oldItem = window.db.fila.find(i => i.id === window.editingId); if (oldItem && oldItem.contrato) newItem.contrato = oldItem.contrato; 
+                if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0]; else newItem.dataConclusao = null;
             } else if (type === 'suporte') {
                 newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value;
-                const oldItem = window.db.suporte.find(i => i.id === window.editingId);
-                if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
-                else newItem.dataConclusao = null;
+                const oldItem = window.db.suporte.find(i => i.id === window.editingId); if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0]; else newItem.dataConclusao = null;
             } else if (type === 'conversoes') {
                 newItem.data = document.getElementById('f-data-conv').value; newItem.ligacoes = parseInt(document.getElementById('f-ligacoes').value) || 0; newItem.reunioes = parseInt(document.getElementById('f-reunioes').value) || 0; newItem.propostas = parseInt(document.getElementById('f-propostas').value) || 0; newItem.fechamentos = parseInt(document.getElementById('f-fechamentos').value) || 0;
             }
 
             try {
                 await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
-                if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } 
-                else { window.db[type].push(newItem); }
+                if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } else { window.db[type].push(newItem); }
                 window.renderCurrentTab(); window.closeModal();
             } catch (error) { alert("Falha na ligação à base de dados cloud."); submitBtn.innerText = 'Tentar Novamente'; submitBtn.disabled = false; }
         }
