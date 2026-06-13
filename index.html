@@ -37,7 +37,7 @@
         .sidebar { width: 260px; background-color: var(--primary); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 100; }
         .logo { padding: 24px; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .logo span { color: var(--accent); }
-        .nav-links { list-style: none; padding: 20px 0; flex-grow: 1; }
+        .nav-links { list-style: none; padding: 20px 0; flex-grow: 1; overflow-y: auto; }
         .nav-links li { padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; color: var(--secondary); }
         .nav-links li:hover, .nav-links li.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
         
@@ -46,8 +46,12 @@
         header { background: var(--surface); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h1 { font-size: 1.5rem; font-weight: 600; }
         
+        /* Menu Mobile - Moderno e invisível no Desktop */
+        .mobile-toggle { display: none; background: transparent; border: none; font-size: 1.5rem; color: var(--text-main); cursor: pointer; transition: color 0.3s ease; padding: 5px; }
+        .mobile-toggle:hover { color: var(--accent); }
+
         /* Submenu Dashboard */
-        .dash-nav { display: flex; gap: 25px; border-bottom: 1px solid var(--border); margin-bottom: 25px; padding-bottom: 5px; }
+        .dash-nav { display: flex; gap: 25px; border-bottom: 1px solid var(--border); margin-bottom: 25px; padding-bottom: 5px; flex-wrap: wrap; }
         .dash-nav span { cursor: pointer; color: var(--text-light); font-weight: 600; font-size: 0.95rem; transition: 0.2s; padding-bottom: 10px; position: relative; }
         .dash-nav span:hover { color: var(--primary); }
         .dash-nav span.active { color: var(--primary); }
@@ -93,6 +97,11 @@
         .card.expense { border-color: var(--danger); }
         .card h3 { color: var(--text-light); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .card p { font-size: 1.6rem; font-weight: bold; }
+
+        /* Mini Cards Executivos (Usados na aba Leads) */
+        .mini-card { background: var(--surface); padding: 10px 16px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 4px solid var(--primary); display: flex; flex-direction: column; justify-content: center; min-width: 120px; }
+        .mini-card .label { font-size: 0.72rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .mini-card .value { font-size: 1.4rem; font-weight: bold; color: var(--text-main); line-height: 1.1; }
 
         /* Charts Grid */
         .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-top: 5px; margin-bottom: 25px;}
@@ -181,7 +190,8 @@
         <ul class="nav-links">
             <li class="active" onclick="window.switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
             <li onclick="window.switchTab('conversoes')"><i class="fas fa-funnel-dollar"></i> Conversões</li>
-            <li onclick="window.switchTab('contatos')"><i class="fas fa-address-book"></i> Contatos</li>
+            <li onclick="window.switchTab('clientes')"><i class="fas fa-users"></i> Clientes</li>
+            <li onclick="window.switchTab('leads')"><i class="fas fa-address-book"></i> Contatos</li>
             <li onclick="window.switchTab('vendas')"><i class="fas fa-wallet"></i> Financeiro</li>
             <li onclick="window.switchTab('fila')"><i class="fas fa-tasks"></i> Fila de Projetos</li>
             <li onclick="window.switchTab('suporte')"><i class="fas fa-headset"></i> Suporte</li>
@@ -372,18 +382,44 @@
             </div>
         </section>
 
-        <section id="contatos" class="tab-content">
+        <section id="clientes" class="tab-content">
             <div class="table-container">
                 <table>
                     <thead><tr><th>Nome</th><th>Número</th><th>Potencial</th><th>Ações</th></tr></thead>
-                    <tbody id="contatos-body"></tbody>
+                    <tbody id="clientes-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="leads" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="leads-counters">
+                    </div>
+                <div style="display: flex; align-items: center; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                    <input type="text" id="filter-leads" placeholder="Pesquisar contatos..." oninput="window.renderLeads()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 300px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s;">
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome / Empresa</th>
+                            <th>Número</th>
+                            <th>Atuação</th>
+                            <th>Descrição</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-body"></tbody>
                 </table>
             </div>
         </section>
 
         <section id="vendas" class="tab-content">
             <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
-                <button class="btn-export" onclick="window.openPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório Premium</button>
+                <button class="btn-export" onclick="window.openPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório</button>
             </div>
             <div class="table-container">
                 <table>
@@ -517,7 +553,8 @@
         firebase.initializeApp(firebaseConfig);
         const dbFirestore = firebase.firestore();
 
-        window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [] };
+        // Adicionado "leads" para a nova aba
+        window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [], leads: [] };
         window.currentTab = 'dashboard';
         window.currentSubTab = 'financeiro';
         window.editingId = null;
@@ -530,25 +567,27 @@
         let kpiReceitaInstance = null; let kpiTicketInstance = null; let kpiTempoInstance = null;
         let kpiPropostasInstance = null; let kpiConversaoInstance = null; let kpiSatisfacaoInstance = null;
 
-        // Variáveis para os gráficos de ADS Diários
         let adsGastoInstance = null; let adsCliquesInstance = null; let adsImpressoesInstance = null;
-        // Variáveis para os gráficos de ADS Mensais
         let adsGastoMesInstance = null; let adsCliquesMesInstance = null; let adsImpressoesMesInstance = null;
 
         async function loadDataFromFirebase() {
             try {
-                const [cSnap, vSnap, fSnap, convSnap, supSnap] = await Promise.all([
+                // Adicionado a busca para a nova aba (leads)
+                const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(),
                     dbFirestore.collection("vendas").get(),
                     dbFirestore.collection("fila").get(),
                     dbFirestore.collection("conversoes").get(),
-                    dbFirestore.collection("suporte").get()
+                    dbFirestore.collection("suporte").get(),
+                    dbFirestore.collection("leads").get()
                 ]);
+                
                 window.db.contatos = cSnap.docs.map(d => d.data());
                 window.db.vendas = vSnap.docs.map(d => d.data());
                 window.db.fila = fSnap.docs.map(d => d.data());
                 window.db.conversoes = convSnap.docs.map(d => d.data());
                 window.db.suporte = supSnap ? supSnap.docs.map(d => d.data()) : [];
+                window.db.leads = lSnap ? lSnap.docs.map(d => d.data()) : [];
 
                 document.getElementById('db-status').classList.add('online');
                 document.getElementById('db-status-text').innerText = 'Online';
@@ -567,7 +606,6 @@
 
         window.toggleMenu = function() { document.getElementById('sidebar').classList.toggle('open'); }
 
-        // ---------- FUNÇÃO NOVA: TELA CHEIA ----------
         window.toggleFullScreen = function() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -590,7 +628,16 @@
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
             
-            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'contatos': 'Gestão de Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos', 'suporte': 'Suporte a Clientes' };
+            // Títulos atualizados para as novas abas
+            const titles = { 
+                'dashboard': 'Dashboard', 
+                'conversoes': 'Conversões', 
+                'clientes': 'Gestão de Clientes', 
+                'leads': 'Contatos', 
+                'vendas': 'Controle Financeiro', 
+                'fila': 'Fila de Projetos', 
+                'suporte': 'Suporte a Clientes' 
+            };
             document.getElementById('page-title').innerText = titles[tabName];
             
             document.getElementById('main-fab').style.display = tabName === 'dashboard' ? 'none' : 'flex';
@@ -612,21 +659,18 @@
         window.renderCurrentTab = function() {
             if (window.currentTab === 'dashboard') window.renderDashboard();
             if (window.currentTab === 'conversoes') window.renderConversoes();
-            if (window.currentTab === 'contatos') window.renderContatos();
+            if (window.currentTab === 'clientes') window.renderClientes(); // Antigo Contatos
+            if (window.currentTab === 'leads') window.renderLeads(); // Novo Contatos CRM
             if (window.currentTab === 'vendas') window.renderVendas();
             if (window.currentTab === 'fila') window.renderFila();
             if (window.currentTab === 'suporte') window.renderSuporte();
         }
 
-        // ---------- FUNÇÃO NOVA: LIGAR E DESLIGAR CAMPANHAS ----------
         window.toggleCampaignStatus = async function(campaignId, checkboxElement) {
             const newStatus = checkboxElement.checked ? 'ACTIVE' : 'PAUSED';
-            
-            // Busca o bolinha de status para fazer um feedback visual imediato
             const statusDot = checkboxElement.closest('tr').querySelector('.signal-dot');
             const originalColorClass = statusDot.className;
             
-            // Muda para amarelinho (processando)
             statusDot.className = 'signal-dot signal-yellow';
             checkboxElement.disabled = true; 
 
@@ -636,18 +680,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ campaign_id: campaignId, status: newStatus })
                 });
-                
                 const result = await response.json();
-                
                 if (result.success) {
-                    // Se deu certo, atualiza a bolinha com a cor final e o texto do nome
                     statusDot.className = checkboxElement.checked ? 'signal-dot signal-green' : 'signal-dot signal-red';
                     statusDot.title = checkboxElement.checked ? 'Ativo' : 'Inativo';
-                    
                     const nameText = checkboxElement.closest('tr').querySelector('strong');
                     if(nameText) nameText.style.color = checkboxElement.checked ? 'var(--text-main)' : 'var(--text-light)';
                 } else {
-                    // Se o Facebook recusou, volta a chave pra posição de antes e avisa
                     alert('Erro do Facebook: ' + (result.error || 'Falha ao atualizar'));
                     checkboxElement.checked = !checkboxElement.checked;
                     statusDot.className = originalColorClass;
@@ -661,12 +700,10 @@
             }
         }
 
-        // ---------- MÓDULO DE CAMPANHAS ADS - REAL TIME E DINÂMICO ----------
         window.renderAdsDashboard = async function() {
             try {
                 const filter = document.getElementById('ads-date-filter').value;
                 const filterText = document.getElementById('ads-date-filter').options[document.getElementById('ads-date-filter').selectedIndex].text;
-                
                 document.getElementById('ads-title-gasto').innerText = `Total Gasto (${filterText})`;
                 
                 const res = await fetch(`/api/meta?preset=${filter}`);
@@ -691,14 +728,12 @@
                 document.getElementById('ads-cliques-total').innerText = tCliques.toLocaleString('pt-BR');
                 document.getElementById('ads-impressoes-total').innerText = tImpressoes.toLocaleString('pt-BR');
 
-                // Renderiza Tabela Dinâmica
                 const tbody = document.getElementById('ads-campaign-body');
                 tbody.innerHTML = '';
 
                 if(apiData.campaigns && apiData.campaigns.length > 0) {
                     apiData.campaigns.forEach(camp => {
                         const insight = (apiData.campaign_insights || []).find(i => i.campaign_id === camp.id) || {};
-                        
                         const isActive = camp.status === 'ACTIVE';
                         const statusClass = isActive ? 'signal-green' : 'signal-red';
                         const statusTitle = isActive ? 'Ativo' : 'Inativo';
@@ -759,7 +794,6 @@
                 let gradImp = ctxImp.createLinearGradient(0, 0, 0, 200); gradImp.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradImp.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
                 adsImpressoesInstance = new Chart(ctxImp, { type: 'line', data: { labels: labelsDiario, datasets: [{ data: impressoesDiario, borderColor: '#8b5cf6', backgroundColor: gradImp, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: optCommon });
 
-                // Gráficos Mensais
                 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
                 const mockMesGasto = [0, 0, 0, 0, 0, tGasto, 0, 0, 0, 0, 0, 0];
                 const mockMesCliques = [0, 0, 0, 0, 0, tCliques, 0, 0, 0, 0, 0, 0];
@@ -777,11 +811,8 @@
                 if(adsImpressoesMesInstance) adsImpressoesMesInstance.destroy();
                 adsImpressoesMesInstance = new Chart(ctxImpMes, { type: 'line', data: { labels: monthLabels, datasets: [{ data: mockMesImpressoes, borderColor: '#8b5cf6', backgroundColor: gradImp, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: optCommon });
 
-            } catch(e) {
-                console.error("Erro ao carregar Dashboard Ads", e);
-            }
+            } catch(e) { console.error("Erro ao carregar Dashboard Ads", e); }
         }
-        // ---------------------------------------------
 
         function getFinancialChartData() {
             const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -952,7 +983,6 @@
                 monthlyStats[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, iniciados: 0, finalizados: 0 };
             }
 
-            // Processa FILA de Projetos
             window.db.fila.forEach(f => {
                 const status = f.status || 'Pendente'; const inicioDate = f.inicio ? new Date(f.inicio + 'T00:00:00') : null;
                 
@@ -984,7 +1014,6 @@
                 }
             });
 
-            // Processa SUPORTE
             window.db.suporte.forEach(s => {
                 const status = s.status || 'Pendente'; 
                 if (status !== 'Concluído') {
@@ -1008,7 +1037,6 @@
             document.getElementById('perf-concluidos').innerText = concluidos;
             document.getElementById('perf-atrasados').innerText = atrasados;
 
-            // Renderiza Alertas Fila
             alertListFila.sort((a, b) => a.restamDias - b.restamDias); let htmlListFila = '';
             alertListFila.forEach(p => {
                 let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
@@ -1018,7 +1046,6 @@
             if(htmlListFila === '') htmlListFila = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum projeto ativo.</p>';
             document.getElementById('alert-list-container').innerHTML = htmlListFila;
 
-            // Renderiza Alertas Suporte
             alertListSuporte.sort((a, b) => a.restamDias - b.restamDias); let htmlListSuporte = '';
             alertListSuporte.forEach(p => {
                 let colorClass = 'var(--success)'; if (p.restamDias < 0) colorClass = 'var(--danger)'; else if (p.restamDias <= 3) colorClass = 'var(--accent)';
@@ -1028,7 +1055,6 @@
             if(htmlListSuporte === '') htmlListSuporte = '<p style="color: var(--text-light); font-size: 0.9rem; padding: 10px;">Nenhum suporte ativo.</p>';
             document.getElementById('alert-list-suporte-container').innerHTML = htmlListSuporte;
 
-            // Gráfico de Linha Mensal
             const sortedKeys = Object.keys(monthlyStats).sort();
             const ctxLinePerf = document.getElementById('perfLineChart').getContext('2d');
             if (perfLineInstance) perfLineInstance.destroy();
@@ -1051,10 +1077,75 @@
             });
         }
 
-        window.renderContatos = function() {
-            const tbody = document.getElementById('contatos-body'); tbody.innerHTML = '';
+        // Função de renderização para "Clientes" (Antiga Contatos)
+        window.renderClientes = function() {
+            const tbody = document.getElementById('clientes-body'); tbody.innerHTML = '';
             window.db.contatos.forEach(c => {
                 tbody.innerHTML += `<tr><td><strong>${c.nome}</strong></td><td>${c.numero}</td><td>${c.potencial}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+            });
+        }
+
+        // FUNÇÃO TOTALMENTE NOVA: Renderização para a aba "Contatos" (Leads / CRM)
+        window.renderLeads = function() {
+            const tbody = document.getElementById('leads-body'); tbody.innerHTML = '';
+            const filterText = document.getElementById('filter-leads').value.toLowerCase();
+
+            // Lógica de Filtro e Contadores
+            let cInt = 0, cDes = 0, cSem = 0, cAgu = 0;
+            let filtered = window.db.leads.filter(l => {
+                const searchable = `${l.nome} ${l.numero} ${l.atuacao} ${l.descricao} ${l.status}`.toLowerCase();
+                return searchable.includes(filterText);
+            });
+
+            filtered.forEach(l => {
+                if(l.status === 'Interessado') cInt++;
+                else if(l.status === 'Desinteressado') cDes++;
+                else if(l.status === 'Sem Resposta') cSem++;
+                else if(l.status === 'Aguardando') cAgu++;
+            });
+
+            // Atualiza HTML dos Contadores com os Mini-Cards Executivos
+            document.getElementById('leads-counters').innerHTML = `
+                <div class="mini-card" style="border-left-color: var(--primary);">
+                    <span class="label">Total</span>
+                    <span class="value">${filtered.length}</span>
+                </div>
+                <div class="mini-card" style="border-left-color: var(--success);">
+                    <span class="label">Interessado</span>
+                    <span class="value">${cInt}</span>
+                </div>
+                <div class="mini-card" style="border-left-color: var(--danger);">
+                    <span class="label">Desinteres.</span>
+                    <span class="value">${cDes}</span>
+                </div>
+                <div class="mini-card" style="border-left-color: #64748b;">
+                    <span class="label">Sem Resp.</span>
+                    <span class="value">${cSem}</span>
+                </div>
+                <div class="mini-card" style="border-left-color: var(--accent);">
+                    <span class="label">Aguardando</span>
+                    <span class="value">${cAgu}</span>
+                </div>
+            `;
+
+            // Renderiza as linhas filtradas
+            filtered.forEach(l => {
+                let statusColor = '#64748b'; 
+                if(l.status === 'Interessado') statusColor = 'var(--success)';
+                else if(l.status === 'Desinteressado') statusColor = 'var(--danger)';
+                else if(l.status === 'Aguardando') statusColor = 'var(--accent)';
+
+                tbody.innerHTML += `<tr>
+                    <td><strong>${l.nome || '-'}</strong></td>
+                    <td>${l.numero || '-'}</td>
+                    <td>${l.atuacao || '-'}</td>
+                    <td>${l.descricao || '-'}</td>
+                    <td><span class="badge" style="background: ${statusColor}; color: white;">${l.status || '-'}</span></td>
+                    <td class="actions">
+                        <button class="btn-edit" onclick="window.editItem('leads', '${l.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn-delete" onclick="window.deleteItem('leads', '${l.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
             });
         }
 
@@ -1281,7 +1372,7 @@
         }
 
         window.openCurrentModal = function() {
-            window.editingId = null; document.getElementById('modal-title').innerHTML = `Adicionar Registro`; window.buildForm(window.currentTab); document.getElementById('modal-overlay').style.display = 'flex';
+            window.editingId = null; document.getElementById('modal-title').innerHTML = `Adicionar Registro`; window.buildForm(window.currentTab === 'clientes' ? 'contatos' : window.currentTab); document.getElementById('modal-overlay').style.display = 'flex';
         }
 
         window.closeModal = function() { document.getElementById('modal-overlay').style.display = 'none'; }
@@ -1291,15 +1382,28 @@
 
             if (type === 'contatos') {
                 html += `<div class="form-group"><label>Nome</label><input type="text" id="f-nome" required value="${data ? data.nome : ''}"></div><div class="form-group"><label>Número (WhatsApp)</label><input type="text" id="f-numero" required value="${data ? data.numero : ''}"></div><div class="form-group"><label>Potencial do Cliente</label><select id="f-potencial"><option value="Alto" ${data && data.potencial==='Alto'?'selected':''}>Alto</option><option value="Médio" ${data && data.potencial==='Médio'?'selected':''}>Médio</option><option value="Baixo" ${data && data.potencial==='Baixo'?'selected':''}>Baixo</option></select></div>`;
+            } else if (type === 'leads') { // NOVA ABA (CONTATOS/CRM)
+                html += `<div class="form-group"><label>Nome / Empresa</label><input type="text" id="f-lead-nome" required value="${data && data.nome ? data.nome : ''}"></div>
+                         <div class="form-group"><label>Número</label><input type="text" id="f-lead-numero" required value="${data && data.numero ? data.numero : ''}"></div>
+                         <div class="form-group"><label>Atuação</label><input type="text" id="f-lead-atuacao" required value="${data && data.atuacao ? data.atuacao : ''}"></div>
+                         <div class="form-group"><label>Descrição</label><input type="text" id="f-lead-descricao" required value="${data && data.descricao ? data.descricao : ''}"></div>
+                         <div class="form-group"><label>Status</label>
+                            <select id="f-lead-status">
+                                <option value="Interessado" ${data && data.status==='Interessado'?'selected':''}>Interessado</option>
+                                <option value="Desinteressado" ${data && data.status==='Desinteressado'?'selected':''}>Desinteressado</option>
+                                <option value="Sem Resposta" ${data && data.status==='Sem Resposta'?'selected':''}>Sem Resposta</option>
+                                <option value="Aguardando" ${data && data.status==='Aguardando'?'selected':''}>Aguardando</option>
+                            </select>
+                         </div>`;
             } else if (type === 'vendas') {
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Descrição</label><input type="text" id="f-descricao" required value="${data ? data.descricao : ''}"></div><div class="form-group"><label>Nome do Cliente/Fornecedor</label><input type="text" id="f-nome-fin" required value="${data && data.nome ? data.nome : ''}"></div><div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="f-valor" required value="${data ? data.valor : ''}"></div><div class="form-group"><label>Tipo</label><select id="f-tipo"><option value="Entrada" ${data && data.tipo==='Entrada'?'selected':''}>Entrada (Receita)</option><option value="Saída" ${data && data.tipo==='Saída'?'selected':''}>Saída (Despesa)</option></select></div>`;
             } else if (type === 'fila') {
                 let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
-                if(!options) options = `<option value="" disabled selected>Cadastre um contato primeiro</option>`;
+                if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro</option>`;
                 html += `<div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-projeto" required value="${data ? data.projeto : ''}"></div><div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div><div class="form-group"><label>Nota do Cliente (0 a 10 - Opcional)</label><input type="number" id="f-nota" min="0" max="10" value="${data && data.nota !== undefined ? data.nota : ''}"></div>`;
             } else if (type === 'suporte') {
                 let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
-                if(!options) options = `<option value="" disabled selected>Cadastre um contato primeiro</option>`;
+                if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro</option>`;
                 html += `<div class="form-group"><label>Cliente</label><select id="f-clienteId" required>${options}</select></div><div class="form-group"><label>Data de Início</label><input type="date" id="f-inicio" required value="${data ? data.inicio : ''}"></div><div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-prazo" required min="1" value="${data ? data.prazo : ''}"></div><div class="form-group"><label>Status</label><select id="f-status"><option value="Pendente" ${data && data.status==='Pendente'?'selected':''}>Pendente</option><option value="Concluído" ${data && data.status==='Concluído'?'selected':''}>Concluído</option></select></div>`;
             } else if (type === 'conversoes') {
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data-conv" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Ligações</label><input type="number" id="f-ligacoes" required value="${data ? data.ligacoes : '0'}"></div><div class="form-group"><label>Reuniões</label><input type="number" id="f-reunioes" required value="${data ? data.reunioes : '0'}"></div><div class="form-group"><label>Propostas Enviadas</label><input type="number" id="f-propostas" required value="${data ? data.propostas : '0'}"></div><div class="form-group"><label>Fechamentos</label><input type="number" id="f-fechamentos" required value="${data ? data.fechamentos : '0'}"></div>`;
@@ -1314,6 +1418,8 @@
 
             if (type === 'contatos') {
                 newItem.nome = document.getElementById('f-nome').value; newItem.numero = document.getElementById('f-numero').value; newItem.potencial = document.getElementById('f-potencial').value;
+            } else if (type === 'leads') {
+                newItem.nome = document.getElementById('f-lead-nome').value; newItem.numero = document.getElementById('f-lead-numero').value; newItem.atuacao = document.getElementById('f-lead-atuacao').value; newItem.descricao = document.getElementById('f-lead-descricao').value; newItem.status = document.getElementById('f-lead-status').value;
             } else if (type === 'vendas') {
                 newItem.data = document.getElementById('f-data').value; newItem.descricao = document.getElementById('f-descricao').value; newItem.nome = document.getElementById('f-nome-fin').value; newItem.valor = parseFloat(document.getElementById('f-valor').value); newItem.tipo = document.getElementById('f-tipo').value;
             } else if (type === 'fila') {
