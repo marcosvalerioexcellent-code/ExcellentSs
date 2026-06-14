@@ -290,8 +290,8 @@
                     <h2 style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">Monitoramento de Performance</h2>
                     <select id="ads-date-filter" onchange="window.renderAdsDashboard()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
                         <option value="last_7d">Últimos 7 dias</option>
-                        <option value="last_30d" selected>Últimos 30 dias</option>
-                        <option value="this_month">Este Mês</option>
+                        <option value="last_30d">Últimos 30 dias</option>
+                        <option value="this_month" selected>Este Mês</option>
                         <option value="this_year">Este Ano (Geral)</option>
                     </select>
                 </div>
@@ -1091,7 +1091,16 @@
             const containers = document.querySelectorAll('.subtab-container');
             containers.forEach(el => { el.style.display = 'block'; });
 
-            window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); window.renderAdsDashboard();
+            // Await na renderização do Ads para o PDF puxar corretamente a informação do filtro antes da captura
+            window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); await window.renderAdsDashboard();
+            
+            // Remove qualquer estado de "hover" ativo no celular antes da captura do PDF
+            Object.values(Chart.instances).forEach(chart => {
+                chart.setActiveElements([]);
+                if (chart.tooltip) chart.tooltip.setActiveElements([], {x:0, y:0});
+                chart.update('none');
+            });
+
             await new Promise(r => setTimeout(r, 700));
 
             const { jsPDF } = window.jspdf;
@@ -1129,12 +1138,14 @@
                 doc.text(lines, 14, yPos); yPos += (lines.length * 5) + 8;
             };
 
-            const addSingleChart = (id, title) => {
+            const addSingleChart = (id, title, customWidth = 182) => {
                 const imgObj = getHighQualityImage(id); if(!imgObj) return;
-                const targetWidth = 182; const targetHeight = targetWidth * imgObj.ratio;
+                const targetWidth = customWidth; 
+                const targetHeight = targetWidth * imgObj.ratio;
+                const xOffset = customWidth === 182 ? 14 : 14 + ((182 - customWidth) / 2); // Centraliza gráfico caso seja menor
                 if(yPos + targetHeight + 15 > 280) { doc.addPage(); yPos = 20; }
                 doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold"); doc.text(title, 14, yPos);
-                doc.addImage(imgObj.data, 'JPEG', 14, yPos + 5, targetWidth, targetHeight); yPos += targetHeight + 15;
+                doc.addImage(imgObj.data, 'JPEG', xOffset, yPos + 5, targetWidth, targetHeight); yPos += targetHeight + 15;
             };
 
             const addDualCharts = (id1, title1, id2, title2) => {
@@ -1175,10 +1186,10 @@
                 doc.setTextColor(saldo >= 0 ? 16 : 239, saldo >= 0 ? 185 : 68, saldo >= 0 ? 129 : 68); doc.text(window.formatCurrency(saldo), 144, yPos + 15);
                 yPos += 28;
 
-                addSingleChart('lineChart', 'Evolução de Entradas e Saídas');
+                addSingleChart('lineChart', 'Evolução de Entradas e Saídas', 140);
                 addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Descrição)', 'topSaidasChart', 'Top 8 Saídas (Por Descrição)');
-                addSingleChart('stackEntradasChart', 'Composição Mensal de Entradas');
-                addSingleChart('stackSaidasChart', 'Composição Mensal de Saídas');
+                addSingleChart('stackEntradasChart', 'Composição Mensal de Entradas', 140);
+                addSingleChart('stackSaidasChart', 'Composição Mensal de Saídas', 140);
             }
 
             if (incKpi) {
@@ -1234,7 +1245,7 @@
                 doc.text(ativos.toString(), 18, yPos + 15); doc.text(concluidos.toString(), 81, yPos + 15); doc.setTextColor(atrasados > 0 ? 239 : 16, atrasados > 0 ? 68 : 185, atrasados > 0 ? 68 : 129); doc.text(atrasados.toString(), 144, yPos + 15);
                 yPos += 28;
 
-                addSingleChart('perfLineChart', 'Monitoramento Mensal (Iniciados vs Finalizados)');
+                addSingleChart('perfLineChart', 'Monitoramento Mensal (Iniciados vs Finalizados)', 140);
             }
 
             if (incAds) {
