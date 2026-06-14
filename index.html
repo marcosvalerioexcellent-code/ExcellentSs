@@ -424,7 +424,8 @@
         </section>
 
         <section id="vendas" class="tab-content">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="vendas-counters"></div>
                 <button class="btn-export" onclick="window.openPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório Tabela</button>
             </div>
             <div class="table-container">
@@ -559,8 +560,22 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modal-view-pdf">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 id="view-pdf-title"><i class="fas fa-file-pdf" style="color: var(--accent);"></i> Visualizar Relatório</h2>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button id="btn-download-pdf-viewer" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer; transition: 0.2s;" title="Baixar PDF" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-main)'"><i class="fas fa-download"></i></button>
+                    <button class="close-modal" onclick="document.getElementById('modal-view-pdf').style.display='none'"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div style="flex-grow: 1; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+                <iframe id="pdf-viewer-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Lógica Global de Modo Escuro e Filtros
         const isDarkMode = () => document.body.classList.contains('dark-mode');
         const getGridColor = () => isDarkMode() ? '#334155' : '#e2e8f0';
         const getTooltipBg = () => isDarkMode() ? '#1e1e1e' : '#1e293b';
@@ -607,11 +622,11 @@
                     ctx.setLineDash([]);
                     
                     ctx.globalCompositeOperation = 'color';
-                    ctx.fillStyle = isDarkMode() ? '#121212' : '#ffffff'; // Preto fosco no dark mode 
+                    ctx.fillStyle = isDarkMode() ? '#121212' : '#ffffff'; 
                     ctx.fillRect(x, chartArea.top, chartArea.right - x, chartArea.bottom - chartArea.top);
                     
                     ctx.globalCompositeOperation = 'source-over';
-                    ctx.fillStyle = isDarkMode() ? 'rgba(18, 18, 18, 0.6)' : 'rgba(248, 250, 252, 0.5)'; // Cinza translúcido
+                    ctx.fillStyle = isDarkMode() ? 'rgba(18, 18, 18, 0.6)' : 'rgba(248, 250, 252, 0.5)'; 
                     ctx.fillRect(x, chartArea.top, chartArea.right - x, chartArea.bottom - chartArea.top);
 
                     ctx.restore();
@@ -1002,7 +1017,7 @@
             kpiConversaoInstance = new Chart(ctxConv, { type: 'line', data: { labels: labels, datasets: [{ data: dadosConversao, borderColor: '#8b5cf6', backgroundColor: gradConv, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: { ...optCommon, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: getTooltipBg(), filter: (t) => t.raw !== 0, callbacks: { label: (ctx) => ` ${ctx.raw}%` } } } } });
 
             const ctxSat = document.getElementById('kpiSatisfacaoChart').getContext('2d');
-            kpiSatisfacaoInstance = new Chart(ctxSat, { type: 'doughnut', data: { labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'], datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2, borderColor: isDarkMode()?'#1e293b':'#ffffff' }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12, filter: (t) => t.raw !== 0 }, modernHover: false }, cutout: '70%' } });
+            kpiSatisfacaoInstance = new Chart(ctxSat, { type: 'doughnut', data: { labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'], datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2, borderColor: isDarkMode()?'#1e1e1e':'#ffffff' }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12, filter: (t) => t.raw !== 0 }, modernHover: false }, cutout: '70%' } });
         }
 
         window.renderPerformanceDashboard = function() {
@@ -1087,10 +1102,15 @@
         window.renderVendas = function() {
             const tbody = document.getElementById('vendas-body'); tbody.innerHTML = '';
             const sorted = [...window.db.vendas].sort((a,b) => new Date(b.data) - new Date(a.data));
+            let entradas = 0; let saidas = 0;
             sorted.forEach(v => {
+                if(v.tipo === 'Entrada') entradas += parseFloat(v.valor); else saidas += parseFloat(v.valor);
                 const badgeClass = v.tipo === 'Entrada' ? 'badge-entrada' : 'badge-saida';
                 tbody.innerHTML += `<tr><td>${window.formatDate(v.data)}</td><td><strong>${v.descricao}</strong></td><td><span class="badge ${badgeClass}">${v.tipo}</span></td><td><strong>${window.formatCurrency(v.valor)}</strong></td><td class="actions"><button class="btn-edit" onclick="window.editItem('vendas', '${v.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('vendas', '${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
             });
+            const saldo = entradas - saidas;
+            const saldoColor = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
+            document.getElementById('vendas-counters').innerHTML = `<div class="mini-card" style="border-left-color: var(--success);"><span class="label">Entradas</span><span class="value" style="color: var(--success);">${window.formatCurrency(entradas)}</span></div><div class="mini-card" style="border-left-color: var(--danger);"><span class="label">Saídas</span><span class="value" style="color: var(--danger);">${window.formatCurrency(saidas)}</span></div><div class="mini-card" style="border-left-color: ${saldoColor};"><span class="label">Saldo Atual</span><span class="value" style="color: ${saldoColor};">${window.formatCurrency(saldo)}</span></div>`;
         }
 
         window.renderFila = function() {
@@ -1171,11 +1191,9 @@
 
             if(!incFin && !incKpi && !incDes && !incAds) { alert('Selecione pelo menos um módulo para exportar.'); btn.innerHTML = originalText; btn.disabled = false; return; }
 
-            // Configuração do Filtro Global para o PDF
             window.pdfFilterStart = document.getElementById('pdf-dash-start').value;
             window.pdfFilterEnd = document.getElementById('pdf-dash-end').value;
 
-            // Desativa temporariamente o dark mode para os gráficos gerarem fundo branco perfeito
             const wasDark = isDarkMode();
             if(wasDark) {
                 document.body.classList.remove('dark-mode');
@@ -1249,7 +1267,6 @@
                 if(yPos + 35 > 280) { doc.addPage(); yPos = 20; }
             };
 
-            // Inteligência para preservar Proporção de imagens tipo Doughnut
             const addDualCharts = (id1, title1, id2, title2, targetWidth = 85, forceHeight = null) => {
                 const imgObj1 = getHighQualityImage(id1); const imgObj2 = getHighQualityImage(id2);
                 if(!imgObj1 && !imgObj2) return;
@@ -1438,18 +1455,15 @@
             document.getElementById(`subtab-${window.currentSubTab}`).style.display = 'block';
             Chart.defaults.animation = true; 
 
-            // Limpa o filtro Global para voltar a Dashboard ao normal
             window.pdfFilterStart = null;
             window.pdfFilterEnd = null;
 
-            // Restaura o tema dark caso estava ativado antes de gerar
             if(wasDark) {
                 document.body.classList.add('dark-mode');
                 Chart.defaults.color = '#94a3b8';
                 Chart.defaults.borderColor = '#334155';
             }
 
-            // Renderiza o visual de volta com as cores / dados não filtrados
             window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); window.renderAdsDashboard();
 
             const pageCount = doc.internal.getNumberOfPages();
@@ -1458,8 +1472,12 @@
                 doc.text(`Sistema de Gestão Executiva Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10);
             }
 
-            doc.save('Relatorio_Executivo_Avancado.pdf');
+            const pdfBlobUrl = doc.output('bloburl');
+            document.getElementById('pdf-viewer-frame').src = pdfBlobUrl;
+            document.getElementById('view-pdf-title').innerHTML = '<i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Executivo Dashboard';
+            document.getElementById('btn-download-pdf-viewer').onclick = function() { doc.save('Relatorio_Executivo_Avancado.pdf'); };
             document.getElementById('modal-pdf-dash').style.display = 'none';
+            document.getElementById('modal-view-pdf').style.display = 'flex';
             btn.innerHTML = originalText; btn.disabled = false;
         }
 
@@ -1507,7 +1525,12 @@
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text(`Gerado pelo Sistema Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10); }
 
-            doc.save('Relatorio_Financeiro_Tabela_Excellent_Services.pdf'); document.getElementById('modal-pdf').style.display = 'none';
+            const pdfBlobUrl = doc.output('bloburl');
+            document.getElementById('pdf-viewer-frame').src = pdfBlobUrl;
+            document.getElementById('view-pdf-title').innerHTML = '<i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Financeiro (Tabela)';
+            document.getElementById('btn-download-pdf-viewer').onclick = function() { doc.save('Relatorio_Financeiro_Tabela_Excellent_Services.pdf'); };
+            document.getElementById('modal-pdf').style.display = 'none';
+            document.getElementById('modal-view-pdf').style.display = 'flex';
         }
 
         window.openCurrentModal = function() {
