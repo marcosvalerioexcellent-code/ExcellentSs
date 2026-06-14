@@ -290,8 +290,8 @@
                     <h2 style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">Monitoramento de Performance</h2>
                     <select id="ads-date-filter" onchange="window.renderAdsDashboard()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
                         <option value="last_7d">Últimos 7 dias</option>
-                        <option value="last_30d">Últimos 30 dias</option>
-                        <option value="this_month" selected>Este Mês</option>
+                        <option value="last_30d" selected>Últimos 30 dias</option>
+                        <option value="this_month">Este Mês</option>
                         <option value="this_year">Este Ano (Geral)</option>
                     </select>
                 </div>
@@ -537,13 +537,12 @@
     </div>
 
     <script>
-        // PLUGIN INTERATIVO DO CHART.JS: Linha Cruzada e Efeito Foco/Desaturado (Consertado ordem para não apagar a legenda)
+        // PLUGIN INTERATIVO DO CHART.JS: Linha Cruzada e Efeito Foco/Desaturado 
         const modernHoverPlugin = {
             id: 'modernHover',
-            // Desenhado ANTES da tooltip ser processada na tela (Para a legenda ficar intacta em cima do filtro)
             beforeTooltipDraw: (chart) => {
                 if (chart.config.type !== 'line') return; 
-                if (chart.config.options?.plugins?.modernHover === false) return; // Trava de segurança para gráficos mistos
+                if (chart.config.options?.plugins?.modernHover === false) return; 
                 
                 if (chart.tooltip?._active?.length) {
                     const x = chart.tooltip._active[0].element.x;
@@ -552,7 +551,6 @@
                     
                     ctx.save();
                     
-                    // Desenha a linha sutil cruzando o gráfico
                     ctx.beginPath();
                     ctx.moveTo(x, chartArea.top);
                     ctx.lineTo(x, chartArea.bottom);
@@ -562,7 +560,6 @@
                     ctx.stroke();
                     ctx.setLineDash([]);
                     
-                    // Efeito: O lado direito fica "Preto e Branco" e levemente esmaecido
                     ctx.globalCompositeOperation = 'color';
                     ctx.fillStyle = '#ffffff'; 
                     ctx.fillRect(x, chartArea.top, chartArea.right - x, chartArea.bottom - chartArea.top);
@@ -612,10 +609,17 @@
         let adsGastoInstance = null; let adsCliquesInstance = null; let adsImpressoesInstance = null;
         let adsGastoMesInstance = null; let adsCliquesMesInstance = null; let adsImpressoesMesInstance = null;
 
+        // Adicionado filtro na configuração global para não mostrar valores iguais a 0 no Tooltip
         const getLineChartOptions = () => ({
             maintainAspectRatio: false, responsive: true,
             interaction: { mode: 'index', intersect: false }, 
-            plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b', bodySpacing: 6, titleFont: {size: 13} } }, 
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                    padding: 12, backgroundColor: '#1e293b', bodySpacing: 6, titleFont: {size: 13},
+                    filter: function(tooltipItem) { return tooltipItem.raw !== 0; }
+                } 
+            }, 
             scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } },
             elements: { point: { radius: 2, hoverRadius: 8, hoverBorderWidth: 3, hoverBorderColor: '#ffffff' } } 
         });
@@ -800,8 +804,6 @@
             if (lineChartInstance) lineChartInstance.destroy(); if (mixedChartInstance) mixedChartInstance.destroy();
 
             const lineOpt = getLineChartOptions();
-            
-            // Força a desativação do efeito hover interativo em gráficos que contém barras.
             const mixedOpt = getLineChartOptions();
             if(!mixedOpt.plugins) mixedOpt.plugins = {};
             mixedOpt.plugins.modernHover = false; 
@@ -827,7 +829,7 @@
 
             const barOpt = { 
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b', callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, 
+                plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b', filter: (t) => t.raw !== 0, callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, 
                 scales: { x: { grid: { color: '#e2e8f0' } }, y: { grid: { display: false } } } 
             };
 
@@ -836,17 +838,20 @@
 
             const arrDescE = Array.from(catEntradas); const arrDescS = Array.from(catSaidas);
 
+            // Filtrando direto na fonte para nem aparecer na legenda caso a categoria esteja 100% zerada
             const stackDataE = arrDescE.map(desc => {
-                return { label: desc, backgroundColor: window.stringToColor(desc), data: data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { if(v.data && v.data.startsWith(k) && v.tipo === 'Entrada' && (v.descricao||'Outros') === desc) sum += parseFloat(v.valor); }); return sum; }) };
-            });
+                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { if(v.data && v.data.startsWith(k) && v.tipo === 'Entrada' && (v.descricao||'Outros') === desc) sum += parseFloat(v.valor); }); return sum; });
+                return { label: desc, backgroundColor: window.stringToColor(desc), data: dataArr };
+            }).filter(d => d.data.some(val => val > 0));
 
             const stackDataS = arrDescS.map(desc => {
-                return { label: desc, backgroundColor: window.stringToColor(desc), data: data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { if(v.data && v.data.startsWith(k) && v.tipo === 'Saída' && (v.descricao||'Outros') === desc) sum += parseFloat(v.valor); }); return sum; }) };
-            });
+                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { if(v.data && v.data.startsWith(k) && v.tipo === 'Saída' && (v.descricao||'Outros') === desc) sum += parseFloat(v.valor); }); return sum; });
+                return { label: desc, backgroundColor: window.stringToColor(desc), data: dataArr };
+            }).filter(d => d.data.some(val => val > 0));
 
             const stackOpt = {
                 responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: {size: 11} } }, tooltip: { padding: 12, backgroundColor: '#1e293b' }, modernHover: false },
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: {size: 11} } }, tooltip: { padding: 12, backgroundColor: '#1e293b', filter: (t) => t.raw !== 0 }, modernHover: false },
                 scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: '#e2e8f0' } } }
             };
 
@@ -921,10 +926,10 @@
             kpiPropostasInstance = new Chart(ctxProp, { type: 'line', data: { labels: labels, datasets: [{ data: dadosPropostas, borderColor: '#3b82f6', backgroundColor: gradProp, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#3b82f6' }] }, options: optCommon });
 
             const ctxConv = document.getElementById('kpiConversaoChart').getContext('2d'); let gradConv = ctxConv.createLinearGradient(0, 0, 0, 200); gradConv.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradConv.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
-            kpiConversaoInstance = new Chart(ctxConv, { type: 'line', data: { labels: labels, datasets: [{ data: dadosConversao, borderColor: '#8b5cf6', backgroundColor: gradConv, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: { ...optCommon, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b', callbacks: { label: (ctx) => ` ${ctx.raw}%` } } } } });
+            kpiConversaoInstance = new Chart(ctxConv, { type: 'line', data: { labels: labels, datasets: [{ data: dadosConversao, borderColor: '#8b5cf6', backgroundColor: gradConv, fill: true, tension: 0.35, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: { ...optCommon, plugins: { legend: { display: false }, tooltip: { padding: 11, backgroundColor: '#1e293b', filter: (t) => t.raw !== 0, callbacks: { label: (ctx) => ` ${ctx.raw}%` } } } } });
 
             const ctxSat = document.getElementById('kpiSatisfacaoChart').getContext('2d');
-            kpiSatisfacaoInstance = new Chart(ctxSat, { type: 'doughnut', data: { labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'], datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12 }, modernHover: false }, cutout: '70%' } });
+            kpiSatisfacaoInstance = new Chart(ctxSat, { type: 'doughnut', data: { labels: ['Satisfeito (8-10)', 'Parcial (5-7)', 'Insatisfeito (0-4)'], datasets: [{ data: [satisfeito, parcial, insatisfeito], backgroundColor: ['#10b981', '#d97706', '#ef4444'], borderWidth: 2 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { padding: 12, filter: (t) => t.raw !== 0 }, modernHover: false }, cutout: '70%' } });
         }
 
         window.renderPerformanceDashboard = function() {
@@ -1091,10 +1096,8 @@
             const containers = document.querySelectorAll('.subtab-container');
             containers.forEach(el => { el.style.display = 'block'; });
 
-            // Await na renderização do Ads para o PDF puxar corretamente a informação do filtro antes da captura
             window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); await window.renderAdsDashboard();
             
-            // Remove qualquer estado de "hover" ativo no celular antes da captura do PDF
             Object.values(Chart.instances).forEach(chart => {
                 chart.setActiveElements([]);
                 if (chart.tooltip) chart.tooltip.setActiveElements([], {x:0, y:0});
@@ -1138,12 +1141,11 @@
                 doc.text(lines, 14, yPos); yPos += (lines.length * 5) + 8;
             };
 
-            // Nova função para evitar quebra feia das caixas com valores (entradas, saidas, kpis)
             const checkSpaceForBoxes = () => {
                 if(yPos + 35 > 280) { doc.addPage(); yPos = 20; }
             };
 
-            // Agora todos os gráficos serão processados em duplas do tamanho 85 (mesmo tamanho do Top 8)
+            // Ajustado o limite de espaço para 288 (tamanho max folha A4 é 297mm) e reduzida folga de Y
             const addDualCharts = (id1, title1, id2, title2) => {
                 const imgObj1 = getHighQualityImage(id1); const imgObj2 = getHighQualityImage(id2);
                 if(!imgObj1 && !imgObj2) return;
@@ -1152,8 +1154,7 @@
                 const maxRatio = Math.max(imgObj1 ? imgObj1.ratio : 0, imgObj2 ? imgObj2.ratio : 0);
                 const targetHeight = targetWidth * maxRatio;
                 
-                // Quebra dinâmica respeitando se há espaço
-                if(yPos + targetHeight + 15 > 280) { doc.addPage(); yPos = 20; }
+                if(yPos + targetHeight + 10 > 288) { doc.addPage(); yPos = 20; }
                 
                 doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold");
                 
@@ -1165,7 +1166,7 @@
                     doc.text(title2, 105, yPos); 
                     doc.addImage(imgObj2.data, 'JPEG', 105, yPos + 5, targetWidth, targetWidth * imgObj2.ratio); 
                 }
-                yPos += targetHeight + 15;
+                yPos += targetHeight + 12; 
             };
 
             if (incFin) {
@@ -1195,7 +1196,6 @@
                 doc.setTextColor(saldo >= 0 ? 16 : 239, saldo >= 0 ? 185 : 68, saldo >= 0 ? 129 : 68); doc.text(window.formatCurrency(saldo), 144, yPos + 15);
                 yPos += 28;
 
-                // Gráficos financeiros sempre em duplas e do mesmo tamanho
                 addDualCharts('lineChart', 'Evolução Financeira', 'mixedChart', 'Entradas x Saídas');
                 addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Descrição)', 'topSaidasChart', 'Top 8 Saídas (Por Descrição)');
                 addDualCharts('stackEntradasChart', 'Composição Mensal (Entradas)', 'stackSaidasChart', 'Composição Mensal (Saídas)');
@@ -1227,7 +1227,6 @@
                 doc.text(`${mediaGeralEntrega} dias`, 18, yPos + 15); doc.text(window.formatCurrency(ticketMedioGeral), 111, yPos + 15);
                 yPos += 28;
 
-                // Gráficos KPI sempre em duplas e do mesmo tamanho
                 addDualCharts('kpiReceitaChart', 'Receita Bruta (Mês a Mês)', 'kpiTicketChart', 'Ticket Médio (Mês a Mês)');
                 addDualCharts('kpiTempoChart', 'Tempo de Entrega Mensal', 'kpiConversaoChart', 'Taxa de Conversão (%)');
                 addDualCharts('kpiPropostasChart', 'Propostas Enviadas (Mês)', 'kpiSatisfacaoChart', 'Nível de Satisfação (NPS)');
@@ -1258,7 +1257,6 @@
                 doc.text(ativos.toString(), 18, yPos + 15); doc.text(concluidos.toString(), 81, yPos + 15); doc.setTextColor(atrasados > 0 ? 239 : 16, atrasados > 0 ? 68 : 185, atrasados > 0 ? 68 : 129); doc.text(atrasados.toString(), 144, yPos + 15);
                 yPos += 28;
 
-                // Sendo um gráfico único aqui, posicionamos pela função em dupla (ele se alinha naturalmente à esquerda com tamanho 85)
                 addDualCharts('perfLineChart', 'Monitoramento (Iniciados vs Finalizados)', null, null);
             }
 
@@ -1274,10 +1272,19 @@
                 
                 const ctrReal = iVal > 0 ? ((cVal/iVal)*100).toFixed(2) : 0;
                 const cpcReal = cVal > 0 ? (gVal/cVal).toFixed(2) : 0;
+                const cpmReal = iVal > 0 ? ((gVal/iVal)*1000).toFixed(2) : 0;
 
-                let analiseAds = `Referente à aquisição de tráfego, o sistema computou um gasto acumulado no período filtrado de ${gastoText}, proporcionando ${impText} impressões de visibilidade e ${clqText} cliques. O CTR médio global é de ${ctrReal}% e o Custo Por Clique (CPC) fechou a R$ ${cpcReal}. `;
-                if(ctrReal > 0 && ctrReal < 1.0) analiseAds += `Alerta de Performance (CTR Baixo): O índice de cliques abaixo de 1% sinaliza fadiga de público ou criativos pouco atrativos. O investimento necessita de testes A/B urgentes para baratear o custo por lead.`;
-                else if (ctrReal >= 1.0) analiseAds += `O índice de atratividade (CTR) demonstra vitalidade saudável na comunicação dos anúncios com a audiência.`;
+                let analiseAds = `Análise Estratégica de Tráfego Pago: No período avaliado, a operação consumiu ${gastoText} em mídia, destravando ${impText} impressões com um CPM (Custo por Mil) médio de R$ ${cpmReal}. Esse volume de exposição no topo de funil gerou ${clqText} cliques com Custo Por Clique (CPC) de R$ ${cpcReal}. `;
+
+                if(ctrReal > 0 && ctrReal < 1.0) {
+                    analiseAds += `Diagnóstico Crítico (CTR: ${ctrReal}%): O índice de atratividade está inferior à margem saudável de 1%. Isso indica "cegueira de banner" ou desalinhamento entre o criativo e a segmentação da audiência. Recomendação Tática: Pausar criativos com CTR inferior a 0.5% e testar novos ganchos visuais (hooks) nos primeiros 3 segundos para baratear o tráfego de atração.`;
+                } else if (ctrReal >= 1.0 && ctrReal < 2.0) {
+                    analiseAds += `Diagnóstico de Escala (CTR: ${ctrReal}%): As campanhas apresentam boa aderência e os custos de atenção estão estabilizados. Recomendação Tática: Iniciar a fase de escala vertical (aumentar o orçamento em 20% a cada 48h) nos anúncios campeões (winning ads) e reforçar campanhas de remarketing para resgatar visitantes retidos no meio do funil.`;
+                } else if (ctrReal >= 2.0) {
+                    analiseAds += `Diagnóstico de Alta Performance (CTR: ${ctrReal}%): Excelente engajamento! O custo de atenção está altamente eficiente, indicando forte fit entre oferta e público. Recomendação Tática: Aproveitar o baixo custo de aquisição para tracionar o máximo de volume. Direcionar o orçamento de guerra para os conjuntos que geraram este CTR e iniciar testes A/B nas páginas de destino para maximizar o ROAS.`;
+                } else {
+                    analiseAds += `Aguardando maior acúmulo de dados pelo pixel e inteligência de máquina (learning phase) para consolidação de métricas e sugestões avançadas de otimização de campanhas.`;
+                }
 
                 addParagraph(analiseAds);
 
@@ -1289,7 +1296,7 @@
                 doc.text(gastoText, 18, yPos + 15); doc.text(clqText, 81, yPos + 15); doc.text(impText, 144, yPos + 15);
                 yPos += 28;
 
-                // Gráficos Ads sempre em duplas
+                // Agora com a quebra milimétrica, as 3 duplas ficarão em uma só página!
                 addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal');
                 addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsCliquesMesChart', 'Cliques Mensais (Geral)');
                 addDualCharts('adsImpressoesChart', 'Impressões Diárias', 'adsImpressoesMesChart', 'Impressões Mensais (Geral)');
