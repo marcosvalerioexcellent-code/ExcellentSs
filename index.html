@@ -30,11 +30,12 @@
         }
 
         body.dark-mode {
-            /* Mantemos o --primary e --secondary iguais ao root para a barra lateral não mudar */
-            --bg-color: #121212; /* Preto fosco para o fundo da página */
-            --surface: #1e1e1e;  /* Preto fosco para os cards e formulários */
+            --primary: #050505; /* Preto extra profundo para a barra lateral */
+            --secondary: #94a3b8;
+            --bg-color: #121212; /* Fundo principal preto fosco */
+            --surface: #1e1e1e;  /* Cards em cinza escuro sutil */
             --text-main: #f8fafc;
-            --text-light: #94a3b8;
+            --text-light: #cbd5e1;
             --border: #2d2d2d;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
         }
@@ -159,7 +160,7 @@
         .form-group input[type="file"] { padding: 6px; }
         .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1); }
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-submit:hover { background: #0f172a; }
+        .btn-submit:hover { background: var(--border); color: var(--text-main); }
 
         .filter-checkbox-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; background: var(--bg-color); padding: 15px; border-radius: var(--radius); border: 1px solid var(--border); transition: 0.3s; }
         .filter-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.95rem; color: var(--text-main); font-weight: 500; transition: 0.2s; }
@@ -562,7 +563,7 @@
         // Lógica Global de Modo Escuro e Filtros
         const isDarkMode = () => document.body.classList.contains('dark-mode');
         const getGridColor = () => isDarkMode() ? '#334155' : '#e2e8f0';
-        const getTooltipBg = () => isDarkMode() ? '#0f172a' : '#1e293b';
+        const getTooltipBg = () => isDarkMode() ? '#1e1e1e' : '#1e293b';
         
         window.pdfFilterStart = null;
         window.pdfFilterEnd = null;
@@ -606,11 +607,11 @@
                     ctx.setLineDash([]);
                     
                     ctx.globalCompositeOperation = 'color';
-                    ctx.fillStyle = isDarkMode() ? '#0f172a' : '#ffffff'; 
+                    ctx.fillStyle = isDarkMode() ? '#121212' : '#ffffff'; // Preto fosco no dark mode 
                     ctx.fillRect(x, chartArea.top, chartArea.right - x, chartArea.bottom - chartArea.top);
                     
                     ctx.globalCompositeOperation = 'source-over';
-                    ctx.fillStyle = isDarkMode() ? 'rgba(30, 41, 59, 0.5)' : 'rgba(248, 250, 252, 0.5)';
+                    ctx.fillStyle = isDarkMode() ? 'rgba(18, 18, 18, 0.6)' : 'rgba(248, 250, 252, 0.5)'; // Cinza translúcido
                     ctx.fillRect(x, chartArea.top, chartArea.right - x, chartArea.bottom - chartArea.top);
 
                     ctx.restore();
@@ -665,7 +666,7 @@
                 } 
             }, 
             scales: { x: { grid: { display: false } }, y: { grid: { color: getGridColor() } } },
-            elements: { point: { radius: 2, hoverRadius: 8, hoverBorderWidth: 3, hoverBorderColor: isDarkMode() ? '#0f172a' : '#ffffff' } } 
+            elements: { point: { radius: 2, hoverRadius: 8, hoverBorderWidth: 3, hoverBorderColor: isDarkMode() ? '#121212' : '#ffffff' } } 
         });
 
         async function loadDataFromFirebase() {
@@ -1248,7 +1249,7 @@
                 if(yPos + 35 > 280) { doc.addPage(); yPos = 20; }
             };
 
-            // Nova função addDualCharts com tamanho travado e centralizado para não crescer no PDF
+            // Inteligência para preservar Proporção de imagens tipo Doughnut
             const addDualCharts = (id1, title1, id2, title2, targetWidth = 85, forceHeight = null) => {
                 const imgObj1 = getHighQualityImage(id1); const imgObj2 = getHighQualityImage(id2);
                 if(!imgObj1 && !imgObj2) return;
@@ -1260,17 +1261,26 @@
                 
                 doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold");
                 
-                // Cálculo de centralização mantendo o alinhamento em duas colunas iguais
                 const xOffset1 = 14 + ((85 - targetWidth) / 2);
                 const xOffset2 = 105 + ((85 - targetWidth) / 2);
 
                 if(imgObj1) { 
                     doc.text(title1, xOffset1, yPos); 
-                    doc.addImage(imgObj1.data, 'JPEG', xOffset1, yPos + 5, targetWidth, targetHeight); 
+                    let w = targetWidth; let h = forceHeight ? forceHeight : (w * imgObj1.ratio);
+                    let dx = xOffset1;
+                    if (forceHeight && imgObj1.ratio > 0.8) {
+                        h = forceHeight; w = h / imgObj1.ratio; dx = xOffset1 + (targetWidth - w) / 2;
+                    }
+                    doc.addImage(imgObj1.data, 'JPEG', dx, yPos + 5, w, h); 
                 }
                 if(imgObj2) { 
                     doc.text(title2, xOffset2, yPos); 
-                    doc.addImage(imgObj2.data, 'JPEG', xOffset2, yPos + 5, targetWidth, targetHeight); 
+                    let w = targetWidth; let h = forceHeight ? forceHeight : (w * imgObj2.ratio);
+                    let dx = xOffset2;
+                    if (forceHeight && imgObj2.ratio > 0.8) {
+                        h = forceHeight; w = h / imgObj2.ratio; dx = xOffset2 + (targetWidth - w) / 2;
+                    }
+                    doc.addImage(imgObj2.data, 'JPEG', dx, yPos + 5, w, h); 
                 }
                 yPos += targetHeight + 12; 
             };
@@ -1347,7 +1357,6 @@
                 doc.text(`${mediaGeralEntrega} dias`, 18, yPos + 15); doc.text(window.formatCurrency(ticketMedioGeral), 111, yPos + 15);
                 yPos += 28;
 
-                // Redução drástica e padronização (75x45)
                 addDualCharts('kpiReceitaChart', 'Receita Bruta (Mês a Mês)', 'kpiTicketChart', 'Ticket Médio (Mês a Mês)', 75, 45);
                 addDualCharts('kpiTempoChart', 'Tempo de Entrega Mensal', 'kpiConversaoChart', 'Taxa de Conversão (%)', 75, 45);
                 addDualCharts('kpiPropostasChart', 'Propostas Enviadas (Mês)', 'kpiSatisfacaoChart', 'Nível de Satisfação (NPS)', 75, 45);
@@ -1420,7 +1429,6 @@
                 doc.text(gastoText, 18, yPos + 15); doc.text(clqText, 81, yPos + 15); doc.text(impText, 144, yPos + 15);
                 yPos += 28;
 
-                // Redução drástica e padronização (75x45)
                 addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal', 75, 45);
                 addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsCliquesMesChart', 'Cliques Mensais (Geral)', 75, 45);
                 addDualCharts('adsImpressoesChart', 'Impressões Diárias', 'adsImpressoesMesChart', 'Impressões Mensais (Geral)', 75, 45);
