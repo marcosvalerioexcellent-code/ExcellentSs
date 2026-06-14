@@ -1138,25 +1138,33 @@
                 doc.text(lines, 14, yPos); yPos += (lines.length * 5) + 8;
             };
 
-            const addSingleChart = (id, title, customWidth = 182) => {
-                const imgObj = getHighQualityImage(id); if(!imgObj) return;
-                const targetWidth = customWidth; 
-                const targetHeight = targetWidth * imgObj.ratio;
-                const xOffset = customWidth === 182 ? 14 : 14 + ((182 - customWidth) / 2); // Centraliza gráfico caso seja menor
-                if(yPos + targetHeight + 15 > 280) { doc.addPage(); yPos = 20; }
-                doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold"); doc.text(title, 14, yPos);
-                doc.addImage(imgObj.data, 'JPEG', xOffset, yPos + 5, targetWidth, targetHeight); yPos += targetHeight + 15;
+            // Nova função para evitar quebra feia das caixas com valores (entradas, saidas, kpis)
+            const checkSpaceForBoxes = () => {
+                if(yPos + 35 > 280) { doc.addPage(); yPos = 20; }
             };
 
+            // Agora todos os gráficos serão processados em duplas do tamanho 85 (mesmo tamanho do Top 8)
             const addDualCharts = (id1, title1, id2, title2) => {
                 const imgObj1 = getHighQualityImage(id1); const imgObj2 = getHighQualityImage(id2);
                 if(!imgObj1 && !imgObj2) return;
-                const targetWidth = 85; const maxRatio = Math.max(imgObj1 ? imgObj1.ratio : 0, imgObj2 ? imgObj2.ratio : 0);
+                
+                const targetWidth = 85; 
+                const maxRatio = Math.max(imgObj1 ? imgObj1.ratio : 0, imgObj2 ? imgObj2.ratio : 0);
                 const targetHeight = targetWidth * maxRatio;
+                
+                // Quebra dinâmica respeitando se há espaço
                 if(yPos + targetHeight + 15 > 280) { doc.addPage(); yPos = 20; }
+                
                 doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold");
-                if(imgObj1) { doc.text(title1, 14, yPos); doc.addImage(imgObj1.data, 'JPEG', 14, yPos + 5, targetWidth, targetWidth * imgObj1.ratio); }
-                if(imgObj2) { doc.text(title2, 105, yPos); doc.addImage(imgObj2.data, 'JPEG', 105, yPos + 5, targetWidth, targetWidth * imgObj2.ratio); }
+                
+                if(imgObj1) { 
+                    doc.text(title1, 14, yPos); 
+                    doc.addImage(imgObj1.data, 'JPEG', 14, yPos + 5, targetWidth, targetWidth * imgObj1.ratio); 
+                }
+                if(imgObj2) { 
+                    doc.text(title2, 105, yPos); 
+                    doc.addImage(imgObj2.data, 'JPEG', 105, yPos + 5, targetWidth, targetWidth * imgObj2.ratio); 
+                }
                 yPos += targetHeight + 15;
             };
 
@@ -1177,6 +1185,7 @@
 
                 addParagraph(analiseFin);
 
+                checkSpaceForBoxes();
                 doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(77, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(140, yPos, 55, 20, 3, 3, 'FD');
                 doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
                 doc.text("TOTAL DE ENTRADAS", 18, yPos + 7); doc.text("TOTAL DE SAÍDAS", 81, yPos + 7); doc.text("SALDO ATUAL", 144, yPos + 7);
@@ -1186,10 +1195,10 @@
                 doc.setTextColor(saldo >= 0 ? 16 : 239, saldo >= 0 ? 185 : 68, saldo >= 0 ? 129 : 68); doc.text(window.formatCurrency(saldo), 144, yPos + 15);
                 yPos += 28;
 
-                addSingleChart('lineChart', 'Evolução de Entradas e Saídas', 140);
+                // Gráficos financeiros sempre em duplas e do mesmo tamanho
+                addDualCharts('lineChart', 'Evolução Financeira', 'mixedChart', 'Entradas x Saídas');
                 addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Descrição)', 'topSaidasChart', 'Top 8 Saídas (Por Descrição)');
-                addSingleChart('stackEntradasChart', 'Composição Mensal de Entradas', 140);
-                addSingleChart('stackSaidasChart', 'Composição Mensal de Saídas', 140);
+                addDualCharts('stackEntradasChart', 'Composição Mensal (Entradas)', 'stackSaidasChart', 'Composição Mensal (Saídas)');
             }
 
             if (incKpi) {
@@ -1210,6 +1219,7 @@
 
                 addParagraph(analiseKpi);
 
+                checkSpaceForBoxes();
                 doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 88, 20, 3, 3, 'FD'); doc.roundedRect(107, yPos, 88, 20, 3, 3, 'FD');
                 doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
                 doc.text("TEMPO MÉDIO DE ENTREGA", 18, yPos + 7); doc.text("TICKET MÉDIO GERAL", 111, yPos + 7);
@@ -1217,8 +1227,10 @@
                 doc.text(`${mediaGeralEntrega} dias`, 18, yPos + 15); doc.text(window.formatCurrency(ticketMedioGeral), 111, yPos + 15);
                 yPos += 28;
 
+                // Gráficos KPI sempre em duplas e do mesmo tamanho
                 addDualCharts('kpiReceitaChart', 'Receita Bruta (Mês a Mês)', 'kpiTicketChart', 'Ticket Médio (Mês a Mês)');
                 addDualCharts('kpiTempoChart', 'Tempo de Entrega Mensal', 'kpiConversaoChart', 'Taxa de Conversão (%)');
+                addDualCharts('kpiPropostasChart', 'Propostas Enviadas (Mês)', 'kpiSatisfacaoChart', 'Nível de Satisfação (NPS)');
             }
 
             if (incDes) {
@@ -1238,6 +1250,7 @@
 
                 addParagraph(analiseDes);
 
+                checkSpaceForBoxes();
                 doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(77, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(140, yPos, 55, 20, 3, 3, 'FD');
                 doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
                 doc.text("PROJETOS ATIVOS", 18, yPos + 7); doc.text("PROJETOS CONCLUÍDOS", 81, yPos + 7); doc.text("PROJETOS EM ATRASO", 144, yPos + 7);
@@ -1245,7 +1258,8 @@
                 doc.text(ativos.toString(), 18, yPos + 15); doc.text(concluidos.toString(), 81, yPos + 15); doc.setTextColor(atrasados > 0 ? 239 : 16, atrasados > 0 ? 68 : 185, atrasados > 0 ? 68 : 129); doc.text(atrasados.toString(), 144, yPos + 15);
                 yPos += 28;
 
-                addSingleChart('perfLineChart', 'Monitoramento Mensal (Iniciados vs Finalizados)', 140);
+                // Sendo um gráfico único aqui, posicionamos pela função em dupla (ele se alinha naturalmente à esquerda com tamanho 85)
+                addDualCharts('perfLineChart', 'Monitoramento (Iniciados vs Finalizados)', null, null);
             }
 
             if (incAds) {
@@ -1267,6 +1281,7 @@
 
                 addParagraph(analiseAds);
 
+                checkSpaceForBoxes();
                 doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(77, yPos, 55, 20, 3, 3, 'FD'); doc.roundedRect(140, yPos, 55, 20, 3, 3, 'FD');
                 doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "normal");
                 doc.text("INVESTIMENTO ADS", 18, yPos + 7); doc.text("CLIQUES TOTAIS", 81, yPos + 7); doc.text("IMPRESSÕES TOTAIS", 144, yPos + 7);
@@ -1274,8 +1289,10 @@
                 doc.text(gastoText, 18, yPos + 15); doc.text(clqText, 81, yPos + 15); doc.text(impText, 144, yPos + 15);
                 yPos += 28;
 
+                // Gráficos Ads sempre em duplas
                 addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal');
-                addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsImpressoesChart', 'Impressões Diárias');
+                addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsCliquesMesChart', 'Cliques Mensais (Geral)');
+                addDualCharts('adsImpressoesChart', 'Impressões Diárias', 'adsImpressoesMesChart', 'Impressões Mensais (Geral)');
             }
 
             containers.forEach(el => { el.style.display = 'none'; });
