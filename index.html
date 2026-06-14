@@ -30,14 +30,13 @@
         }
 
         body.dark-mode {
-            --primary: #0f172a;
-            --secondary: #94a3b8;
-            --bg-color: #0f172a;
-            --surface: #1e293b;
+            /* Mantemos o --primary e --secondary iguais ao root para a barra lateral não mudar */
+            --bg-color: #121212; /* Preto fosco para o fundo da página */
+            --surface: #1e1e1e;  /* Preto fosco para os cards e formulários */
             --text-main: #f8fafc;
-            --text-light: #cbd5e1;
-            --border: #334155;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            --text-light: #94a3b8;
+            --border: #2d2d2d;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
@@ -160,17 +159,13 @@
         .form-group input[type="file"] { padding: 6px; }
         .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1); }
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-submit:hover { background: var(--border); color: var(--text-main); }
+        .btn-submit:hover { background: #0f172a; }
 
         .filter-checkbox-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; background: var(--bg-color); padding: 15px; border-radius: var(--radius); border: 1px solid var(--border); transition: 0.3s; }
         .filter-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.95rem; color: var(--text-main); font-weight: 500; transition: 0.2s; }
         .filter-checkbox-label:hover { color: var(--accent); }
         .filter-checkbox-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
 
-        body.dark-mode .btn-export { background-color: #334155; }
-        body.dark-mode .btn-export:hover { background-color: #475569; }
-        body.dark-mode .btn-submit { background-color: #334155; }
-        body.dark-mode .btn-submit:hover { background-color: #475569; color: white;}
         body.dark-mode .close-modal { color: #f8fafc; }
         body.dark-mode .dash-nav span:hover { color: #f8fafc; }
         body.dark-mode .dash-nav span.active { color: #f8fafc; }
@@ -218,7 +213,7 @@
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div class="system-status"><span class="status-dot" id="db-status"></span> <span id="db-status-text">Conectando...</span></div>
                 
-                <button class="fab" id="btn-dark-mode" onclick="window.toggleDarkMode()" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem; margin-right: 5px;" title="Modo Escuro"><i class="fas fa-moon"></i></button>
+                <button class="fab" id="btn-dark-mode" onclick="window.toggleDarkMode()" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem; margin-right: 5px;" title="Alternar Tema"><i class="fas fa-moon"></i></button>
                 
                 <button onclick="window.toggleFullScreen()" class="fab" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem;" title="Tela Cheia"><i class="fas fa-expand" id="fullscreen-icon"></i></button>
 
@@ -755,7 +750,7 @@
                     let qs = [];
                     if (window.pdfFilterStart) qs.push(`start=${window.pdfFilterStart}`);
                     if (window.pdfFilterEnd) qs.push(`end=${window.pdfFilterEnd}`);
-                    qs.push(`preset=this_year`); // Solução fallback para api
+                    qs.push(`preset=this_year`); 
                     url += `?${qs.join('&')}`;
                     filterText = "Período Personalizado";
                 } else {
@@ -1253,25 +1248,29 @@
                 if(yPos + 35 > 280) { doc.addPage(); yPos = 20; }
             };
 
-            const addDualCharts = (id1, title1, id2, title2) => {
+            // Nova função addDualCharts com tamanho travado e centralizado para não crescer no PDF
+            const addDualCharts = (id1, title1, id2, title2, targetWidth = 85, forceHeight = null) => {
                 const imgObj1 = getHighQualityImage(id1); const imgObj2 = getHighQualityImage(id2);
                 if(!imgObj1 && !imgObj2) return;
                 
-                const targetWidth = 85; 
                 const maxRatio = Math.max(imgObj1 ? imgObj1.ratio : 0, imgObj2 ? imgObj2.ratio : 0);
-                const targetHeight = targetWidth * maxRatio;
+                const targetHeight = forceHeight ? forceHeight : (targetWidth * maxRatio);
                 
                 if(yPos + targetHeight + 10 > 288) { doc.addPage(); yPos = 20; }
                 
                 doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold");
                 
+                // Cálculo de centralização mantendo o alinhamento em duas colunas iguais
+                const xOffset1 = 14 + ((85 - targetWidth) / 2);
+                const xOffset2 = 105 + ((85 - targetWidth) / 2);
+
                 if(imgObj1) { 
-                    doc.text(title1, 14, yPos); 
-                    doc.addImage(imgObj1.data, 'JPEG', 14, yPos + 5, targetWidth, targetWidth * imgObj1.ratio); 
+                    doc.text(title1, xOffset1, yPos); 
+                    doc.addImage(imgObj1.data, 'JPEG', xOffset1, yPos + 5, targetWidth, targetHeight); 
                 }
                 if(imgObj2) { 
-                    doc.text(title2, 105, yPos); 
-                    doc.addImage(imgObj2.data, 'JPEG', 105, yPos + 5, targetWidth, targetWidth * imgObj2.ratio); 
+                    doc.text(title2, xOffset2, yPos); 
+                    doc.addImage(imgObj2.data, 'JPEG', xOffset2, yPos + 5, targetWidth, targetHeight); 
                 }
                 yPos += targetHeight + 12; 
             };
@@ -1304,9 +1303,9 @@
                 doc.setTextColor(saldo >= 0 ? 16 : 239, saldo >= 0 ? 185 : 68, saldo >= 0 ? 129 : 68); doc.text(window.formatCurrency(saldo), 144, yPos + 15);
                 yPos += 28;
 
-                addDualCharts('lineChart', 'Evolução Financeira', 'mixedChart', 'Entradas x Saídas');
-                addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Descrição)', 'topSaidasChart', 'Top 8 Saídas (Por Descrição)');
-                addDualCharts('stackEntradasChart', 'Composição Mensal (Entradas)', 'stackSaidasChart', 'Composição Mensal (Saídas)');
+                addDualCharts('lineChart', 'Evolução Financeira', 'mixedChart', 'Entradas x Saídas', 85, 55);
+                addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Descrição)', 'topSaidasChart', 'Top 8 Saídas (Por Descrição)', 85, 55);
+                addDualCharts('stackEntradasChart', 'Composição Mensal (Entradas)', 'stackSaidasChart', 'Composição Mensal (Saídas)', 85, 55);
             }
 
             if (incKpi) {
@@ -1348,9 +1347,10 @@
                 doc.text(`${mediaGeralEntrega} dias`, 18, yPos + 15); doc.text(window.formatCurrency(ticketMedioGeral), 111, yPos + 15);
                 yPos += 28;
 
-                addDualCharts('kpiReceitaChart', 'Receita Bruta (Mês a Mês)', 'kpiTicketChart', 'Ticket Médio (Mês a Mês)');
-                addDualCharts('kpiTempoChart', 'Tempo de Entrega Mensal', 'kpiConversaoChart', 'Taxa de Conversão (%)');
-                addDualCharts('kpiPropostasChart', 'Propostas Enviadas (Mês)', 'kpiSatisfacaoChart', 'Nível de Satisfação (NPS)');
+                // Redução drástica e padronização (75x45)
+                addDualCharts('kpiReceitaChart', 'Receita Bruta (Mês a Mês)', 'kpiTicketChart', 'Ticket Médio (Mês a Mês)', 75, 45);
+                addDualCharts('kpiTempoChart', 'Tempo de Entrega Mensal', 'kpiConversaoChart', 'Taxa de Conversão (%)', 75, 45);
+                addDualCharts('kpiPropostasChart', 'Propostas Enviadas (Mês)', 'kpiSatisfacaoChart', 'Nível de Satisfação (NPS)', 75, 45);
             }
 
             if (incDes) {
@@ -1381,7 +1381,7 @@
                 doc.text(ativos.toString(), 18, yPos + 15); doc.text(concluidos.toString(), 81, yPos + 15); doc.setTextColor(atrasados > 0 ? 239 : 16, atrasados > 0 ? 68 : 185, atrasados > 0 ? 68 : 129); doc.text(atrasados.toString(), 144, yPos + 15);
                 yPos += 28;
 
-                addDualCharts('perfLineChart', 'Monitoramento (Iniciados vs Finalizados)', null, null);
+                addDualCharts('perfLineChart', 'Monitoramento (Iniciados vs Finalizados)', null, null, 85, 55);
             }
 
             if (incAds) {
@@ -1420,9 +1420,10 @@
                 doc.text(gastoText, 18, yPos + 15); doc.text(clqText, 81, yPos + 15); doc.text(impText, 144, yPos + 15);
                 yPos += 28;
 
-                addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal');
-                addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsCliquesMesChart', 'Cliques Mensais (Geral)');
-                addDualCharts('adsImpressoesChart', 'Impressões Diárias', 'adsImpressoesMesChart', 'Impressões Mensais (Geral)');
+                // Redução drástica e padronização (75x45)
+                addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal', 75, 45);
+                addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsCliquesMesChart', 'Cliques Mensais (Geral)', 75, 45);
+                addDualCharts('adsImpressoesChart', 'Impressões Diárias', 'adsImpressoesMesChart', 'Impressões Mensais (Geral)', 75, 45);
             }
 
             containers.forEach(el => { el.style.display = 'none'; });
