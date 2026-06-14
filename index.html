@@ -309,7 +309,7 @@
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                     <h2 style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">Monitoramento de Performance</h2>
-                    <select id="ads-date-filter" onchange="window.renderAdsDashboard()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
+                    <select id="ads-date-filter" onchange="window.renderAdsDashboard()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
                         <option value="last_7d">Últimos 7 dias</option>
                         <option value="last_30d">Últimos 30 dias</option>
                         <option value="this_month" selected>Este Mês</option>
@@ -748,19 +748,41 @@
 
         window.renderAdsDashboard = async function() {
             try {
-                const filter = document.getElementById('ads-date-filter').value;
-                const filterText = document.getElementById('ads-date-filter').options[document.getElementById('ads-date-filter').selectedIndex].text;
+                let filterText = '';
+                let url = `/api/meta`;
+                
+                if (window.pdfFilterStart || window.pdfFilterEnd) {
+                    let qs = [];
+                    if (window.pdfFilterStart) qs.push(`start=${window.pdfFilterStart}`);
+                    if (window.pdfFilterEnd) qs.push(`end=${window.pdfFilterEnd}`);
+                    qs.push(`preset=this_year`); // Solução fallback para api
+                    url += `?${qs.join('&')}`;
+                    filterText = "Período Personalizado";
+                } else {
+                    const filter = document.getElementById('ads-date-filter').value;
+                    filterText = document.getElementById('ads-date-filter').options[document.getElementById('ads-date-filter').selectedIndex].text;
+                    url += `?preset=${filter}`;
+                }
+
                 document.getElementById('ads-title-gasto').innerText = `Total Gasto (${filterText})`;
                 
-                const res = await fetch(`/api/meta?preset=${filter}`); const apiData = await res.json();
+                const res = await fetch(url); const apiData = await res.json();
                 let labelsDiario = []; let gastosDiario = []; let cliquesDiario = []; let impressoesDiario = [];
                 let tGasto = 0; let tCliques = 0; let tImpressoes = 0;
 
+                const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                let mockMesGasto = [0,0,0,0,0,0,0,0,0,0,0,0]; let mockMesCliques = [0,0,0,0,0,0,0,0,0,0,0,0]; let mockMesImpressoes = [0,0,0,0,0,0,0,0,0,0,0,0];
+
                 if (!apiData.error && apiData.daily) {
                     apiData.daily.forEach(dia => {
-                        labelsDiario.push(window.formatDate(dia.date_start).substring(0,5)); 
-                        let gas = parseFloat(dia.spend || 0); let clq = parseInt(dia.clicks || 0); let imp = parseInt(dia.impressions || 0);
-                        gastosDiario.push(gas); tGasto += gas; cliquesDiario.push(clq); tCliques += clq; impressoesDiario.push(imp); tImpressoes += imp;
+                        if(window.dateInRange(dia.date_start)) {
+                            labelsDiario.push(window.formatDate(dia.date_start).substring(0,5)); 
+                            let gas = parseFloat(dia.spend || 0); let clq = parseInt(dia.clicks || 0); let imp = parseInt(dia.impressions || 0);
+                            gastosDiario.push(gas); tGasto += gas; cliquesDiario.push(clq); tCliques += clq; impressoesDiario.push(imp); tImpressoes += imp;
+                            
+                            let monthIndex = parseInt(dia.date_start.split('-')[1]) - 1;
+                            mockMesGasto[monthIndex] += gas; mockMesCliques[monthIndex] += clq; mockMesImpressoes[monthIndex] += imp;
+                        }
                     });
                 }
 
@@ -797,9 +819,6 @@
                 const ctxImp = document.getElementById('adsImpressoesChart').getContext('2d'); if(adsImpressoesInstance) adsImpressoesInstance.destroy();
                 let gradImp = ctxImp.createLinearGradient(0, 0, 0, 200); gradImp.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); gradImp.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
                 adsImpressoesInstance = new Chart(ctxImp, { type: 'line', data: { labels: labelsDiario, datasets: [{ data: impressoesDiario, borderColor: '#8b5cf6', backgroundColor: gradImp, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#8b5cf6' }] }, options: optCommon });
-
-                const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                const mockMesGasto = [0, 0, 0, 0, 0, tGasto, 0, 0, 0, 0, 0, 0]; const mockMesCliques = [0, 0, 0, 0, 0, tCliques, 0, 0, 0, 0, 0, 0]; const mockMesImpressoes = [0, 0, 0, 0, 0, tImpressoes, 0, 0, 0, 0, 0, 0];
 
                 const ctxGasMes = document.getElementById('adsGastoMesChart').getContext('2d'); if(adsGastoMesInstance) adsGastoMesInstance.destroy();
                 adsGastoMesInstance = new Chart(ctxGasMes, { type: 'line', data: { labels: monthLabels, datasets: [{ data: mockMesGasto, borderColor: '#ef4444', backgroundColor: gradGas, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444' }] }, options: optCommon });
