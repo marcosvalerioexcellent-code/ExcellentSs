@@ -123,7 +123,12 @@
         th, td { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 0.9rem; transition: 0.3s; }
         th { background-color: var(--bg-color); color: var(--text-light); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
         tr:hover { background-color: var(--bg-color); }
-        .actions button { background: none; border: none; cursor: pointer; margin-right: 8px; font-size: 1rem; transition: 0.2s; }
+        .actions, .actions-header { text-align: center; white-space: nowrap; }
+        .actions button { background: none; border: none; cursor: pointer; margin: 0 4px; font-size: 0.95rem; transition: 0.2s; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; padding: 0; }
+        .actions .fab { background: transparent !important; color: inherit !important; border: none !important; width: auto !important; height: auto !important; border-radius: 0 !important; box-shadow: none !important; display: inline-block !important; font-size: 0.95rem !important; padding: 0 !important; margin: 0 !important; }
+        .actions button:hover { transform: translateY(-1px); }
+        .btn-whatsapp { color: var(--text-light); } .btn-whatsapp:hover { color: var(--success); }
+        .btn-phone { color: var(--text-light); } .btn-phone:hover { color: var(--accent); }
         .btn-edit { color: var(--text-light); } .btn-edit:hover { color: var(--primary); }
         .btn-delete { color: var(--text-light); } .btn-delete:hover { color: var(--danger); }
         .btn-clip { color: var(--text-light); } .btn-clip:hover { color: var(--accent); } 
@@ -392,7 +397,7 @@
         <section id="conversoes" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Data</th><th>Ligações</th><th>Reuniões</th><th>Propostas</th><th>Fechamentos</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Data</th><th>Ligações</th><th>Reuniões</th><th>Propostas</th><th>Fechamentos</th><th class="actions-header">Ações</th></tr></thead>
                     <tbody id="conversoes-body"></tbody>
                 </table>
             </div>
@@ -401,7 +406,7 @@
         <section id="clientes" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Nome</th><th>Número</th><th>Potencial</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Nome</th><th>Número</th><th>Potencial</th><th class="actions-header">Ações</th></tr></thead>
                     <tbody id="clientes-body"></tbody>
                 </table>
             </div>
@@ -417,7 +422,7 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Nome / Empresa</th><th>Número</th><th>Atuação</th><th>Descrição</th><th>Status</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Nome / Empresa</th><th>Número</th><th>Atuação</th><th>Descrição</th><th>Status</th><th>Follow-up</th><th class="actions-header">Ações</th></tr></thead>
                     <tbody id="leads-body"></tbody>
                 </table>
             </div>
@@ -430,7 +435,7 @@
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th class="actions-header">Ações</th></tr></thead>
                     <tbody id="vendas-body"></tbody>
                 </table>
             </div>
@@ -439,7 +444,7 @@
         <section id="fila" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Projeto</th><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th>Nota</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Projeto</th><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th>Nota</th><th class="actions-header">Ações</th></tr></thead>
                     <tbody id="fila-body"></tbody>
                 </table>
             </div>
@@ -448,7 +453,7 @@
         <section id="suporte" class="tab-content">
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th class="actions-header">Ações</th></tr></thead>
                     <tbody id="suporte-body"></tbody>
                 </table>
             </div>
@@ -704,6 +709,38 @@
         window.generateId = function() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
         window.formatCurrency = function(value) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); }
         window.formatDate = function(dateString) { if(!dateString) return '-'; const [y, m, d] = dateString.split('-'); return `${d}/${m}/${y}`; }
+
+        window.normalizeSmartPhone = function(numero) {
+            let raw = (numero || '').toString().trim();
+            let digits = raw.replace(/\D/g, '');
+            if (!digits) return null;
+
+            if (raw.startsWith('+')) return digits;
+            if (raw.startsWith('00')) return digits.replace(/^00+/, '');
+            if (digits.startsWith('00')) return digits.replace(/^00+/, '');
+
+            if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) return digits;
+            if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+            if (digits.length > 11) return digits;
+
+            return null;
+        }
+
+        window.showPhoneFormatAlert = function() {
+            alert('Informe o número completo com DDD. Para números fora do Brasil, informe também o DDI do país. Exemplo: (11) 99999-9999 ou +1 202 555 0100.');
+        }
+
+        window.openSmartWhatsApp = function(numero) {
+            const phone = window.normalizeSmartPhone(numero);
+            if (!phone) { window.showPhoneFormatAlert(); return; }
+            window.open(`https://wa.me/${phone}`, '_blank');
+        }
+
+        window.openSmartPhoneDial = function(numero) {
+            const phone = window.normalizeSmartPhone(numero);
+            if (!phone) { window.showPhoneFormatAlert(); return; }
+            window.location.href = `tel:+${phone}`;
+        }
 
         window.toggleMenu = function() { document.getElementById('sidebar').classList.toggle('open'); }
         window.toggleFullScreen = function() {
@@ -1082,20 +1119,24 @@
 
         window.renderClientes = function() {
             const tbody = document.getElementById('clientes-body'); tbody.innerHTML = '';
-            window.db.contatos.forEach(c => { tbody.innerHTML += `<tr><td><strong>${c.nome}</strong></td><td>${c.numero}</td><td>${c.potencial}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`; });
+            window.db.contatos.forEach(c => {
+                const numeroEncoded = encodeURIComponent(c.numero || '');
+                tbody.innerHTML += `<tr><td><strong>${c.nome || '-'}</strong></td><td>${c.numero || '-'}</td><td>${c.potencial || '-'}</td><td class="actions"><button class="btn-whatsapp" title="Abrir WhatsApp" onclick="window.openSmartWhatsApp(decodeURIComponent('${numeroEncoded}'))"><i class="fab fa-whatsapp"></i></button><button class="btn-phone" title="Ligar" onclick="window.openSmartPhoneDial(decodeURIComponent('${numeroEncoded}'))"><i class="fas fa-phone"></i></button><button class="btn-edit" title="Editar" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" title="Excluir" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+            });
         }
 
         window.renderLeads = function() {
             const tbody = document.getElementById('leads-body'); tbody.innerHTML = '';
             const filterText = document.getElementById('filter-leads').value.toLowerCase();
-            let cInt = 0, cDes = 0, cSem = 0, cAgu = 0; let filtered = window.db.leads.filter(l => { const searchable = `${l.nome} ${l.numero} ${l.atuacao} ${l.descricao} ${l.status}`.toLowerCase(); return searchable.includes(filterText); });
+            let cInt = 0, cDes = 0, cSem = 0, cAgu = 0; let filtered = window.db.leads.filter(l => { const searchable = `${l.nome} ${l.numero} ${l.atuacao} ${l.descricao} ${l.status} ${l.followup}`.toLowerCase(); return searchable.includes(filterText); });
             filtered.forEach(l => { if(l.status === 'Interessado') cInt++; else if(l.status === 'Desinteressado') cDes++; else if(l.status === 'Sem Resposta') cSem++; else if(l.status === 'Aguardando') cAgu++; });
 
             document.getElementById('leads-counters').innerHTML = `<div class="mini-card" style="border-left-color: var(--primary);"><span class="label">Total</span><span class="value">${filtered.length}</span></div><div class="mini-card" style="border-left-color: var(--success);"><span class="label">Interessado</span><span class="value">${cInt}</span></div><div class="mini-card" style="border-left-color: var(--danger);"><span class="label">Desinteres.</span><span class="value">${cDes}</span></div><div class="mini-card" style="border-left-color: #64748b;"><span class="label">Sem Resp.</span><span class="value">${cSem}</span></div><div class="mini-card" style="border-left-color: var(--accent);"><span class="label">Aguardando</span><span class="value">${cAgu}</span></div>`;
 
             filtered.forEach(l => {
                 let statusColor = '#64748b'; if(l.status === 'Interessado') statusColor = 'var(--success)'; else if(l.status === 'Desinteressado') statusColor = 'var(--danger)'; else if(l.status === 'Aguardando') statusColor = 'var(--accent)';
-                tbody.innerHTML += `<tr><td><strong>${l.nome || '-'}</strong></td><td>${l.numero || '-'}</td><td>${l.atuacao || '-'}</td><td>${l.descricao || '-'}</td><td><span class="badge" style="background: ${statusColor}; color: white;">${l.status || '-'}</span></td><td class="actions"><button class="btn-edit" onclick="window.editItem('leads', '${l.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('leads', '${l.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+                const numeroEncoded = encodeURIComponent(l.numero || '');
+                tbody.innerHTML += `<tr><td><strong>${l.nome || '-'}</strong></td><td>${l.numero || '-'}</td><td>${l.atuacao || '-'}</td><td>${l.descricao || '-'}</td><td><span class="badge" style="background: ${statusColor}; color: white;">${l.status || '-'}</span></td><td>${window.formatDate(l.followup)}</td><td class="actions"><button class="btn-whatsapp" title="Abrir WhatsApp" onclick="window.openSmartWhatsApp(decodeURIComponent('${numeroEncoded}'))"><i class="fab fa-whatsapp"></i></button><button class="btn-phone" title="Ligar" onclick="window.openSmartPhoneDial(decodeURIComponent('${numeroEncoded}'))"><i class="fas fa-phone"></i></button><button class="btn-edit" title="Editar" onclick="window.editItem('leads', '${l.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" title="Excluir" onclick="window.deleteItem('leads', '${l.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
             });
         }
 
@@ -1543,15 +1584,16 @@
             const container = document.getElementById('modal-body'); let html = `<form onsubmit="window.handleFormSubmit(event, '${type}')">`;
 
             if (type === 'contatos') {
-                html += `<div class="form-group"><label>Nome</label><input type="text" id="f-nome" required value="${data ? data.nome : ''}"></div><div class="form-group"><label>Número (WhatsApp)</label><input type="text" id="f-numero" required value="${data ? data.numero : ''}"></div><div class="form-group"><label>Potencial do Cliente</label><select id="f-potencial"><option value="Alto" ${data && data.potencial==='Alto'?'selected':''}>Alto</option><option value="Médio" ${data && data.potencial==='Médio'?'selected':''}>Médio</option><option value="Baixo" ${data && data.potencial==='Baixo'?'selected':''}>Baixo</option></select></div>`;
+                html += `<div class="form-group"><label>Nome</label><input type="text" id="f-nome" required value="${data ? data.nome : ''}"></div><div class="form-group"><label>Número</label><input type="tel" id="f-numero" required placeholder="Ex: (11) 99999-9999 ou +1 202 555 0100" value="${data ? data.numero : ''}"><small style="color: var(--text-light); display: block; margin-top: 6px;">Obrigatório informar DDD. Para outro país, informe também o DDI.</small></div><div class="form-group"><label>Potencial do Cliente</label><select id="f-potencial"><option value="Alto" ${data && data.potencial==='Alto'?'selected':''}>Alto</option><option value="Médio" ${data && data.potencial==='Médio'?'selected':''}>Médio</option><option value="Baixo" ${data && data.potencial==='Baixo'?'selected':''}>Baixo</option></select></div>`;
             } else if (type === 'leads') { 
                 html += `<div class="form-group"><label>Nome / Empresa</label><input type="text" id="f-lead-nome" required value="${data && data.nome ? data.nome : ''}"></div>
-                         <div class="form-group"><label>Número</label><input type="text" id="f-lead-numero" required value="${data && data.numero ? data.numero : ''}"></div>
+                         <div class="form-group"><label>Número</label><input type="tel" id="f-lead-numero" required placeholder="Ex: (11) 99999-9999 ou +1 202 555 0100" value="${data && data.numero ? data.numero : ''}"><small style="color: var(--text-light); display: block; margin-top: 6px;">Obrigatório informar DDD. Para outro país, informe também o DDI.</small></div>
                          <div class="form-group"><label>Atuação</label><input type="text" id="f-lead-atuacao" required value="${data && data.atuacao ? data.atuacao : ''}"></div>
                          <div class="form-group"><label>Descrição</label><input type="text" id="f-lead-descricao" required value="${data && data.descricao ? data.descricao : ''}"></div>
                          <div class="form-group"><label>Status</label>
                             <select id="f-lead-status"><option value="Interessado" ${data && data.status==='Interessado'?'selected':''}>Interessado</option><option value="Desinteressado" ${data && data.status==='Desinteressado'?'selected':''}>Desinteressado</option><option value="Sem Resposta" ${data && data.status==='Sem Resposta'?'selected':''}>Sem Resposta</option><option value="Aguardando" ${data && data.status==='Aguardando'?'selected':''}>Aguardando</option></select>
-                         </div>`;
+                         </div>
+                         <div class="form-group"><label>Follow-up</label><input type="date" id="f-lead-followup" value="${data && data.followup ? data.followup : ''}"><small style="color: var(--text-light); display: block; margin-top: 6px;">Data para retornar a conversa com esse contato.</small></div>`;
             } else if (type === 'vendas') { 
                 html += `<div class="form-group"><label>Data</label><input type="date" id="f-data" required value="${data ? data.data : ''}"></div><div class="form-group"><label>Descrição (Centro de Custo ou Receita)</label><input type="text" id="f-descricao" required value="${data ? data.descricao : ''}"></div><div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="f-valor" required value="${data ? data.valor : ''}"></div><div class="form-group"><label>Tipo</label><select id="f-tipo"><option value="Entrada" ${data && data.tipo==='Entrada'?'selected':''}>Entrada (Receita)</option><option value="Saída" ${data && data.tipo==='Saída'?'selected':''}>Saída (Despesa)</option></select></div>`;
             } else if (type === 'fila') {
@@ -1571,9 +1613,23 @@
             e.preventDefault(); const submitBtn = e.target.querySelector('.btn-submit'); submitBtn.innerText = 'A guardar na Nuvem...'; submitBtn.disabled = true; let newItem = { id: window.editingId || window.generateId() };
 
             if (type === 'contatos') {
-                newItem.nome = document.getElementById('f-nome').value; newItem.numero = document.getElementById('f-numero').value; newItem.potencial = document.getElementById('f-potencial').value;
+                const contatoNumero = document.getElementById('f-numero').value;
+                if (!window.normalizeSmartPhone(contatoNumero)) {
+                    window.showPhoneFormatAlert();
+                    submitBtn.innerText = window.editingId ? 'Salvar Alterações' : 'Cadastrar';
+                    submitBtn.disabled = false;
+                    return;
+                }
+                newItem.nome = document.getElementById('f-nome').value; newItem.numero = contatoNumero; newItem.potencial = document.getElementById('f-potencial').value;
             } else if (type === 'leads') {
-                newItem.nome = document.getElementById('f-lead-nome').value; newItem.numero = document.getElementById('f-lead-numero').value; newItem.atuacao = document.getElementById('f-lead-atuacao').value; newItem.descricao = document.getElementById('f-lead-descricao').value; newItem.status = document.getElementById('f-lead-status').value;
+                const leadNumero = document.getElementById('f-lead-numero').value;
+                if (!window.normalizeSmartPhone(leadNumero)) {
+                    window.showPhoneFormatAlert();
+                    submitBtn.innerText = window.editingId ? 'Salvar Alterações' : 'Cadastrar';
+                    submitBtn.disabled = false;
+                    return;
+                }
+                newItem.nome = document.getElementById('f-lead-nome').value; newItem.numero = leadNumero; newItem.atuacao = document.getElementById('f-lead-atuacao').value; newItem.descricao = document.getElementById('f-lead-descricao').value; newItem.status = document.getElementById('f-lead-status').value; newItem.followup = document.getElementById('f-lead-followup').value;
             } else if (type === 'vendas') { 
                 newItem.data = document.getElementById('f-data').value; newItem.descricao = document.getElementById('f-descricao').value; newItem.valor = parseFloat(document.getElementById('f-valor').value); newItem.tipo = document.getElementById('f-tipo').value;
             } else if (type === 'fila') {
