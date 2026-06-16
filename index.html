@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -154,6 +155,11 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: var(--surface); width: 90%; max-width: 500px; border-radius: var(--radius); box-shadow: var(--shadow); padding: 30px; animation: scaleUp 0.2s; transition: 0.3s; border: 1px solid transparent; }
         .modal-large { max-width: 800px; height: 85vh; display: flex; flex-direction: column; }
+        .pdf-mobile-viewer { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; background: #f1f5f9; padding: 10px; }
+        .pdf-mobile-page { display: block; width: 100%; height: auto; margin: 0 auto 14px auto; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+        .pdf-mobile-loading, .pdf-mobile-fallback { height: 100%; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; color: var(--text-main); }
+        .pdf-mobile-fallback button { background: var(--primary); color: #fff; border: none; padding: 11px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        body.dark-mode .pdf-mobile-viewer { background: #0f172a; }
         @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-header h2 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
@@ -192,6 +198,11 @@
             .desempenho-grid > .chart-box:last-child { grid-column: span 1; }
             .dash-nav { flex-direction: column; align-items: flex-start; gap: 15px; }
             .dash-nav .btn-export { width: 100%; justify-content: center; }
+            .modal { width: 96%; padding: 18px; max-height: 94vh; }
+            .modal-large { width: 96vw; height: 88vh; padding: 14px; }
+            .modal-header { gap: 12px; margin-bottom: 12px; }
+            .modal-header h2 { font-size: 0.95rem; line-height: 1.25; }
+            .pdf-mobile-viewer { padding: 8px; }
         }
     </style>
 </head>
@@ -561,6 +572,7 @@
             </div>
             <div style="flex-grow: 1; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
                 <iframe id="contract-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+                <div id="contract-mobile-viewer" class="pdf-mobile-viewer" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -576,6 +588,7 @@
             </div>
             <div style="flex-grow: 1; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
                 <iframe id="pdf-viewer-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+                <div id="pdf-mobile-viewer" class="pdf-mobile-viewer" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -1211,12 +1224,128 @@
                 finally { btn.innerText = 'Salvar Anexo'; btn.disabled = false; }
             }; reader.readAsDataURL(file);
         }
+        window.pdfViewerUrls = window.pdfViewerUrls || {};
+
+        window.isMobilePdfDevice = function() {
+            return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        }
+
+        window.dataURLToPdfBlob = function(dataUrl) {
+            const parts = dataUrl.split(',');
+            const mimeMatch = parts[0].match(/data:(.*?);base64/);
+            const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+            const binary = atob(parts[1]);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+            return new Blob([bytes], { type: mime });
+        }
+
+        window.showPdfMobileFallback = function(container, objectUrl, fileName) {
+            container.innerHTML = `
+                <div class="pdf-mobile-fallback">
+                    <i class="fas fa-file-pdf" style="font-size: 2.2rem; color: var(--accent);"></i>
+                    <strong>Seu celular bloqueou a pré-visualização interna do PDF.</strong>
+                    <span style="font-size: 0.9rem; color: var(--text-light);">Toque no botão abaixo para abrir o PDF em uma nova aba.</span>
+                    <button type="button" class="btn-open-mobile-pdf"><i class="fas fa-up-right-from-square"></i> Abrir PDF</button>
+                </div>`;
+            const openBtn = container.querySelector('.btn-open-mobile-pdf');
+            if (openBtn) openBtn.onclick = function() { window.open(objectUrl, '_blank'); };
+        }
+
+        window.renderPdfToMobileCanvas = async function(pdfBlob, container, objectUrl, fileName) {
+            container.innerHTML = '<div class="pdf-mobile-loading"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent);"></i><strong>Carregando visualização do PDF...</strong></div>';
+
+            try {
+                if (!window.pdfjsLib) throw new Error('PDF.js não carregou.');
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                const buffer = await pdfBlob.arrayBuffer();
+                const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+                container.innerHTML = '';
+
+                const availableWidth = Math.max(260, container.clientWidth - 16);
+                const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const baseViewport = page.getViewport({ scale: 1 });
+                    const cssScale = availableWidth / baseViewport.width;
+                    const renderViewport = page.getViewport({ scale: cssScale * pixelRatio });
+
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-mobile-page';
+                    canvas.width = renderViewport.width;
+                    canvas.height = renderViewport.height;
+                    canvas.style.width = `${baseViewport.width * cssScale}px`;
+                    canvas.style.height = `${baseViewport.height * cssScale}px`;
+
+                    container.appendChild(canvas);
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport: renderViewport }).promise;
+                }
+            } catch (error) {
+                console.warn('Falha ao renderizar PDF no visualizador mobile:', error);
+                window.showPdfMobileFallback(container, objectUrl, fileName);
+            }
+        }
+
+        window.showResponsivePdf = function(options) {
+            const modal = document.getElementById(options.modalId);
+            const iframe = document.getElementById(options.iframeId);
+            const mobileViewer = document.getElementById(options.mobileViewerId);
+            const btnDownload = document.getElementById(options.downloadButtonId);
+            const titleEl = options.titleId ? document.getElementById(options.titleId) : null;
+            const fileName = options.fileName || 'documento.pdf';
+            const pdfBlob = options.blob || window.dataURLToPdfBlob(options.dataUrl);
+
+            if (titleEl && options.titleHtml) titleEl.innerHTML = options.titleHtml;
+
+            if (window.pdfViewerUrls[options.iframeId]) {
+                URL.revokeObjectURL(window.pdfViewerUrls[options.iframeId]);
+            }
+
+            const objectUrl = URL.createObjectURL(pdfBlob);
+            window.pdfViewerUrls[options.iframeId] = objectUrl;
+
+            btnDownload.onclick = function() {
+                if (typeof options.downloadAction === 'function') {
+                    options.downloadAction();
+                    return;
+                }
+                const link = document.createElement('a');
+                link.href = objectUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            if (window.isMobilePdfDevice()) {
+                iframe.removeAttribute('src');
+                iframe.style.display = 'none';
+                mobileViewer.style.display = 'block';
+                modal.style.display = 'flex';
+                window.renderPdfToMobileCanvas(pdfBlob, mobileViewer, objectUrl, fileName);
+            } else {
+                mobileViewer.style.display = 'none';
+                mobileViewer.innerHTML = '';
+                iframe.style.display = 'block';
+                iframe.src = objectUrl;
+                modal.style.display = 'flex';
+            }
+        }
+
         window.viewContract = function(id) {
             const item = window.db.fila.find(i => i.id === id); if (!item || !item.contrato) return;
-            const iframe = document.getElementById('contract-frame'); iframe.src = item.contrato;
-            const btnDownload = document.getElementById('btn-download-contract');
-            btnDownload.onclick = function() { const link = document.createElement('a'); link.href = item.contrato; link.download = `Contrato_${item.projeto.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`; link.click(); };
-            document.getElementById('modal-view-contract').style.display = 'flex';
+            const fileName = `Contrato_${item.projeto.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+            window.showResponsivePdf({
+                dataUrl: item.contrato,
+                modalId: 'modal-view-contract',
+                iframeId: 'contract-frame',
+                mobileViewerId: 'contract-mobile-viewer',
+                downloadButtonId: 'btn-download-contract',
+                fileName: fileName
+            });
         }
 
         window.openPdfModal = function() { document.getElementById('modal-pdf').style.display = 'flex'; }
@@ -1513,12 +1642,19 @@
                 doc.text(`Sistema de Gestão Executiva Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10);
             }
 
-            const pdfBlobUrl = doc.output('bloburl');
-            document.getElementById('pdf-viewer-frame').src = pdfBlobUrl;
-            document.getElementById('view-pdf-title').innerHTML = '<i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Executivo Dashboard';
-            document.getElementById('btn-download-pdf-viewer').onclick = function() { doc.save('Relatorio_Executivo_Avancado.pdf'); };
+            const pdfBlob = doc.output('blob');
+            window.showResponsivePdf({
+                blob: pdfBlob,
+                modalId: 'modal-view-pdf',
+                iframeId: 'pdf-viewer-frame',
+                mobileViewerId: 'pdf-mobile-viewer',
+                downloadButtonId: 'btn-download-pdf-viewer',
+                titleId: 'view-pdf-title',
+                titleHtml: '<i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Executivo Dashboard',
+                fileName: 'Relatorio_Executivo_Avancado.pdf',
+                downloadAction: function() { doc.save('Relatorio_Executivo_Avancado.pdf'); }
+            });
             document.getElementById('modal-pdf-dash').style.display = 'none';
-            document.getElementById('modal-view-pdf').style.display = 'flex';
             btn.innerHTML = originalText; btn.disabled = false;
         }
 
@@ -1566,12 +1702,19 @@
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text(`Gerado pelo Sistema Excellent Services - Página ${i} de ${pageCount}`, 14, doc.internal.pageSize.height - 10); }
 
-            const pdfBlobUrl = doc.output('bloburl');
-            document.getElementById('pdf-viewer-frame').src = pdfBlobUrl;
-            document.getElementById('view-pdf-title').innerHTML = '<i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Financeiro (Tabela)';
-            document.getElementById('btn-download-pdf-viewer').onclick = function() { doc.save('Relatorio_Financeiro_Tabela_Excellent_Services.pdf'); };
+            const pdfBlob = doc.output('blob');
+            window.showResponsivePdf({
+                blob: pdfBlob,
+                modalId: 'modal-view-pdf',
+                iframeId: 'pdf-viewer-frame',
+                mobileViewerId: 'pdf-mobile-viewer',
+                downloadButtonId: 'btn-download-pdf-viewer',
+                titleId: 'view-pdf-title',
+                titleHtml: '<i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório Financeiro (Tabela)',
+                fileName: 'Relatorio_Financeiro_Tabela_Excellent_Services.pdf',
+                downloadAction: function() { doc.save('Relatorio_Financeiro_Tabela_Excellent_Services.pdf'); }
+            });
             document.getElementById('modal-pdf').style.display = 'none';
-            document.getElementById('modal-view-pdf').style.display = 'flex';
         }
 
         window.openCurrentModal = function() {
