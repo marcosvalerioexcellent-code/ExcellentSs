@@ -337,9 +337,9 @@
 <body>
 
     <div id="app-intro" aria-label="Abertura do aplicativo">
-        <video id="intro-video" autoplay playsinline preload="auto">
-            <source src="splash.mp4" type="video/mp4">
-        </video>
+        <video id="intro-video" playsinline preload="auto">
+    <source src="splash.mp4" type="video/mp4">
+</video>
         <div class="intro-tap-message">Toque na tela para iniciar a abertura com som</div>
     </div>
 
@@ -1971,6 +1971,15 @@
             if (window.innerWidth > 768) {
                 document.body.classList.remove('show-intro');
                 const intro = document.getElementById('app-intro');
+                const video = document.getElementById('intro-video');
+                
+                // Força o vídeo a parar e ficar mudo no computador
+                if (video) {
+                    video.pause();
+                    video.muted = true;
+                    video.removeAttribute('src'); // Remove a fonte para o navegador descartar o arquivo
+                }
+                
                 if (intro) intro.style.display = 'none';
                 return;
             }
