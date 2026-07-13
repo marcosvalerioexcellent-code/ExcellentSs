@@ -35,10 +35,10 @@
         }
 
         body.dark-mode {
-            --primary: #050505; /* Preto extra profundo para a barra lateral */
+            --primary: #050505; 
             --secondary: #94a3b8;
-            --bg-color: #121212; /* Fundo principal preto fosco */
-            --surface: #1e1e1e;  /* Cards em cinza escuro sutil */
+            --bg-color: #121212; 
+            --surface: #1e1e1e;  
             --text-main: #f8fafc;
             --text-light: #cbd5e1;
             --border: #2d2d2d;
@@ -508,28 +508,38 @@
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
-                    <h2 style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">Comparativo de Campanhas (Gasto Diário)</h2>
+                    <h2 style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">Comparativo de Campanhas</h2>
                     <select id="ads-campaign-filter" onchange="window.updateAdsComparativoChart()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
                         <option value="all">Todas as Ativas</option>
                     </select>
                 </div>
-                <div class="charts-container" style="grid-template-columns: 1fr; margin-bottom: 25px;">
+                
+                <div class="charts-container triple">
                     <div class="chart-box">
-                        <div class="chart-wrapper large"><canvas id="adsComparativoChart"></canvas></div>
+                        <h3><i class="fas fa-money-bill-wave" style="color:#ef4444;"></i> Comparativo: Gasto</h3>
+                        <div class="chart-wrapper"><canvas id="adsComparativoGastoChart"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3><i class="fas fa-mouse-pointer" style="color:#3b82f6;"></i> Comparativo: Cliques</h3>
+                        <div class="chart-wrapper"><canvas id="adsComparativoCliquesChart"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3><i class="fas fa-eye" style="color:#8b5cf6;"></i> Comparativo: Impressões</h3>
+                        <div class="chart-wrapper"><canvas id="adsComparativoImpressoesChart"></canvas></div>
                     </div>
                 </div>
 
                 <div class="charts-container triple">
                     <div class="chart-box">
-                        <h3><i class="fas fa-money-bill-wave" style="color:#ef4444;"></i> Gasto Diário</h3>
+                        <h3><i class="fas fa-money-bill-wave" style="color:#ef4444;"></i> Gasto Diário (Geral)</h3>
                         <div class="chart-wrapper"><canvas id="adsGastoChart"></canvas></div>
                     </div>
                     <div class="chart-box">
-                        <h3><i class="fas fa-mouse-pointer" style="color:#3b82f6;"></i> Cliques Diários</h3>
+                        <h3><i class="fas fa-mouse-pointer" style="color:#3b82f6;"></i> Cliques Diários (Geral)</h3>
                         <div class="chart-wrapper"><canvas id="adsCliquesChart"></canvas></div>
                     </div>
                     <div class="chart-box">
-                        <h3><i class="fas fa-eye" style="color:#8b5cf6;"></i> Impressões Diárias</h3>
+                        <h3><i class="fas fa-eye" style="color:#8b5cf6;"></i> Impressões Diárias (Geral)</h3>
                         <div class="chart-wrapper"><canvas id="adsImpressoesChart"></canvas></div>
                     </div>
                 </div>
@@ -846,7 +856,7 @@
 
         let adsGastoInstance = null; let adsCliquesInstance = null; let adsImpressoesInstance = null;
         let adsGastoMesInstance = null; let adsCliquesMesInstance = null; let adsImpressoesMesInstance = null;
-        let adsComparativoInstance = null;
+        let adsCompGastoInstance = null; let adsCompCliquesInstance = null; let adsCompImpressoesInstance = null;
 
         const getLineChartOptions = () => ({
             maintainAspectRatio: false, responsive: true,
@@ -875,7 +885,6 @@
                 window.db.fila = fSnap.docs.map(d => d.data()); 
                 window.db.conversoes = convSnap.docs.map(d => d.data());
                 
-                // NOVO LOGICA: Auto concluir Suportes que estouraram o prazo
                 window.db.suporte = supSnap ? supSnap.docs.map(d => {
                     let data = d.data();
                     if (data.status !== 'Concluído' && data.inicio && data.prazo) {
@@ -883,10 +892,9 @@
                         const fimDate = new Date(inicioDate);
                         fimDate.setDate(fimDate.getDate() + parseInt(data.prazo));
                         const hoje = new Date(); hoje.setHours(0,0,0,0);
-                        if (hoje >= fimDate) { // Quando zerar ou passar do prazo, marca como concluído automaticamente
+                        if (hoje >= fimDate) { 
                             data.status = 'Concluído';
                             data.dataConclusao = fimDate.toISOString().split('T')[0];
-                            // Atualiza silenciosamente no banco para persistir o novo status
                             dbFirestore.collection('suporte').doc(data.id).update({
                                 status: 'Concluído',
                                 dataConclusao: data.dataConclusao
@@ -989,7 +997,7 @@
                 if (result.success) {
                     statusDot.className = checkboxElement.checked ? 'signal-dot signal-green' : 'signal-dot signal-red'; statusDot.title = checkboxElement.checked ? 'Ativo' : 'Inativo';
                     const nameText = checkboxElement.closest('tr').querySelector('strong'); if(nameText) nameText.style.color = checkboxElement.checked ? 'var(--text-main)' : 'var(--text-light)';
-                    window.renderAdsDashboard(); // Atualiza painel para o filtro e comparativo refletirem a mudança
+                    window.renderAdsDashboard();
                 } else { alert('Erro do Facebook: ' + (result.error || 'Falha ao atualizar')); checkboxElement.checked = !checkboxElement.checked; statusDot.className = originalColorClass; }
             } catch (error) { alert('Erro de conexão ao tentar alterar a campanha.'); checkboxElement.checked = !checkboxElement.checked; statusDot.className = originalColorClass; } 
             finally { checkboxElement.disabled = false; }
@@ -997,23 +1005,37 @@
         
         window.updateAdsComparativoChart = function() {
             const filterId = document.getElementById('ads-campaign-filter').value;
-            let datasetsToShow = window.adsComparativoDatasets || [];
+            
+            let dataGasto = window.adsComparativoDatasetsGasto || [];
+            let dataCliques = window.adsComparativoDatasetsCliques || [];
+            let dataImpressoes = window.adsComparativoDatasetsImpressoes || [];
 
             if (filterId !== 'all') {
-                datasetsToShow = datasetsToShow.filter(ds => ds.campaign_id === filterId);
+                dataGasto = dataGasto.filter(ds => ds.campaign_id === filterId);
+                dataCliques = dataCliques.filter(ds => ds.campaign_id === filterId);
+                dataImpressoes = dataImpressoes.filter(ds => ds.campaign_id === filterId);
             }
 
-            const ctxComp = document.getElementById('adsComparativoChart').getContext('2d');
-            if(window.adsComparativoInstance) window.adsComparativoInstance.destroy();
-
             const chartOpts = getLineChartOptions();
-            chartOpts.plugins.legend = { display: true, position: 'top', labels: { color: isDarkMode() ? '#f8fafc' : '#334155', usePointStyle: true, boxWidth: 8 } };
+            chartOpts.plugins.legend = { display: false };
             chartOpts.maintainAspectRatio = false;
 
-            window.adsComparativoInstance = new Chart(ctxComp, {
-                type: 'line',
-                data: { labels: window.adsLabelsDiario || [], datasets: datasetsToShow },
-                options: chartOpts
+            const ctxGasto = document.getElementById('adsComparativoGastoChart').getContext('2d');
+            if(window.adsCompGastoInstance) window.adsCompGastoInstance.destroy();
+            window.adsCompGastoInstance = new Chart(ctxGasto, {
+                type: 'line', data: { labels: window.adsLabelsDiario || [], datasets: dataGasto }, options: chartOpts
+            });
+
+            const ctxCliques = document.getElementById('adsComparativoCliquesChart').getContext('2d');
+            if(window.adsCompCliquesInstance) window.adsCompCliquesInstance.destroy();
+            window.adsCompCliquesInstance = new Chart(ctxCliques, {
+                type: 'line', data: { labels: window.adsLabelsDiario || [], datasets: dataCliques }, options: chartOpts
+            });
+
+            const ctxImpressoes = document.getElementById('adsComparativoImpressoesChart').getContext('2d');
+            if(window.adsCompImpressoesInstance) window.adsCompImpressoesInstance.destroy();
+            window.adsCompImpressoesInstance = new Chart(ctxImpressoes, {
+                type: 'line', data: { labels: window.adsLabelsDiario || [], datasets: dataImpressoes }, options: chartOpts
             });
         }
 
@@ -1063,7 +1085,6 @@
 
                 const tbody = document.getElementById('ads-campaign-body'); tbody.innerHTML = '';
                 
-                // NOVO: Coletando campanhas ativas para o filtro do comparativo
                 const campSelect = document.getElementById('ads-campaign-filter');
                 const selectedCampId = campSelect ? campSelect.value : 'all';
                 if (campSelect) campSelect.innerHTML = '<option value="all">Todas as Ativas</option>';
@@ -1095,37 +1116,43 @@
                     });
                 } else { tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; padding: 20px; color: var(--text-light);">Nenhuma campanha encontrada ou sem resultados no período selecionado.</td></tr>`; }
 
-                // NOVO: Gerando os datasets para o Comparativo de Campanhas
                 window.adsLabelsDiario = labelsDiario;
-                window.adsComparativoDatasets = [];
+                window.adsComparativoDatasetsGasto = [];
+                window.adsComparativoDatasetsCliques = [];
+                window.adsComparativoDatasetsImpressoes = [];
                 
                 activeCampaigns.forEach(camp => {
                     const insight = (apiData.campaign_insights || []).find(i => i.campaign_id === camp.id) || {};
-                    const campTotalSpend = parseFloat(insight.spend || 0);
-                    const ratio = tGasto > 0 ? (campTotalSpend / tGasto) : 0; // fallback proporcional para geração de gráficos executivos visuais
                     
-                    let campData = [];
+                    const campTotalSpend = parseFloat(insight.spend || 0);
+                    const ratioGasto = tGasto > 0 ? (campTotalSpend / tGasto) : 0;
+                    
+                    const campTotalClicks = parseInt(insight.clicks || 0);
+                    const ratioCliques = tCliques > 0 ? (campTotalClicks / tCliques) : 0;
+                    
+                    const campTotalImpressions = parseInt(insight.impressions || 0);
+                    const ratioImpressoes = tImpressoes > 0 ? (campTotalImpressions / tImpressoes) : 0;
+                    
+                    let campDataGasto = [];
+                    let campDataCliques = [];
+                    let campDataImpressoes = [];
+                    
                     if (apiData.daily) {
                         apiData.daily.forEach(dia => {
                             if (window.dateInRange(dia.date_start)) {
-                                let dailyTotal = parseFloat(dia.spend || 0);
-                                campData.push(dailyTotal * ratio);
+                                campDataGasto.push(parseFloat(dia.spend || 0) * ratioGasto);
+                                campDataCliques.push(parseInt(dia.clicks || 0) * ratioCliques);
+                                campDataImpressoes.push(parseInt(dia.impressions || 0) * ratioImpressoes);
                             }
                         });
                     }
                     
                     const color = window.stringToColor(camp.id);
-                    window.adsComparativoDatasets.push({
-                        label: camp.name,
-                        campaign_id: camp.id,
-                        data: campData,
-                        borderColor: color,
-                        backgroundColor: color,
-                        fill: false,
-                        tension: 0.4,
-                        borderWidth: 3,
-                        pointBackgroundColor: color
-                    });
+                    const baseConfig = { label: camp.name, campaign_id: camp.id, borderColor: color, backgroundColor: color, fill: false, tension: 0.4, borderWidth: 3, pointBackgroundColor: color };
+                    
+                    window.adsComparativoDatasetsGasto.push({ ...baseConfig, data: campDataGasto });
+                    window.adsComparativoDatasetsCliques.push({ ...baseConfig, data: campDataCliques });
+                    window.adsComparativoDatasetsImpressoes.push({ ...baseConfig, data: campDataImpressoes });
                 });
                 
                 if (typeof window.updateAdsComparativoChart === 'function') window.updateAdsComparativoChart();
@@ -1724,7 +1751,7 @@
                     }
                     doc.addImage(imgObj1.data, 'JPEG', dx, yPos + 5, w, h); 
                 }
-                if(imgObj2) { 
+                if(imgObj2 && title2) { 
                     doc.text(title2, xOffset2, yPos); 
                     let w = targetWidth; let h = forceHeight ? forceHeight : (w * imgObj2.ratio);
                     let dx = xOffset2;
@@ -1883,6 +1910,13 @@
                 addDualCharts('adsGastoChart', 'Investimento Diário', 'adsGastoMesChart', 'Investimento Mensal', 75, 45);
                 addDualCharts('adsCliquesChart', 'Cliques Diários', 'adsCliquesMesChart', 'Cliques Mensais (Geral)', 75, 45);
                 addDualCharts('adsImpressoesChart', 'Impressões Diárias', 'adsImpressoesMesChart', 'Impressões Mensais (Geral)', 75, 45);
+
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...primaryColor);
+                if(yPos > 260) { doc.addPage(); yPos = 20; }
+                doc.text("Comparativo por Campanha (Visão Diária)", 14, yPos);
+                yPos += 8;
+                addDualCharts('adsComparativoGastoChart', 'Comparativo: Gasto Diário', 'adsComparativoCliquesChart', 'Comparativo: Cliques Diários', 75, 45);
+                addDualCharts('adsComparativoImpressoesChart', 'Comparativo: Impressões Diárias', null, null, 75, 45);
             }
 
             containers.forEach(el => { el.style.display = 'none'; });
@@ -2047,7 +2081,6 @@
                 newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value;
                 const oldItem = window.db.suporte.find(i => i.id === window.editingId); 
                 
-                // NOVO: Garantir mesma logica de auto-concluir no cadastro/edição
                 if (newItem.status !== 'Concluído' && newItem.inicio && newItem.prazo) {
                     const iDate = new Date(newItem.inicio + 'T00:00:00');
                     const fDate = new Date(iDate);
@@ -2099,17 +2132,15 @@
         }
 
         window.initAppIntro = function() {
-            // Validação para rodar a intro apenas no celular (telas menores ou iguais a 768px)
             if (window.innerWidth > 768) {
                 document.body.classList.remove('show-intro');
                 const intro = document.getElementById('app-intro');
                 const video = document.getElementById('intro-video');
                 
-                // Força o vídeo a parar e ficar mudo no computador
                 if (video) {
                     video.pause();
                     video.muted = true;
-                    video.removeAttribute('src'); // Remove a fonte para o navegador descartar o arquivo
+                    video.removeAttribute('src'); 
                 }
                 
                 if (intro) intro.style.display = 'none';
@@ -2142,7 +2173,6 @@
             video.addEventListener('ended', finishOnce, { once: true });
             video.addEventListener('error', () => setTimeout(finishOnce, 300), { once: true });
 
-            // Segurança: caso o evento "ended" não dispare, encerra após 12 segundos.
             setTimeout(finishOnce, 12000);
 
             const tryPlay = () => {
