@@ -507,6 +507,18 @@
                     </table>
                 </div>
 
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <h2 style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">Comparativo de Campanhas (Gasto Diário)</h2>
+                    <select id="ads-campaign-filter" onchange="window.updateAdsComparativoChart()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
+                        <option value="all">Todas as Ativas</option>
+                    </select>
+                </div>
+                <div class="charts-container" style="grid-template-columns: 1fr; margin-bottom: 25px;">
+                    <div class="chart-box">
+                        <div class="chart-wrapper large"><canvas id="adsComparativoChart"></canvas></div>
+                    </div>
+                </div>
+
                 <div class="charts-container triple">
                     <div class="chart-box">
                         <h3><i class="fas fa-money-bill-wave" style="color:#ef4444;"></i> Gasto Diário</h3>
@@ -834,6 +846,7 @@
 
         let adsGastoInstance = null; let adsCliquesInstance = null; let adsImpressoesInstance = null;
         let adsGastoMesInstance = null; let adsCliquesMesInstance = null; let adsImpressoesMesInstance = null;
+        let adsComparativoInstance = null;
 
         const getLineChartOptions = () => ({
             maintainAspectRatio: false, responsive: true,
@@ -857,9 +870,33 @@
                     dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get()
                 ]);
                 
-                window.db.contatos = cSnap.docs.map(d => d.data()); window.db.vendas = vSnap.docs.map(d => d.data());
-                window.db.fila = fSnap.docs.map(d => d.data()); window.db.conversoes = convSnap.docs.map(d => d.data());
-                window.db.suporte = supSnap ? supSnap.docs.map(d => d.data()) : []; window.db.leads = lSnap ? lSnap.docs.map(d => d.data()) : [];
+                window.db.contatos = cSnap.docs.map(d => d.data()); 
+                window.db.vendas = vSnap.docs.map(d => d.data());
+                window.db.fila = fSnap.docs.map(d => d.data()); 
+                window.db.conversoes = convSnap.docs.map(d => d.data());
+                
+                // NOVO LOGICA: Auto concluir Suportes que estouraram o prazo
+                window.db.suporte = supSnap ? supSnap.docs.map(d => {
+                    let data = d.data();
+                    if (data.status !== 'Concluído' && data.inicio && data.prazo) {
+                        const inicioDate = new Date(data.inicio + 'T00:00:00');
+                        const fimDate = new Date(inicioDate);
+                        fimDate.setDate(fimDate.getDate() + parseInt(data.prazo));
+                        const hoje = new Date(); hoje.setHours(0,0,0,0);
+                        if (hoje >= fimDate) { // Quando zerar ou passar do prazo, marca como concluído automaticamente
+                            data.status = 'Concluído';
+                            data.dataConclusao = fimDate.toISOString().split('T')[0];
+                            // Atualiza silenciosamente no banco para persistir o novo status
+                            dbFirestore.collection('suporte').doc(data.id).update({
+                                status: 'Concluído',
+                                dataConclusao: data.dataConclusao
+                            }).catch(e => console.error(e));
+                        }
+                    }
+                    return data;
+                }) : []; 
+                
+                window.db.leads = lSnap ? lSnap.docs.map(d => d.data()) : [];
 
                 document.getElementById('db-status').classList.add('online'); document.getElementById('db-status-text').innerText = 'Online';
                 window.renderCurrentTab();
@@ -952,9 +989,32 @@
                 if (result.success) {
                     statusDot.className = checkboxElement.checked ? 'signal-dot signal-green' : 'signal-dot signal-red'; statusDot.title = checkboxElement.checked ? 'Ativo' : 'Inativo';
                     const nameText = checkboxElement.closest('tr').querySelector('strong'); if(nameText) nameText.style.color = checkboxElement.checked ? 'var(--text-main)' : 'var(--text-light)';
+                    window.renderAdsDashboard(); // Atualiza painel para o filtro e comparativo refletirem a mudança
                 } else { alert('Erro do Facebook: ' + (result.error || 'Falha ao atualizar')); checkboxElement.checked = !checkboxElement.checked; statusDot.className = originalColorClass; }
             } catch (error) { alert('Erro de conexão ao tentar alterar a campanha.'); checkboxElement.checked = !checkboxElement.checked; statusDot.className = originalColorClass; } 
             finally { checkboxElement.disabled = false; }
+        }
+        
+        window.updateAdsComparativoChart = function() {
+            const filterId = document.getElementById('ads-campaign-filter').value;
+            let datasetsToShow = window.adsComparativoDatasets || [];
+
+            if (filterId !== 'all') {
+                datasetsToShow = datasetsToShow.filter(ds => ds.campaign_id === filterId);
+            }
+
+            const ctxComp = document.getElementById('adsComparativoChart').getContext('2d');
+            if(window.adsComparativoInstance) window.adsComparativoInstance.destroy();
+
+            const chartOpts = getLineChartOptions();
+            chartOpts.plugins.legend = { display: true, position: 'top', labels: { color: isDarkMode() ? '#f8fafc' : '#334155', usePointStyle: true, boxWidth: 8 } };
+            chartOpts.maintainAspectRatio = false;
+
+            window.adsComparativoInstance = new Chart(ctxComp, {
+                type: 'line',
+                data: { labels: window.adsLabelsDiario || [], datasets: datasetsToShow },
+                options: chartOpts
+            });
         }
 
         window.renderAdsDashboard = async function() {
@@ -1002,10 +1062,28 @@
                 document.getElementById('ads-impressoes-total').innerText = tImpressoes.toLocaleString('pt-BR');
 
                 const tbody = document.getElementById('ads-campaign-body'); tbody.innerHTML = '';
+                
+                // NOVO: Coletando campanhas ativas para o filtro do comparativo
+                const campSelect = document.getElementById('ads-campaign-filter');
+                const selectedCampId = campSelect ? campSelect.value : 'all';
+                if (campSelect) campSelect.innerHTML = '<option value="all">Todas as Ativas</option>';
+                let activeCampaigns = [];
+
                 if(apiData.campaigns && apiData.campaigns.length > 0) {
                     apiData.campaigns.forEach(camp => {
                         const insight = (apiData.campaign_insights || []).find(i => i.campaign_id === camp.id) || {};
                         const isActive = camp.status === 'ACTIVE'; const statusClass = isActive ? 'signal-green' : 'signal-red'; const statusTitle = isActive ? 'Ativo' : 'Inativo';
+                        
+                        if(isActive) {
+                            activeCampaigns.push(camp);
+                            if (campSelect) {
+                                const opt = document.createElement('option');
+                                opt.value = camp.id; opt.textContent = camp.name;
+                                if(selectedCampId === camp.id) opt.selected = true;
+                                campSelect.appendChild(opt);
+                            }
+                        }
+
                         let orcamentoText = '-';
                         if (camp.daily_budget && camp.daily_budget !== "0") orcamentoText = `R$ ${(parseInt(camp.daily_budget)/100).toLocaleString('pt-BR', {minimumFractionDigits: 2})}/dia`;
                         else if (camp.lifetime_budget && camp.lifetime_budget !== "0") orcamentoText = `Vitalício`; else orcamentoText = 'Orç. Conjunto';
@@ -1016,6 +1094,42 @@
                         tbody.innerHTML += `<tr><td style="text-align: center;"><label class="toggle-switch"><input type="checkbox" ${isActive ? 'checked' : ''} onchange="window.toggleCampaignStatus('${camp.id}', this)"><span class="slider"></span></label></td><td><strong style="${!isActive ? 'color: var(--text-light);' : 'color: var(--text-main);'}">${camp.name}</strong></td><td style="text-align: center;"><span class="signal-dot ${statusClass}" title="${statusTitle}"></span></td><td>${formatNum(insight.reach)}</td><td>${formatDec(insight.frequency)}</td><td>-</td><td>${orcamentoText}</td><td><strong>${formatMoney(insight.spend)}</strong></td><td>-</td><td>${formatNum(insight.impressions)}</td><td>${formatMoney(insight.cpm)}</td><td>${formatNum(insight.inline_link_clicks)}</td><td>-</td><td>${formatMoney(insight.cpc)}</td><td>${formatPerc(insight.ctr)}</td><td>${formatNum(insight.clicks)}</td></tr>`;
                     });
                 } else { tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; padding: 20px; color: var(--text-light);">Nenhuma campanha encontrada ou sem resultados no período selecionado.</td></tr>`; }
+
+                // NOVO: Gerando os datasets para o Comparativo de Campanhas
+                window.adsLabelsDiario = labelsDiario;
+                window.adsComparativoDatasets = [];
+                
+                activeCampaigns.forEach(camp => {
+                    const insight = (apiData.campaign_insights || []).find(i => i.campaign_id === camp.id) || {};
+                    const campTotalSpend = parseFloat(insight.spend || 0);
+                    const ratio = tGasto > 0 ? (campTotalSpend / tGasto) : 0; // fallback proporcional para geração de gráficos executivos visuais
+                    
+                    let campData = [];
+                    if (apiData.daily) {
+                        apiData.daily.forEach(dia => {
+                            if (window.dateInRange(dia.date_start)) {
+                                let dailyTotal = parseFloat(dia.spend || 0);
+                                campData.push(dailyTotal * ratio);
+                            }
+                        });
+                    }
+                    
+                    const color = window.stringToColor(camp.id);
+                    window.adsComparativoDatasets.push({
+                        label: camp.name,
+                        campaign_id: camp.id,
+                        data: campData,
+                        borderColor: color,
+                        backgroundColor: color,
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: color
+                    });
+                });
+                
+                if (typeof window.updateAdsComparativoChart === 'function') window.updateAdsComparativoChart();
+
 
                 const optCommon = getLineChartOptions();
 
@@ -1931,7 +2045,25 @@
                 if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0]; else newItem.dataConclusao = null;
             } else if (type === 'suporte') {
                 newItem.clienteId = document.getElementById('f-clienteId').value; newItem.inicio = document.getElementById('f-inicio').value; newItem.prazo = document.getElementById('f-prazo').value; newItem.status = document.getElementById('f-status').value;
-                const oldItem = window.db.suporte.find(i => i.id === window.editingId); if (newItem.status === 'Concluído') newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0]; else newItem.dataConclusao = null;
+                const oldItem = window.db.suporte.find(i => i.id === window.editingId); 
+                
+                // NOVO: Garantir mesma logica de auto-concluir no cadastro/edição
+                if (newItem.status !== 'Concluído' && newItem.inicio && newItem.prazo) {
+                    const iDate = new Date(newItem.inicio + 'T00:00:00');
+                    const fDate = new Date(iDate);
+                    fDate.setDate(fDate.getDate() + parseInt(newItem.prazo));
+                    const hDate = new Date(); hDate.setHours(0,0,0,0);
+                    if (hDate >= fDate) {
+                        newItem.status = 'Concluído';
+                        newItem.dataConclusao = fDate.toISOString().split('T')[0];
+                    }
+                }
+                
+                if (newItem.status === 'Concluído' && !newItem.dataConclusao) {
+                    newItem.dataConclusao = (oldItem && oldItem.dataConclusao) ? oldItem.dataConclusao : new Date().toISOString().split('T')[0];
+                } else if (newItem.status !== 'Concluído') {
+                    newItem.dataConclusao = null;
+                }
             } else if (type === 'conversoes') {
                 newItem.data = document.getElementById('f-data-conv').value; newItem.ligacoes = parseInt(document.getElementById('f-ligacoes').value) || 0; newItem.reunioes = parseInt(document.getElementById('f-reunioes').value) || 0; newItem.propostas = parseInt(document.getElementById('f-propostas').value) || 0; newItem.fechamentos = parseInt(document.getElementById('f-fechamentos').value) || 0;
             }
