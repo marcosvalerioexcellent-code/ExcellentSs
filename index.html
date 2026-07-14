@@ -32,6 +32,8 @@
             --border: #e2e8f0;
             --radius: 8px;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --agenda-anotacao: #d97706;
+            --agenda-cliente: #3b82f6;
         }
 
         body.dark-mode {
@@ -156,6 +158,61 @@
         .badge-pendente { background: #fef3c7; color: #92400e; }
         .badge-concluido { background: #d1fae5; color: #065f46; }
 
+        /* Agenda / Calendar Styles */
+        .agenda-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .calendar-container { background: var(--surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 30px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-day-header { text-align: center; font-weight: 600; color: var(--text-light); font-size: 0.85rem; padding: 10px 0; text-transform: uppercase; }
+        .calendar-day { background: var(--bg-color); border: 1px solid var(--border); border-radius: 6px; min-height: 90px; padding: 8px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: stretch; position: relative; }
+        .calendar-day:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--secondary); }
+        .calendar-day.empty { background: transparent; border: none; cursor: default; }
+        .calendar-day .day-num { font-weight: 700; font-size: 1rem; color: var(--text-main); margin-bottom: 5px; text-align: right; }
+        .calendar-day.has-anotacao { background-color: rgba(217, 119, 6, 0.08); border-color: var(--agenda-anotacao); }
+        .calendar-day.has-cliente { background-color: rgba(59, 130, 246, 0.08); border-color: var(--agenda-cliente); }
+        .calendar-day.has-ambos { background: linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%); border-color: #8b5cf6; }
+        .calendar-day-indicators { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+        .cal-badge { font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-badge.anot { background-color: var(--agenda-anotacao); }
+        .cal-badge.cli { background-color: var(--agenda-cliente); }
+        
+        .planner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .planner-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; margin-bottom: 30px; overflow-x: auto; }
+        .planner-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; min-width: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .planner-day h4 { font-size: 0.9rem; color: var(--text-main); border-bottom: 1px dashed var(--border); padding-bottom: 8px; margin-bottom: 12px; text-align: center; }
+        .planner-item { background: var(--bg-color); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 0.8rem; border-left: 3px solid #ccc; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .planner-item.type-anotacao { border-left-color: var(--agenda-anotacao); }
+        .planner-item.type-cliente { border-left-color: var(--agenda-cliente); }
+        .planner-item strong { display: block; margin-bottom: 3px; color: var(--text-main); font-size: 0.85rem;}
+        
+        .agenda-list-container { background: var(--surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 25px; }
+        .agenda-list-container h3 { font-size: 1.1rem; margin-bottom: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        
+        .checklist-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); transition: 0.2s; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item label { display: flex; align-items: center; gap: 12px; cursor: pointer; flex-grow: 1; font-size: 0.95rem; color: var(--text-main); }
+        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--success); }
+        .checklist-item.done span.check-text { text-decoration: line-through; color: var(--text-light); }
+        .badge-mini { font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; color: white; margin-left: 10px; font-weight: bold; }
+        
+        .reorg-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--bg-color); border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--danger); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .reorg-info { flex-grow: 1; }
+        .reorg-info strong { color: var(--text-main); display: block; margin-bottom: 4px; font-size: 0.95rem; }
+        .reorg-info span { color: var(--text-light); font-size: 0.8rem; }
+        .reorg-actions { display: flex; gap: 10px; }
+        .reorg-actions button { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: 8px 12px; font-size: 0.9rem; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .reorg-actions button.btn-reschedule { color: var(--primary); }
+        .reorg-actions button.btn-reschedule:hover { border-color: var(--primary); background: var(--primary); color: white; }
+        .reorg-actions button.btn-del { color: var(--danger); }
+        .reorg-actions button.btn-del:hover { border-color: var(--danger); background: var(--danger); color: white; }
+
+        .modal-agenda-choice-btn { flex: 1; padding: 20px; border-radius: 12px; border: 2px solid transparent; background: var(--bg-color); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: var(--shadow); }
+        .modal-agenda-choice-btn:hover { transform: translateY(-3px); }
+        .btn-choice-anotacao { border-color: rgba(217, 119, 6, 0.3); color: var(--agenda-anotacao); }
+        .btn-choice-anotacao:hover { border-color: var(--agenda-anotacao); background: rgba(217, 119, 6, 0.05); }
+        .btn-choice-cliente { border-color: rgba(59, 130, 246, 0.3); color: var(--agenda-cliente); }
+        .btn-choice-cliente:hover { border-color: var(--agenda-cliente); background: rgba(59, 130, 246, 0.05); }
+
+        /* General Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: var(--surface); width: 90%; max-width: 500px; border-radius: var(--radius); box-shadow: var(--shadow); padding: 30px; animation: scaleUp 0.2s; transition: 0.3s; border: 1px solid transparent; }
         .modal-large { max-width: 800px; height: 85vh; display: flex; flex-direction: column; }
@@ -171,9 +228,9 @@
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
-        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; transition: 0.2s; background-color: var(--surface); color: var(--text-main); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; transition: 0.2s; background-color: var(--surface); color: var(--text-main); }
         .form-group input[type="file"] { padding: 6px; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1); }
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-submit:hover { background: var(--border); color: var(--text-main); }
 
@@ -189,6 +246,7 @@
         @media (max-width: 1024px) {
             .desempenho-grid { grid-template-columns: 1fr 1fr; }
             .desempenho-grid > .chart-box:last-child { grid-column: span 2; }
+            .planner-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
         }
 
         @media (max-width: 768px) {
@@ -207,6 +265,11 @@
             .modal-header { gap: 12px; margin-bottom: 12px; }
             .modal-header h2 { font-size: 0.95rem; line-height: 1.25; }
             .pdf-mobile-viewer { padding: 8px; }
+            .calendar-grid { gap: 4px; }
+            .calendar-day { padding: 4px; min-height: 70px; }
+            .calendar-day .day-num { font-size: 0.85rem; margin-bottom: 2px; }
+            .cal-badge { font-size: 0.55rem; padding: 1px 2px; }
+            .planner-grid { display: flex; flex-direction: column; overflow-x: visible; }
         }
 
 
@@ -285,13 +348,14 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 5px;
+                gap: 2px;
                 background: rgba(255,255,255,0.92);
                 border: 1px solid rgba(226,232,240,0.94);
                 border-radius: 24px;
                 box-shadow: 0 18px 45px rgba(15, 23, 42, 0.20);
                 backdrop-filter: blur(18px);
                 z-index: 900;
+                overflow-x: auto;
             }
 
             body.dark-mode .mobile-bottom-nav {
@@ -302,6 +366,7 @@
 
             .bottom-nav-item {
                 flex: 1;
+                min-width: 48px;
                 height: 48px;
                 border: none;
                 border-radius: 18px;
@@ -354,6 +419,7 @@
             <li data-tab="vendas" onclick="window.switchTab('vendas', this)"><i class="fas fa-wallet"></i> Financeiro</li>
             <li data-tab="fila" onclick="window.switchTab('fila', this)"><i class="fas fa-tasks"></i> Fila de Projetos</li>
             <li data-tab="suporte" onclick="window.switchTab('suporte', this)"><i class="fas fa-headset"></i> Suporte</li>
+            <li data-tab="agenda" onclick="window.switchTab('agenda', this)"><i class="fas fa-calendar-alt"></i> Agenda</li>
         </ul>
     </nav>
 
@@ -627,6 +693,58 @@
                 </table>
             </div>
         </section>
+
+        <section id="agenda" class="tab-content">
+            
+            <div class="agenda-header">
+                <h2 style="font-size: 1.2rem; color: var(--text-main); font-weight: 600;">Calendário Mensal</h2>
+                <div style="display: flex; gap: 10px;">
+                    <select id="agenda-month" onchange="window.changeAgendaDate()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
+                        <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option><option value="3">Abril</option>
+                        <option value="4">Maio</option><option value="5">Junho</option><option value="6">Julho</option><option value="7">Agosto</option>
+                        <option value="8">Setembro</option><option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
+                    </select>
+                    <select id="agenda-year" onchange="window.changeAgendaDate()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 600; outline: none; cursor: pointer; box-shadow: var(--shadow);">
+                        </select>
+                </div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-grid" id="calendar-header-grid">
+                    <div class="calendar-day-header">D</div><div class="calendar-day-header">S</div><div class="calendar-day-header">T</div>
+                    <div class="calendar-day-header">Q</div><div class="calendar-day-header">Q</div><div class="calendar-day-header">S</div>
+                    <div class="calendar-day-header">S</div>
+                </div>
+                <div class="calendar-grid" id="calendar-body">
+                    </div>
+            </div>
+
+            <div class="agenda-header" style="margin-top: 40px;">
+                <h2 style="font-size: 1.2rem; color: var(--text-main); font-weight: 600;">Planner Semanal Mágico <i class="fas fa-magic" style="color: var(--accent); font-size: 1rem;"></i></h2>
+                <select id="planner-filter" onchange="window.renderAgenda()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); outline: none; cursor: pointer; box-shadow: var(--shadow);">
+                    <option value="ambos">Todos</option>
+                    <option value="cliente">Somente Clientes</option>
+                    <option value="anotacao">Somente Anotações</option>
+                </select>
+            </div>
+            
+            <div class="planner-grid" id="planner-body">
+                </div>
+
+            <div class="agenda-list-container">
+                <h3><i class="fas fa-tasks" style="color: var(--success);"></i> Checklist da Semana</h3>
+                <div id="checklist-body">
+                    </div>
+            </div>
+
+            <div class="agenda-list-container" style="border-left: 4px solid var(--danger);">
+                <h3><i class="fas fa-exclamation-circle" style="color: var(--danger);"></i> Reorganização de Pendências</h3>
+                <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 15px;">Itens passados e presentes que ainda não foram marcados como concluídos.</p>
+                <div id="reorg-body">
+                    </div>
+            </div>
+
+        </section>
     </main>
 
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Navegação inferior do aplicativo">
@@ -637,6 +755,7 @@
         <button type="button" class="bottom-nav-item" data-tab="vendas" onclick="window.switchTab('vendas', this)" aria-label="Financeiro" title="Financeiro"><i class="fas fa-wallet"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="fila" onclick="window.switchTab('fila', this)" aria-label="Fila de Projetos" title="Fila de Projetos"><i class="fas fa-tasks"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="suporte" onclick="window.switchTab('suporte', this)" aria-label="Suporte" title="Suporte"><i class="fas fa-headset"></i></button>
+        <button type="button" class="bottom-nav-item" data-tab="agenda" onclick="window.switchTab('agenda', this)" aria-label="Agenda" title="Agenda"><i class="fas fa-calendar-alt"></i></button>
     </nav>
 
 
@@ -650,6 +769,43 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modal-agenda-choice">
+        <div class="modal" style="max-width: 420px; text-align: center;">
+            <h2 style="margin-bottom: 10px; color: var(--text-main); justify-content: center;">O que registrar?</h2>
+            <p style="margin-bottom: 25px; color: var(--text-light); font-size: 0.9rem;">Selecione o tipo de registro para <strong id="agenda-choice-date"></strong></p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="modal-agenda-choice-btn btn-choice-anotacao" onclick="window.openAgendaForm('anotacao')">
+                    <i class="fas fa-sticky-note" style="font-size: 1.8rem;"></i> Anotação
+                </button>
+                <button class="modal-agenda-choice-btn btn-choice-cliente" onclick="window.openAgendaForm('cliente')">
+                    <i class="fas fa-user-tie" style="font-size: 1.8rem;"></i> Cliente
+                </button>
+            </div>
+            <button onclick="document.getElementById('modal-agenda-choice').style.display='none'" style="margin-top: 25px; background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.95rem; text-decoration: underline;">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-agenda-reschedule">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-day" style="color: var(--accent);"></i> Reorganizar Item</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-agenda-reschedule').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-agenda-reschedule-body">
+                <form onsubmit="window.saveRescheduleAgenda(event)">
+                    <div class="form-group">
+                        <label>Nova Data</label>
+                        <input type="date" id="f-reorg-data" required>
+                    </div>
+                    <div class="form-group" id="f-reorg-hora-group" style="display: none;">
+                        <label>Novo Horário</label>
+                        <input type="time" id="f-reorg-hora">
+                    </div>
+                    <button type="submit" class="btn-submit">Salvar Alteração</button>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="modal-overlay" id="modal-pdf-dash">
         <div class="modal">
             <div class="modal-header">
@@ -840,7 +996,7 @@
         firebase.initializeApp(firebaseConfig);
         const dbFirestore = firebase.firestore();
 
-        window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [], leads: [] };
+        window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [], leads: [], agenda: [] };
         window.currentTab = 'dashboard';
         window.currentSubTab = 'financeiro';
         window.editingId = null;
@@ -874,16 +1030,18 @@
 
         async function loadDataFromFirebase() {
             try {
-                const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap] = await Promise.all([
+                const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap, aSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(), dbFirestore.collection("vendas").get(),
                     dbFirestore.collection("fila").get(), dbFirestore.collection("conversoes").get(),
-                    dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get()
+                    dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get(),
+                    dbFirestore.collection("agenda").get().catch(() => ({ docs: [] })) 
                 ]);
                 
                 window.db.contatos = cSnap.docs.map(d => d.data()); 
                 window.db.vendas = vSnap.docs.map(d => d.data());
                 window.db.fila = fSnap.docs.map(d => d.data()); 
                 window.db.conversoes = convSnap.docs.map(d => d.data());
+                window.db.agenda = aSnap.docs ? aSnap.docs.map(d => d.data()) : [];
                 
                 window.db.suporte = supSnap ? supSnap.docs.map(d => {
                     let data = d.data();
@@ -907,6 +1065,22 @@
                 window.db.leads = lSnap ? lSnap.docs.map(d => d.data()) : [];
 
                 document.getElementById('db-status').classList.add('online'); document.getElementById('db-status-text').innerText = 'Online';
+                
+                // Init Agenda Year Filter
+                const yearSelect = document.getElementById('agenda-year');
+                if(yearSelect) {
+                    for(let y = 2026; y <= 2036; y++){
+                        let opt = document.createElement('option');
+                        opt.value = y; opt.innerText = y;
+                        yearSelect.appendChild(opt);
+                    }
+                    window.currentAgendaYear = new Date().getFullYear();
+                    window.currentAgendaMonth = new Date().getMonth();
+                    if(window.currentAgendaYear < 2026) window.currentAgendaYear = 2026;
+                    document.getElementById('agenda-year').value = window.currentAgendaYear;
+                    document.getElementById('agenda-month').value = window.currentAgendaMonth;
+                }
+
                 window.renderCurrentTab();
             } catch (error) { console.error(error); document.getElementById('db-status-text').innerText = 'Erro de Conexão'; document.getElementById('db-status-text').style.color = 'var(--danger)'; }
         }
@@ -962,10 +1136,10 @@
             if (targetSection) targetSection.classList.add('active');
             document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => el.classList.add('active'));
 
-            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'clientes': 'Gestão de Clientes', 'leads': 'Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos', 'suporte': 'Suporte a Clientes' };
+            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'clientes': 'Gestão de Clientes', 'leads': 'Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos', 'suporte': 'Suporte a Clientes', 'agenda': 'Agenda e Planejamento' };
             document.getElementById('page-title').innerText = titles[tabName];
 
-            document.getElementById('main-fab').style.display = tabName === 'dashboard' ? 'none' : 'flex';
+            document.getElementById('main-fab').style.display = (tabName === 'dashboard' || tabName === 'agenda') ? 'none' : 'flex';
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
             window.renderCurrentTab();
         }
@@ -981,10 +1155,323 @@
         }
 
         window.renderCurrentTab = function() {
-            if (window.currentTab === 'dashboard') window.renderDashboard(); if (window.currentTab === 'conversoes') window.renderConversoes();
-            if (window.currentTab === 'clientes') window.renderClientes(); if (window.currentTab === 'leads') window.renderLeads(); 
-            if (window.currentTab === 'vendas') window.renderVendas(); if (window.currentTab === 'fila') window.renderFila(); if (window.currentTab === 'suporte') window.renderSuporte();
+            if (window.currentTab === 'dashboard') window.renderDashboard(); 
+            if (window.currentTab === 'conversoes') window.renderConversoes();
+            if (window.currentTab === 'clientes') window.renderClientes(); 
+            if (window.currentTab === 'leads') window.renderLeads(); 
+            if (window.currentTab === 'vendas') window.renderVendas(); 
+            if (window.currentTab === 'fila') window.renderFila(); 
+            if (window.currentTab === 'suporte') window.renderSuporte();
+            if (window.currentTab === 'agenda') window.renderAgenda();
         }
+
+        // --- AGENDA FUNCTIONS --- //
+
+        window.changeAgendaDate = function() {
+            window.currentAgendaMonth = parseInt(document.getElementById('agenda-month').value);
+            window.currentAgendaYear = parseInt(document.getElementById('agenda-year').value);
+            window.renderAgenda();
+        }
+
+        window.renderAgenda = function() {
+            window.buildCalendar();
+            window.buildPlanner();
+            window.buildChecklist();
+            window.buildReorganization();
+        }
+
+        window.buildCalendar = function() {
+            const body = document.getElementById('calendar-body');
+            body.innerHTML = '';
+            
+            const firstDay = new Date(window.currentAgendaYear, window.currentAgendaMonth, 1).getDay();
+            const daysInMonth = new Date(window.currentAgendaYear, window.currentAgendaMonth + 1, 0).getDate();
+            
+            for(let i = 0; i < firstDay; i++){
+                body.innerHTML += `<div class="calendar-day empty"></div>`;
+            }
+
+            for(let d = 1; d <= daysInMonth; d++){
+                const dataStr = `${window.currentAgendaYear}-${String(window.currentAgendaMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                
+                const itemsDay = window.db.agenda.filter(i => i.data === dataStr);
+                const hasAnot = itemsDay.some(i => i.tipo === 'anotacao');
+                const hasCli = itemsDay.some(i => i.tipo === 'cliente');
+                
+                let extraClass = '';
+                if(hasAnot && hasCli) extraClass = 'has-ambos';
+                else if(hasAnot) extraClass = 'has-anotacao';
+                else if(hasCli) extraClass = 'has-cliente';
+
+                let indicatorsHtml = '<div class="calendar-day-indicators">';
+                itemsDay.forEach(it => {
+                    if(it.tipo === 'anotacao') {
+                        indicatorsHtml += `<span class="cal-badge anot">${it.descricao}</span>`;
+                    } else {
+                        indicatorsHtml += `<span class="cal-badge cli">${it.hora ? it.hora + ' ' : ''}${it.nome}</span>`;
+                    }
+                });
+                indicatorsHtml += '</div>';
+
+                body.innerHTML += `
+                    <div class="calendar-day ${extraClass}" onclick="window.openAgendaChoice('${dataStr}')">
+                        <span class="day-num">${d}</span>
+                        ${indicatorsHtml}
+                    </div>`;
+            }
+        }
+
+        window.buildPlanner = function() {
+            const body = document.getElementById('planner-body');
+            body.innerHTML = '';
+            
+            const filter = document.getElementById('planner-filter').value;
+            const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            
+            const startDay = new Date();
+            startDay.setHours(0,0,0,0);
+            
+            for(let i = 0; i < 7; i++){
+                const d = new Date(startDay);
+                d.setDate(d.getDate() + i);
+                const dataStr = d.toISOString().split('T')[0];
+                const dayName = weekDays[d.getDay()];
+                const fmtDate = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+                
+                let itemsDay = window.db.agenda.filter(it => it.data === dataStr);
+                if(filter === 'cliente') itemsDay = itemsDay.filter(it => it.tipo === 'cliente');
+                if(filter === 'anotacao') itemsDay = itemsDay.filter(it => it.tipo === 'anotacao');
+
+                let itemsHtml = '';
+                if(itemsDay.length === 0){
+                    itemsHtml = '<p style="color: var(--text-light); font-size: 0.8rem; text-align: center; margin-top: 15px;">Livre</p>';
+                } else {
+                    // Ordenar por hora se tiver (clientes primeiro geralmente)
+                    itemsDay.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
+                    
+                    itemsDay.forEach(it => {
+                        if(it.tipo === 'anotacao'){
+                            itemsHtml += `<div class="planner-item type-anotacao">${it.descricao}</div>`;
+                        } else {
+                            itemsHtml += `<div class="planner-item type-cliente"><strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>${it.assunto}</div>`;
+                        }
+                    });
+                }
+
+                body.innerHTML += `
+                    <div class="planner-day">
+                        <h4>${dayName} (${fmtDate})</h4>
+                        ${itemsHtml}
+                    </div>`;
+            }
+        }
+
+        window.buildChecklist = function() {
+            const body = document.getElementById('checklist-body');
+            body.innerHTML = '';
+            
+            const startDay = new Date(); startDay.setHours(0,0,0,0);
+            const endDay = new Date(startDay); endDay.setDate(endDay.getDate() + 6);
+            
+            const items = window.db.agenda.filter(it => {
+                const d = new Date(it.data + 'T00:00:00');
+                return d >= startDay && d <= endDay;
+            });
+
+            if(items.length === 0){
+                body.innerHTML = '<p style="color: var(--text-light); font-size: 0.9rem;">Nenhuma atividade agendada para os próximos 7 dias.</p>';
+                return;
+            }
+
+            items.sort((a,b) => new Date(a.data) - new Date(b.data));
+
+            items.forEach(it => {
+                const isDone = it.concluido ? 'checked' : '';
+                const doneClass = it.concluido ? 'done' : '';
+                const title = it.tipo === 'anotacao' ? it.descricao : `${it.hora ? it.hora + ' - ' : ''}Cliente: ${it.nome} (${it.assunto})`;
+                const fmtDate = window.formatDate(it.data).substring(0,5);
+                const badge = it.tipo === 'anotacao' ? `<span class="badge-mini" style="background: var(--agenda-anotacao);">Anotação</span>` : `<span class="badge-mini" style="background: var(--agenda-cliente);">Cliente</span>`;
+
+                body.innerHTML += `
+                    <div class="checklist-item ${doneClass}">
+                        <label>
+                            <input type="checkbox" class="checklist-checkbox" ${isDone} onchange="window.toggleAgendaStatus('${it.id}')">
+                            <span class="check-text">${title} <small style="color: var(--text-light); margin-left: 5px;">[${fmtDate}]</small> ${badge}</span>
+                        </label>
+                    </div>`;
+            });
+        }
+
+        window.buildReorganization = function() {
+            const body = document.getElementById('reorg-body');
+            body.innerHTML = '';
+            
+            const items = window.db.agenda.filter(it => !it.concluido);
+
+            if(items.length === 0){
+                body.innerHTML = '<p style="color: var(--text-light); font-size: 0.9rem;">Tudo limpo! Não há pendências para reorganizar.</p>';
+                return;
+            }
+
+            items.sort((a,b) => new Date(a.data) - new Date(b.data));
+
+            items.forEach(it => {
+                const title = it.tipo === 'anotacao' ? it.descricao : `Cliente: ${it.nome} (${it.assunto})`;
+                const fmtDate = window.formatDate(it.data);
+                
+                body.innerHTML += `
+                    <div class="reorg-item">
+                        <div class="reorg-info">
+                            <strong>${title}</strong>
+                            <span>Agendado para: ${fmtDate} ${it.hora ? 'às ' + it.hora : ''}</span>
+                        </div>
+                        <div class="reorg-actions">
+                            <button class="btn-reschedule" onclick="window.openRescheduleAgenda('${it.id}')" title="Reorganizar"><i class="fas fa-calendar-day"></i></button>
+                            <button class="btn-del" onclick="window.deleteAgendaItem('${it.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.openAgendaChoice = function(dataStr) {
+            window.agendaTargetDate = dataStr;
+            const ptBrDate = window.formatDate(dataStr);
+            document.getElementById('agenda-choice-date').innerText = ptBrDate;
+            document.getElementById('modal-agenda-choice').style.display = 'flex';
+        }
+
+        window.openAgendaForm = function(tipo) {
+            document.getElementById('modal-agenda-choice').style.display = 'none';
+            window.editingId = null;
+            document.getElementById('modal-title').innerHTML = tipo === 'anotacao' ? '<i class="fas fa-sticky-note" style="color: var(--agenda-anotacao);"></i> Nova Anotação' : '<i class="fas fa-user-tie" style="color: var(--agenda-cliente);"></i> Novo Cliente';
+            
+            let html = `<form onsubmit="window.saveAgendaItem(event, '${tipo}')">`;
+            
+            if(tipo === 'anotacao') {
+                html += `<div class="form-group"><label>Descrição</label><textarea id="f-ag-desc" rows="4" required placeholder="O que você precisa lembrar?"></textarea></div>`;
+            } else {
+                html += `
+                    <div class="form-group"><label>Nome do Cliente</label><input type="text" id="f-ag-nome" required></div>
+                    <div class="form-group"><label>Assunto</label><input type="text" id="f-ag-assunto" required></div>
+                    <div class="form-group"><label>Horário</label><input type="time" id="f-ag-hora" required></div>
+                `;
+            }
+            
+            html += `<button type="submit" class="btn-submit">Adicionar à Agenda</button></form>`;
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        window.saveAgendaItem = async function(e, tipo) {
+            e.preventDefault();
+            const btn = e.target.querySelector('.btn-submit');
+            btn.innerText = 'Salvando...'; btn.disabled = true;
+
+            const newItem = {
+                id: window.generateId(),
+                tipo: tipo,
+                data: window.agendaTargetDate,
+                concluido: false
+            };
+
+            if(tipo === 'anotacao') {
+                newItem.descricao = document.getElementById('f-ag-desc').value;
+            } else {
+                newItem.nome = document.getElementById('f-ag-nome').value;
+                newItem.assunto = document.getElementById('f-ag-assunto').value;
+                newItem.hora = document.getElementById('f-ag-hora').value;
+            }
+
+            try {
+                await dbFirestore.collection('agenda').doc(newItem.id).set(newItem);
+                window.db.agenda.push(newItem);
+                window.renderAgenda();
+                window.closeModal();
+            } catch(error) {
+                alert("Erro ao salvar na agenda.");
+                btn.innerText = 'Adicionar à Agenda'; btn.disabled = false;
+            }
+        }
+
+        window.toggleAgendaStatus = async function(id) {
+            const item = window.db.agenda.find(i => i.id === id);
+            if(!item) return;
+            
+            item.concluido = !item.concluido;
+            
+            // Re-render immediate visual feedback
+            window.buildChecklist();
+            window.buildReorganization();
+            
+            try {
+                await dbFirestore.collection('agenda').doc(id).update({ concluido: item.concluido });
+            } catch(e) {
+                alert("Erro ao atualizar status na nuvem.");
+                item.concluido = !item.concluido;
+                window.buildChecklist();
+                window.buildReorganization();
+            }
+        }
+
+        window.deleteAgendaItem = async function(id) {
+            if(!confirm("Deseja realmente apagar este item?")) return;
+            try {
+                await dbFirestore.collection('agenda').doc(id).delete();
+                window.db.agenda = window.db.agenda.filter(i => i.id !== id);
+                window.renderAgenda();
+            } catch(e) { alert("Erro ao apagar."); }
+        }
+
+        window.reorgTargetId = null;
+        window.openRescheduleAgenda = function(id) {
+            const item = window.db.agenda.find(i => i.id === id);
+            if(!item) return;
+            window.reorgTargetId = id;
+            
+            document.getElementById('f-reorg-data').value = item.data;
+            if(item.tipo === 'cliente') {
+                document.getElementById('f-reorg-hora-group').style.display = 'block';
+                document.getElementById('f-reorg-hora').value = item.hora || '';
+                document.getElementById('f-reorg-hora').required = true;
+            } else {
+                document.getElementById('f-reorg-hora-group').style.display = 'none';
+                document.getElementById('f-reorg-hora').required = false;
+            }
+            
+            document.getElementById('modal-agenda-reschedule').style.display = 'flex';
+        }
+
+        window.saveRescheduleAgenda = async function(e) {
+            e.preventDefault();
+            const id = window.reorgTargetId;
+            const item = window.db.agenda.find(i => i.id === id);
+            if(!item) return;
+
+            const newData = document.getElementById('f-reorg-data').value;
+            let updatePayload = { data: newData };
+            item.data = newData;
+
+            if(item.tipo === 'cliente') {
+                const novaHora = document.getElementById('f-reorg-hora').value;
+                updatePayload.hora = novaHora;
+                item.hora = novaHora;
+            }
+
+            const btn = e.target.querySelector('.btn-submit');
+            btn.innerText = 'Salvando...'; btn.disabled = true;
+
+            try {
+                await dbFirestore.collection('agenda').doc(id).update(updatePayload);
+                window.renderAgenda();
+                document.getElementById('modal-agenda-reschedule').style.display = 'none';
+            } catch(error) {
+                alert("Erro ao reorganizar.");
+            } finally {
+                btn.innerText = 'Salvar Alteração'; btn.disabled = false;
+            }
+        }
+        // --- FIM AGENDA FUNCTIONS --- //
+
 
         window.toggleCampaignStatus = async function(campaignId, checkboxElement) {
             const newStatus = checkboxElement.checked ? 'ACTIVE' : 'PAUSED';
