@@ -167,13 +167,20 @@
         .calendar-day:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--secondary); }
         .calendar-day.empty { background: transparent; border: none; cursor: default; }
         .calendar-day .day-num { font-weight: 700; font-size: 1rem; color: var(--text-main); margin-bottom: 5px; text-align: right; }
-        .calendar-day.has-anotacao { background-color: rgba(217, 119, 6, 0.08); border-color: var(--agenda-anotacao); }
-        .calendar-day.has-cliente { background-color: rgba(59, 130, 246, 0.08); border-color: var(--agenda-cliente); }
-        .calendar-day.has-ambos { background: linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%); border-color: #8b5cf6; }
-        .calendar-day-indicators { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
-        .cal-badge { font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cal-badge.anot { background-color: var(--agenda-anotacao); }
-        .cal-badge.cli { background-color: var(--agenda-cliente); }
+        
+        /* Novas regras visuais elegantes para o dia da agenda */
+        .calendar-day.has-anotacao { background-color: var(--agenda-anotacao); border: none; }
+        .calendar-day.has-cliente { background-color: var(--agenda-cliente); border: none; }
+        .calendar-day.has-ambos { background: linear-gradient(135deg, var(--agenda-anotacao) 50%, var(--agenda-cliente) 50%); border: none; }
+        .calendar-day.has-anotacao .day-num, .calendar-day.has-cliente .day-num, .calendar-day.has-ambos .day-num { color: #ffffff; }
+
+        /* Estilo para itens do dia no pop-up */
+        .day-detail-item { background: var(--bg-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .day-detail-item.anotacao { border-left-color: var(--agenda-anotacao); }
+        .day-detail-item.cliente { border-left-color: var(--agenda-cliente); }
+        .day-detail-info { flex-grow: 1; }
+        .day-detail-info strong { display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px; }
+        .day-detail-info span { color: var(--text-light); font-size: 0.85rem; display: block;}
         
         .planner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
         .planner-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; margin-bottom: 30px; overflow-x: auto; }
@@ -268,10 +275,8 @@
             .calendar-grid { gap: 4px; }
             .calendar-day { padding: 4px; min-height: 70px; }
             .calendar-day .day-num { font-size: 0.85rem; margin-bottom: 2px; }
-            .cal-badge { font-size: 0.55rem; padding: 1px 2px; }
             .planner-grid { display: flex; flex-direction: column; overflow-x: visible; }
         }
-
 
         /* Intro em vídeo do aplicativo */
         #app-intro {
@@ -769,6 +774,22 @@
         </div>
     </div>
 
+    <!-- Novo Pop-up Elegante de Detalhes do Dia -->
+    <div class="modal-overlay" id="modal-agenda-day">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-agenda-day-title">Agenda do Dia</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-agenda-day').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-agenda-day-body" style="max-height: 50vh; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
+                <!-- Itens serão injetados via JS -->
+            </div>
+            <div style="display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button class="btn-submit" onclick="window.openAgendaChoice(window.agendaTargetDate)"><i class="fas fa-plus"></i> Novo Registro no Dia</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-agenda-choice">
         <div class="modal" style="max-width: 420px; text-align: center;">
             <h2 style="margin-bottom: 10px; color: var(--text-main); justify-content: center;">O que registrar?</h2>
@@ -806,6 +827,7 @@
             </div>
         </div>
     </div>
+    
     <div class="modal-overlay" id="modal-pdf-dash">
         <div class="modal">
             <div class="modal-header">
@@ -1203,22 +1225,64 @@
                 else if(hasAnot) extraClass = 'has-anotacao';
                 else if(hasCli) extraClass = 'has-cliente';
 
-                let indicatorsHtml = '<div class="calendar-day-indicators">';
-                itemsDay.forEach(it => {
-                    if(it.tipo === 'anotacao') {
-                        indicatorsHtml += `<span class="cal-badge anot">${it.descricao}</span>`;
-                    } else {
-                        indicatorsHtml += `<span class="cal-badge cli">${it.hora ? it.hora + ' ' : ''}${it.nome}</span>`;
-                    }
-                });
-                indicatorsHtml += '</div>';
-
                 body.innerHTML += `
-                    <div class="calendar-day ${extraClass}" onclick="window.openAgendaChoice('${dataStr}')">
+                    <div class="calendar-day ${extraClass}" onclick="window.openAgendaDayDetails('${dataStr}')">
                         <span class="day-num">${d}</span>
-                        ${indicatorsHtml}
                     </div>`;
             }
+        }
+
+        // Nova Função: Abrir detalhes elegantes do dia da Agenda
+        window.openAgendaDayDetails = function(dataStr) {
+            window.agendaTargetDate = dataStr;
+            document.getElementById('modal-agenda-day-title').innerHTML = `<i class="fas fa-calendar-day" style="color: var(--accent);"></i> Agenda de ${window.formatDate(dataStr)}`;
+            
+            window.renderAgendaDayItems(dataStr);
+            document.getElementById('modal-agenda-day').style.display = 'flex';
+        }
+
+        // Nova Função: Renderizar itens dentro do pop-up do dia
+        window.renderAgendaDayItems = function(dataStr) {
+            const container = document.getElementById('modal-agenda-day-body');
+            const items = window.db.agenda.filter(i => i.data === dataStr);
+
+            if (items.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px 20px; color: var(--text-light);"><i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i><p>Nenhum registro para este dia.</p><p style="font-size: 0.85rem; margin-top: 5px;">Clique abaixo para adicionar algo especial.</p></div>`;
+                return;
+            }
+
+            // Ordenar itens (clientes com hora primeiro)
+            items.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
+
+            let html = '';
+            items.forEach(it => {
+                if(it.tipo === 'anotacao') {
+                    html += `
+                    <div class="day-detail-item anotacao">
+                        <div class="day-detail-info">
+                            <strong>Anotação</strong>
+                            <span>${it.descricao}</span>
+                        </div>
+                        <div class="reorg-actions">
+                            <button class="btn-reschedule" onclick="window.editAgendaItem('${it.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button class="btn-del" onclick="window.deleteAgendaItem('${it.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="day-detail-item cliente">
+                        <div class="day-detail-info">
+                            <strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>
+                            <span>${it.assunto}</span>
+                        </div>
+                        <div class="reorg-actions">
+                            <button class="btn-reschedule" onclick="window.editAgendaItem('${it.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button class="btn-del" onclick="window.deleteAgendaItem('${it.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+                }
+            });
+            container.innerHTML = html;
         }
 
         window.buildPlanner = function() {
@@ -1246,7 +1310,6 @@
                 if(itemsDay.length === 0){
                     itemsHtml = '<p style="color: var(--text-light); font-size: 0.8rem; text-align: center; margin-top: 15px;">Livre</p>';
                 } else {
-                    // Ordenar por hora se tiver (clientes primeiro geralmente)
                     itemsDay.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
                     
                     itemsDay.forEach(it => {
@@ -1337,13 +1400,36 @@
             window.agendaTargetDate = dataStr;
             const ptBrDate = window.formatDate(dataStr);
             document.getElementById('agenda-choice-date').innerText = ptBrDate;
+            document.getElementById('modal-agenda-day').style.display = 'none'; // Esconde o dia
             document.getElementById('modal-agenda-choice').style.display = 'flex';
+        }
+
+        // Nova Função: Edição mágica da Agenda
+        window.editAgendaItem = function(id) {
+            const item = window.db.agenda.find(i => i.id === id);
+            if(!item) return;
+
+            document.getElementById('modal-agenda-day').style.display = 'none';
+            window.editingId = id;
+            window.openAgendaForm(item.tipo);
+
+            // Popula os dados via setTimeout para garantir que o modal injetou o HTML
+            setTimeout(() => {
+                if(item.tipo === 'anotacao') {
+                    document.getElementById('f-ag-desc').value = item.descricao;
+                } else {
+                    document.getElementById('f-ag-nome').value = item.nome;
+                    document.getElementById('f-ag-assunto').value = item.assunto;
+                    document.getElementById('f-ag-hora').value = item.hora || '';
+                }
+            }, 50);
         }
 
         window.openAgendaForm = function(tipo) {
             document.getElementById('modal-agenda-choice').style.display = 'none';
-            window.editingId = null;
-            document.getElementById('modal-title').innerHTML = tipo === 'anotacao' ? '<i class="fas fa-sticky-note" style="color: var(--agenda-anotacao);"></i> Nova Anotação' : '<i class="fas fa-user-tie" style="color: var(--agenda-cliente);"></i> Novo Cliente';
+            if(!window.editingId) window.editingId = null; // Garante reset
+            
+            document.getElementById('modal-title').innerHTML = tipo === 'anotacao' ? '<i class="fas fa-sticky-note" style="color: var(--agenda-anotacao);"></i> ' + (window.editingId ? 'Editar Anotação' : 'Nova Anotação') : '<i class="fas fa-user-tie" style="color: var(--agenda-cliente);"></i> ' + (window.editingId ? 'Editar Cliente' : 'Novo Cliente');
             
             let html = `<form onsubmit="window.saveAgendaItem(event, '${tipo}')">`;
             
@@ -1357,7 +1443,7 @@
                 `;
             }
             
-            html += `<button type="submit" class="btn-submit">Adicionar à Agenda</button></form>`;
+            html += `<button type="submit" class="btn-submit">${window.editingId ? 'Salvar Alterações' : 'Adicionar à Agenda'}</button></form>`;
             document.getElementById('modal-body').innerHTML = html;
             document.getElementById('modal-overlay').style.display = 'flex';
         }
@@ -1367,11 +1453,15 @@
             const btn = e.target.querySelector('.btn-submit');
             btn.innerText = 'Salvando...'; btn.disabled = true;
 
+            const isEditing = !!window.editingId;
+            const targetId = isEditing ? window.editingId : window.generateId();
+            let oldItem = isEditing ? window.db.agenda.find(i => i.id === targetId) : null;
+
             const newItem = {
-                id: window.generateId(),
+                id: targetId,
                 tipo: tipo,
-                data: window.agendaTargetDate,
-                concluido: false
+                data: oldItem ? oldItem.data : window.agendaTargetDate,
+                concluido: oldItem ? oldItem.concluido : false
             };
 
             if(tipo === 'anotacao') {
@@ -1383,13 +1473,26 @@
             }
 
             try {
-                await dbFirestore.collection('agenda').doc(newItem.id).set(newItem);
-                window.db.agenda.push(newItem);
+                if (isEditing) {
+                    await dbFirestore.collection('agenda').doc(targetId).update(newItem);
+                    const index = window.db.agenda.findIndex(i => i.id === targetId);
+                    if (index > -1) window.db.agenda[index] = newItem;
+                } else {
+                    await dbFirestore.collection('agenda').doc(newItem.id).set(newItem);
+                    window.db.agenda.push(newItem);
+                }
+
                 window.renderAgenda();
                 window.closeModal();
+                window.editingId = null;
+
+                // Reabre o pop-up do dia para feedback visual maravilhoso
+                window.openAgendaDayDetails(newItem.data);
+
             } catch(error) {
                 alert("Erro ao salvar na agenda.");
-                btn.innerText = 'Adicionar à Agenda'; btn.disabled = false;
+                btn.innerText = window.editingId ? 'Salvar Alterações' : 'Adicionar à Agenda'; 
+                btn.disabled = false;
             }
         }
 
@@ -1399,7 +1502,6 @@
             
             item.concluido = !item.concluido;
             
-            // Re-render immediate visual feedback
             window.buildChecklist();
             window.buildReorganization();
             
@@ -1416,9 +1518,15 @@
         window.deleteAgendaItem = async function(id) {
             if(!confirm("Deseja realmente apagar este item?")) return;
             try {
+                const item = window.db.agenda.find(i => i.id === id);
                 await dbFirestore.collection('agenda').doc(id).delete();
                 window.db.agenda = window.db.agenda.filter(i => i.id !== id);
                 window.renderAgenda();
+                
+                // Se estiver dentro do pop-up do dia, atualiza magicamente
+                if (item && document.getElementById('modal-agenda-day').style.display === 'flex') {
+                    window.renderAgendaDayItems(item.data);
+                }
             } catch(e) { alert("Erro ao apagar."); }
         }
 
