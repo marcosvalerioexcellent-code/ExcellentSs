@@ -744,7 +744,7 @@
 
             <div class="agenda-list-container" style="border-left: 4px solid var(--danger);">
                 <h3><i class="fas fa-exclamation-circle" style="color: var(--danger);"></i> Reorganização de Pendências</h3>
-                <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 15px;">Itens passados e presentes que ainda não foram marcados como concluídos.</p>
+                <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 15px;">Itens de dias anteriores que ainda não foram marcados como concluídos.</p>
                 <div id="reorg-body">
                     </div>
             </div>
@@ -1369,7 +1369,14 @@
             const body = document.getElementById('reorg-body');
             body.innerHTML = '';
             
-            const items = window.db.agenda.filter(it => !it.concluido);
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            const items = window.db.agenda.filter(it => {
+                if (it.concluido) return false;
+                const dataItem = new Date(it.data + 'T00:00:00');
+                return dataItem < hoje;
+            });
 
             if(items.length === 0){
                 body.innerHTML = '<p style="color: var(--text-light); font-size: 0.9rem;">Tudo limpo! Não há pendências para reorganizar.</p>';
