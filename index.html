@@ -737,7 +737,7 @@
                 </div>
 
             <div class="agenda-list-container">
-                <h3><i class="fas fa-tasks" style="color: var(--success);"></i> Checklist da Semana</h3>
+                <h3><i class="fas fa-tasks" style="color: var(--success);"></i> Checklist do Dia</h3>
                 <div id="checklist-body">
                     </div>
             </div>
@@ -1216,7 +1216,7 @@
             for(let d = 1; d <= daysInMonth; d++){
                 const dataStr = `${window.currentAgendaYear}-${String(window.currentAgendaMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 
-                const itemsDay = window.db.agenda.filter(i => i.data === dataStr);
+                const itemsDay = window.db.agenda.filter(i => i.data === dataStr && !i.concluido);
                 const hasAnot = itemsDay.some(i => i.tipo === 'anotacao');
                 const hasCli = itemsDay.some(i => i.tipo === 'cliente');
                 
@@ -1244,7 +1244,7 @@
         // Nova Função: Renderizar itens dentro do pop-up do dia
         window.renderAgendaDayItems = function(dataStr) {
             const container = document.getElementById('modal-agenda-day-body');
-            const items = window.db.agenda.filter(i => i.data === dataStr);
+            const items = window.db.agenda.filter(i => i.data === dataStr && !i.concluido);
 
             if (items.length === 0) {
                 container.innerHTML = `<div style="text-align: center; padding: 40px 20px; color: var(--text-light);"><i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i><p>Nenhum registro para este dia.</p><p style="font-size: 0.85rem; margin-top: 5px;">Clique abaixo para adicionar algo especial.</p></div>`;
@@ -1302,7 +1302,7 @@
                 const dayName = weekDays[d.getDay()];
                 const fmtDate = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
                 
-                let itemsDay = window.db.agenda.filter(it => it.data === dataStr);
+                let itemsDay = window.db.agenda.filter(it => it.data === dataStr && !it.concluido);
                 if(filter === 'cliente') itemsDay = itemsDay.filter(it => it.tipo === 'cliente');
                 if(filter === 'anotacao') itemsDay = itemsDay.filter(it => it.tipo === 'anotacao');
 
@@ -1333,33 +1333,29 @@
             const body = document.getElementById('checklist-body');
             body.innerHTML = '';
             
-            const startDay = new Date(); startDay.setHours(0,0,0,0);
-            const endDay = new Date(startDay); endDay.setDate(endDay.getDate() + 6);
+            const hoje = new Date();
+            const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
             
-            const items = window.db.agenda.filter(it => {
-                const d = new Date(it.data + 'T00:00:00');
-                return d >= startDay && d <= endDay;
-            });
+            const items = window.db.agenda.filter(it => it.data === hojeStr);
 
             if(items.length === 0){
-                body.innerHTML = '<p style="color: var(--text-light); font-size: 0.9rem;">Nenhuma atividade agendada para os próximos 7 dias.</p>';
+                body.innerHTML = '<p style="color: var(--text-light); font-size: 0.9rem;">Nenhuma atividade agendada para hoje.</p>';
                 return;
             }
 
-            items.sort((a,b) => new Date(a.data) - new Date(b.data));
+            items.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
 
             items.forEach(it => {
                 const isDone = it.concluido ? 'checked' : '';
                 const doneClass = it.concluido ? 'done' : '';
                 const title = it.tipo === 'anotacao' ? it.descricao : `${it.hora ? it.hora + ' - ' : ''}Cliente: ${it.nome} (${it.assunto})`;
-                const fmtDate = window.formatDate(it.data).substring(0,5);
                 const badge = it.tipo === 'anotacao' ? `<span class="badge-mini" style="background: var(--agenda-anotacao);">Anotação</span>` : `<span class="badge-mini" style="background: var(--agenda-cliente);">Cliente</span>`;
 
                 body.innerHTML += `
                     <div class="checklist-item ${doneClass}">
                         <label>
                             <input type="checkbox" class="checklist-checkbox" ${isDone} onchange="window.toggleAgendaStatus('${it.id}')">
-                            <span class="check-text">${title} <small style="color: var(--text-light); margin-left: 5px;">[${fmtDate}]</small> ${badge}</span>
+                            <span class="check-text">${title} ${badge}</span>
                         </label>
                     </div>`;
             });
@@ -1509,16 +1505,14 @@
             
             item.concluido = !item.concluido;
             
-            window.buildChecklist();
-            window.buildReorganization();
+            window.renderAgenda();
             
             try {
                 await dbFirestore.collection('agenda').doc(id).update({ concluido: item.concluido });
             } catch(e) {
                 alert("Erro ao atualizar status na nuvem.");
                 item.concluido = !item.concluido;
-                window.buildChecklist();
-                window.buildReorganization();
+                window.renderAgenda();
             }
         }
 
