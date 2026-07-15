@@ -457,10 +457,15 @@
             <div class="login-card">
                 <h2>Bem-vindo(a)</h2>
                 <p>Acesse o Sistema de Gestão.</p>
-                <form onsubmit="window.handleEmailAuth(event)">
+                <form id="auth-form" onsubmit="event.preventDefault();">
                     <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" required placeholder="seu@email.com"></div>
                     <div class="form-group"><label>Senha</label><input type="password" id="auth-password" required placeholder="••••••••"></div>
-                    <button type="submit" class="btn-submit" id="btn-auth-action">Entrar / Cadastrar-se</button>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button type="button" class="btn-submit" id="btn-login" onclick="window.loginEmail()" style="margin-top: 0;">Entrar</button>
+                        <button type="button" class="btn-submit" id="btn-register" onclick="window.registerEmail()" style="margin-top: 0; background: transparent; color: var(--primary); border: 2px solid var(--primary);">Cadastrar</button>
+                    </div>
+
                     <small style="display: block; text-align: center; margin-top: 15px; color: var(--text-light); cursor: pointer;" onclick="window.resetPassword()">Esqueci minha senha</small>
                 </form>
                 <div class="auth-divider">ou</div>
@@ -3009,24 +3014,44 @@
 
         // --- SISTEMA DE LOGIN E ADMINISTRAÇÃO ---
 
-        window.handleEmailAuth = async function(e) {
-            e.preventDefault();
+        window.loginEmail = async function() {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-password').value;
-            const btn = document.getElementById('btn-auth-action');
-            btn.innerText = 'Processando...'; btn.disabled = true;
+            if(!email || !pass) return alert("Preencha e-mail e senha para entrar.");
+            
+            const btn = document.getElementById('btn-login');
+            btn.innerText = 'Entrando...'; btn.disabled = true;
 
             try {
                 await auth.signInWithEmailAndPassword(email, pass);
             } catch (error) {
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
-                    try {
-                        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                        await dbFirestore.collection('users').doc(cred.user.uid).set({ email: email, departamento: 'Pendente' });
-                    } catch (err) { alert("Erro ao cadastrar: " + err.message); }
-                } else { alert("Erro no login: " + error.message); }
+                alert("Erro ao entrar: Verifique se o e-mail e a senha estão corretos.");
             }
-            btn.innerText = 'Entrar / Cadastrar-se'; btn.disabled = false;
+            btn.innerText = 'Entrar'; btn.disabled = false;
+        }
+
+        window.registerEmail = async function() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            if(!email || !pass) return alert("Preencha e-mail e senha para se cadastrar.");
+            
+            const btn = document.getElementById('btn-register');
+            btn.innerText = 'Criando...'; btn.disabled = true;
+
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await dbFirestore.collection('users').doc(cred.user.uid).set({ email: email, departamento: 'Pendente' });
+                alert("Conta criada com sucesso! Você já está logado.");
+            } catch (error) {
+                if(error.code === 'auth/email-already-in-use') {
+                    alert("Este e-mail já está cadastrado. Por favor, clique em Entrar.");
+                } else if(error.code === 'auth/weak-password') {
+                    alert("A senha é muito fraca. Tente uma senha com pelo menos 6 caracteres.");
+                } else {
+                    alert("Erro ao cadastrar: " + error.message);
+                }
+            }
+            btn.innerText = 'Cadastrar'; btn.disabled = false;
         }
 
         window.loginWithGoogle = async function() {
