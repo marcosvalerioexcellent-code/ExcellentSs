@@ -17,6 +17,8 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="config/admin-config.js"></script>
     
     <style>
         :root {
@@ -50,6 +52,47 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
 
         body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
+
+        /* Tela de Login Elegante */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); z-index: 100000;
+            display: flex; transition: opacity 0.5s ease;
+        }
+        .login-left {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle, var(--primary) 0%, #0f172a 100%);
+        }
+        .login-left img { max-width: 50%; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+        
+        .login-right {
+            width: 450px; display: flex; align-items: center; justify-content: center; padding: 40px; background: var(--surface); box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+        }
+        .login-card { width: 100%; max-width: 350px; }
+        .login-card h2 { font-size: 1.8rem; margin-bottom: 10px; color: var(--text-main); }
+        .login-card p { font-size: 0.9rem; color: var(--text-light); margin-bottom: 30px; }
+        
+        .btn-google {
+            width: 100%; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600;
+            color: #444; cursor: pointer; transition: 0.2s; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-google:hover { background: #f8f9fa; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-google img { width: 20px; }
+        
+        .auth-divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: var(--text-light); font-size: 0.85rem; }
+        .auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+        .auth-divider:not(:empty)::before { margin-right: .25em; }
+        .auth-divider:not(:empty)::after { margin-left: .25em; }
+
+        .admin-user-card { background: var(--bg-color); padding: 15px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+
+        @media (max-width: 768px) {
+            #login-overlay { flex-direction: column; }
+            .login-left { display: none; }
+            .login-right { width: 100%; padding: 20px; }
+        }
 
         /* Sidebar */
         .sidebar { width: 260px; background-color: var(--primary); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 100; }
@@ -406,13 +449,35 @@
 </head>
 <body>
 
-    <div id="app-intro" aria-label="Abertura do aplicativo">
-        <video id="intro-video" playsinline preload="auto">
-    <source src="splash.mp4" type="video/mp4">
-</video>
-        <div class="intro-tap-message">Toque na tela para iniciar a abertura com som</div>
+    <div id="login-overlay">
+        <div class="login-left">
+            <img src="favicon.png" alt="Excellent Services Logo">
+        </div>
+        <div class="login-right">
+            <div class="login-card">
+                <h2>Bem-vindo(a)</h2>
+                <p>Acesse o Sistema de Gestão.</p>
+                <form onsubmit="window.handleEmailAuth(event)">
+                    <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" required placeholder="seu@email.com"></div>
+                    <div class="form-group"><label>Senha</label><input type="password" id="auth-password" required placeholder="••••••••"></div>
+                    <button type="submit" class="btn-submit" id="btn-auth-action">Entrar / Cadastrar-se</button>
+                    <small style="display: block; text-align: center; margin-top: 15px; color: var(--text-light); cursor: pointer;" onclick="window.resetPassword()">Esqueci minha senha</small>
+                </form>
+                <div class="auth-divider">ou</div>
+                <button class="btn-google" type="button" onclick="window.loginWithGoogle()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                    Continuar com Google
+                </button>
+            </div>
+        </div>
     </div>
 
+    <div id="app-intro" aria-label="Abertura do aplicativo">
+        <video id="intro-video" playsinline preload="auto">
+            <source src="splash.mp4" type="video/mp4">
+        </video>
+        <div class="intro-tap-message">Toque na tela para iniciar a abertura com som</div>
+    </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="logo">EXCELLENT<span>SERVICES</span></div>
@@ -425,6 +490,9 @@
             <li data-tab="fila" onclick="window.switchTab('fila', this)"><i class="fas fa-tasks"></i> Fila de Projetos</li>
             <li data-tab="suporte" onclick="window.switchTab('suporte', this)"><i class="fas fa-headset"></i> Suporte</li>
             <li data-tab="agenda" onclick="window.switchTab('agenda', this)"><i class="fas fa-calendar-alt"></i> Agenda</li>
+            
+            <li id="nav-admin" data-tab="admin" onclick="window.switchTab('admin', this)" style="display: none;"><i class="fas fa-user-shield"></i> Administração</li>
+            <li onclick="window.logoutAuth()" style="margin-top: 20px; color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Sair do Sistema</li>
         </ul>
     </nav>
 
@@ -751,6 +819,14 @@
             </div>
 
         </section>
+        
+        <section id="admin" class="tab-content">
+            <div class="agenda-header">
+                <h2 style="font-size: 1.2rem; color: var(--text-main); font-weight: 600;">Gestão de Acessos e Departamentos</h2>
+            </div>
+            <div id="admin-users-list"></div>
+        </section>
+
     </main>
 
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Navegação inferior do aplicativo">
@@ -775,7 +851,6 @@
         </div>
     </div>
 
-    <!-- Novo Pop-up Elegante de Detalhes do Dia -->
     <div class="modal-overlay" id="modal-agenda-day">
         <div class="modal">
             <div class="modal-header">
@@ -783,8 +858,7 @@
                 <button class="close-modal" onclick="document.getElementById('modal-agenda-day').style.display='none'"><i class="fas fa-times"></i></button>
             </div>
             <div id="modal-agenda-day-body" style="max-height: 50vh; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
-                <!-- Itens serão injetados via JS -->
-            </div>
+                </div>
             <div style="display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px;">
                 <button class="btn-submit" onclick="window.openAgendaChoice(window.agendaTargetDate)"><i class="fas fa-plus"></i> Novo Registro no Dia</button>
             </div>
@@ -865,7 +939,8 @@
             </div>
         </div>
     </div>
-<div class="modal-overlay" id="modal-pdf-agenda">
+
+    <div class="modal-overlay" id="modal-pdf-agenda">
         <div class="modal">
             <div class="modal-header">
                 <h2><i class="fas fa-file-pdf" style="color: var(--accent);"></i> Relatório da Agenda</h2>
@@ -888,6 +963,7 @@
             </div>
         </div>
     </div>
+
     <div class="modal-overlay" id="modal-pdf">
         <div class="modal">
             <div class="modal-header">
@@ -1040,6 +1116,9 @@
 
         firebase.initializeApp(firebaseConfig);
         const dbFirestore = firebase.firestore();
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        window.currentUser = null;
 
         window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [], leads: [], agenda: [] };
         window.currentTab = 'dashboard';
@@ -1074,12 +1153,14 @@
         });
 
         async function loadDataFromFirebase() {
+            if (!window.currentUser) return;
+
             try {
                 const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap, aSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(), dbFirestore.collection("vendas").get(),
                     dbFirestore.collection("fila").get(), dbFirestore.collection("conversoes").get(),
                     dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get(),
-                    dbFirestore.collection("agenda").get().catch(() => ({ docs: [] })) 
+                    dbFirestore.collection("agenda").where("userId", "==", window.currentUser.uid).get().catch(() => ({ docs: [] })) 
                 ]);
                 
                 window.db.contatos = cSnap.docs.map(d => d.data()); 
@@ -1114,6 +1195,7 @@
                 // Init Agenda Year Filter
                 const yearSelect = document.getElementById('agenda-year');
                 if(yearSelect) {
+                    yearSelect.innerHTML = '';
                     for(let y = 2026; y <= 2036; y++){
                         let opt = document.createElement('option');
                         opt.value = y; opt.innerText = y;
@@ -1172,6 +1254,7 @@
             else { if (document.exitFullscreen) { document.exitFullscreen(); document.getElementById('fullscreen-icon').classList.replace('fa-compress', 'fa-expand'); } }
         }
 
+        // Modifica a função switchTab nativa para carregar usuários do Admin
         window.switchTab = function(tabName, triggerEl) {
             window.currentTab = tabName;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -1179,14 +1262,24 @@
 
             const targetSection = document.getElementById(tabName);
             if (targetSection) targetSection.classList.add('active');
-            document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => el.classList.add('active'));
+            
+            // Highlight menus
+            if(triggerEl) triggerEl.classList.add('active');
+            else {
+                document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => el.classList.add('active'));
+            }
 
-            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'clientes': 'Gestão de Clientes', 'leads': 'Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos', 'suporte': 'Suporte a Clientes', 'agenda': 'Agenda e Planejamento' };
-            document.getElementById('page-title').innerText = titles[tabName];
+            const titles = { 'dashboard': 'Dashboard', 'conversoes': 'Conversões', 'clientes': 'Gestão de Clientes', 'leads': 'Contatos', 'vendas': 'Controle Financeiro', 'fila': 'Fila de Projetos', 'suporte': 'Suporte a Clientes', 'agenda': 'Agenda e Planejamento', 'admin': 'Administração' };
+            document.getElementById('page-title').innerText = titles[tabName] || 'Dashboard';
 
-            document.getElementById('main-fab').style.display = (tabName === 'dashboard' || tabName === 'agenda') ? 'none' : 'flex';
+            document.getElementById('main-fab').style.display = (tabName === 'dashboard' || tabName === 'agenda' || tabName === 'admin') ? 'none' : 'flex';
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
-            window.renderCurrentTab();
+            
+            if (tabName === 'admin') {
+                window.loadAdminUsers();
+            } else {
+                window.renderCurrentTab();
+            }
         }
 
         window.switchDashSubTab = function(subTabName) {
@@ -1487,7 +1580,8 @@
                 id: targetId,
                 tipo: tipo,
                 data: oldItem ? oldItem.data : window.agendaTargetDate,
-                concluido: oldItem ? oldItem.concluido : false
+                concluido: oldItem ? oldItem.concluido : false,
+                userId: window.currentUser.uid // Vinculado ao usuário logado
             };
 
             if(tipo === 'anotacao') {
@@ -2811,9 +2905,7 @@
             tryPlay();
         }
 
-        document.getElementById('main-fab').style.display = 'none';
-        window.onload = () => { window.initAppIntro(); loadDataFromFirebase(); };
-    window.openAgendaPdfModal = function() { 
+        window.openAgendaPdfModal = function() { 
             document.getElementById('modal-pdf-agenda').style.display = 'flex'; 
         }
 
@@ -2914,6 +3006,127 @@
             });
             document.getElementById('modal-pdf-agenda').style.display = 'none';
         }
-</script>
+
+        // --- SISTEMA DE LOGIN E ADMINISTRAÇÃO ---
+
+        window.handleEmailAuth = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            const btn = document.getElementById('btn-auth-action');
+            btn.innerText = 'Processando...'; btn.disabled = true;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+            } catch (error) {
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
+                    try {
+                        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                        await dbFirestore.collection('users').doc(cred.user.uid).set({ email: email, departamento: 'Pendente' });
+                    } catch (err) { alert("Erro ao cadastrar: " + err.message); }
+                } else { alert("Erro no login: " + error.message); }
+            }
+            btn.innerText = 'Entrar / Cadastrar-se'; btn.disabled = false;
+        }
+
+        window.loginWithGoogle = async function() {
+            try {
+                const res = await auth.signInWithPopup(googleProvider);
+                const userRef = dbFirestore.collection('users').doc(res.user.uid);
+                const doc = await userRef.get();
+                if (!doc.exists) await userRef.set({ email: res.user.email, departamento: 'Pendente' });
+            } catch (error) { alert("Erro Google Sign-In: " + error.message); }
+        }
+
+        window.logoutAuth = function() { auth.signOut(); }
+
+        window.resetPassword = async function() {
+            const email = document.getElementById('auth-email').value;
+            if(!email) return alert("Preencha seu e-mail no campo acima e clique aqui novamente.");
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert("E-mail de redefinição enviado com sucesso!");
+            } catch(e) { alert("Erro: " + e.message); }
+        }
+
+        // Observador em Tempo Real (Mostra Tela / Esconde Tela)
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                window.currentUser = user;
+                document.getElementById('login-overlay').style.display = 'none';
+                
+                // Exibe menu admin apenas se o email estiver no admin-config.js
+                if (window.ADMIN_EMAILS && window.ADMIN_EMAILS.includes(user.email)) {
+                    document.getElementById('nav-admin').style.display = 'flex';
+                } else {
+                    document.getElementById('nav-admin').style.display = 'none';
+                }
+
+                // Migração da Andressa
+                if (user.email === 'andressavalerioexcellent@yahoo.com') {
+                    const snap = await dbFirestore.collection("agenda").get();
+                    const batch = dbFirestore.batch();
+                    snap.docs.forEach(doc => { if (!doc.data().userId) batch.update(doc.ref, { userId: user.uid }); });
+                    await batch.commit();
+                }
+                
+                // Inicia o carregamento dos dados agora que sabemos quem ele é
+                loadDataFromFirebase();
+            } else {
+                window.currentUser = null;
+                document.getElementById('login-overlay').style.display = 'flex';
+            }
+        });
+
+        window.loadAdminUsers = async function() {
+            if (!window.ADMIN_EMAILS.includes(window.currentUser.email)) return;
+            const container = document.getElementById('admin-users-list');
+            container.innerHTML = '<p>Carregando usuários...</p>';
+            try {
+                const snap = await dbFirestore.collection('users').get();
+                let html = '';
+                snap.docs.forEach(doc => {
+                    const u = doc.data();
+                    html += `
+                    <div class="admin-user-card">
+                        <div>
+                            <strong>${u.email}</strong>
+                            <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 5px;">Setor: <span class="badge" style="background: var(--primary); color: white;">${u.departamento || 'Pendente'}</span></div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <select id="dep-${doc.id}" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border);">
+                                <option value="Tecnologia">Tecnologia</option><option value="Marketing">Marketing</option><option value="Gestão">Gestão</option>
+                            </select>
+                            <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px;" onclick="window.promoverUsuario('${doc.id}')">Definir Setor</button>
+                            <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px; background: var(--accent);" onclick="window.resetPasswordAdmin('${u.email}')" title="Enviar reset de senha"><i class="fas fa-key"></i></button>
+                            <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px; background: var(--danger);" onclick="window.removerUsuario('${doc.id}', '${u.email}')" title="Remover Acesso"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) { container.innerHTML = '<p style="color:red;">Erro ao buscar acessos.</p>'; }
+        }
+
+        window.promoverUsuario = async function(uid) {
+            const dep = document.getElementById(`dep-${uid}`).value;
+            try { await dbFirestore.collection('users').doc(uid).update({ departamento: dep }); window.loadAdminUsers(); } 
+            catch(e) { alert("Erro: " + e.message); }
+        }
+
+        window.resetPasswordAdmin = async function(email) {
+            try { await auth.sendPasswordResetEmail(email); alert("Link de redefinição enviado para " + email); } 
+            catch(e) { alert("Erro: " + e.message); }
+        }
+
+        window.removerUsuario = async function(uid, email) {
+            if(!confirm(`Bloquear e remover o acesso de ${email}?\n(O banco de dados suspenderá a conta e negará visualizações)`)) return;
+            try { await dbFirestore.collection('users').doc(uid).delete(); window.loadAdminUsers(); } 
+            catch(e) { alert("Erro: " + e.message); }
+        }
+
+        document.getElementById('main-fab').style.display = 'none';
+        window.onload = () => { window.initAppIntro(); }; // Não chamamos mais loadDataFromFirebase aqui, agora quem chama é o onAuthStateChanged
+
+    </script>
 </body>
 </html>
