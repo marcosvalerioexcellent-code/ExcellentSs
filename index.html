@@ -2872,11 +2872,23 @@
                 return [dataFmt, hora, tipoFmt, descricao, st];
             });
 
+            // Tabela Principal
             doc.autoTable({
-                startY: 100, head: [['Data', 'Hora', 'Tipo', 'Descrição / Cliente', 'Status']], body: tableBody, theme: 'grid',
-                headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, alternateRowStyles: { fillColor: [248, 250, 252] },
-                styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85] },
-                columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 15 }, 2: { cellWidth: 25 }, 4: { cellWidth: 25, fontStyle: 'bold' } },
+                startY: 100, 
+                head: [['Data', 'Hora', 'Tipo', 'Descrição / Cliente', 'Status']], 
+                body: tableBody, 
+                theme: 'grid',
+                margin: { left: 14, right: 14 }, // Trava as margens da página
+                headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, 
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85], overflow: 'linebreak' }, // Força a quebra
+                columnStyles: { 
+                    0: { cellWidth: 20 }, 
+                    1: { cellWidth: 15 }, 
+                    2: { cellWidth: 22 }, 
+                    3: { cellWidth: 100 }, // Limite exato para a descrição não vazar
+                    4: { cellWidth: 25, fontStyle: 'bold' } 
+                },
                 didParseCell: function (data) { 
                     if (data.section === 'body' && data.column.index === 4) { 
                         if (data.cell.raw === 'Concluído') data.cell.styles.textColor = [16, 185, 129]; 
