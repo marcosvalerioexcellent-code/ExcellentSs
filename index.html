@@ -18,7 +18,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="config/admin-config.js"></script>
+    <script src="admin-config.js"></script>
     
     <style>
         :root {
@@ -449,30 +449,43 @@
 </head>
 <body>
 
+    <!-- Overlay de Login -->
     <div id="login-overlay">
         <div class="login-left">
             <img src="favicon.png" alt="Excellent Services Logo">
         </div>
         <div class="login-right">
-            <div class="login-card">
+            <div class="login-card" id="card-login">
                 <h2>Bem-vindo(a)</h2>
                 <p>Acesse o Sistema de Gestão.</p>
-                <form id="auth-form" onsubmit="event.preventDefault();">
-                    <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" required placeholder="seu@email.com"></div>
-                    <div class="form-group"><label>Senha</label><input type="password" id="auth-password" required placeholder="••••••••"></div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button type="button" class="btn-submit" id="btn-login" onclick="window.loginEmail()" style="margin-top: 0;">Entrar</button>
-                        <button type="button" class="btn-submit" id="btn-register" onclick="window.registerEmail()" style="margin-top: 0; background: transparent; color: var(--primary); border: 2px solid var(--primary);">Cadastrar</button>
+                <form onsubmit="event.preventDefault(); window.loginEmail();">
+                    <div class="form-group"><label>E-mail</label><input type="email" id="auth-email-login" required placeholder="seu@email.com"></div>
+                    <div class="form-group"><label>Senha</label><input type="password" id="auth-password-login" required placeholder="••••••••"></div>
+                    <button type="submit" class="btn-submit" id="btn-login">Entrar</button>
+                    <div style="display:flex; justify-content: space-between; margin-top: 15px;">
+                        <small style="color: var(--primary); cursor: pointer; font-weight:bold;" onclick="window.toggleAuthMode('register')">Criar conta</small>
+                        <small style="color: var(--text-light); cursor: pointer;" onclick="window.resetPassword()">Esqueci a senha</small>
                     </div>
-
-                    <small style="display: block; text-align: center; margin-top: 15px; color: var(--text-light); cursor: pointer;" onclick="window.resetPassword()">Esqueci minha senha</small>
                 </form>
                 <div class="auth-divider">ou</div>
                 <button class="btn-google" type="button" onclick="window.loginWithGoogle()">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
                     Continuar com Google
                 </button>
+            </div>
+            
+            <div class="login-card" id="card-register" style="display: none;">
+                <h2>Cadastrar</h2>
+                <p>Crie sua conta no sistema.</p>
+                <form onsubmit="event.preventDefault(); window.registerEmail();">
+                    <div class="form-group"><label>E-mail</label><input type="email" id="auth-email-reg" required placeholder="seu@email.com"></div>
+                    <div class="form-group"><label>Senha</label><input type="password" id="auth-password-reg" required placeholder="••••••••"></div>
+                    <div class="form-group"><label>Confirmar Senha</label><input type="password" id="auth-password-conf" required placeholder="••••••••"></div>
+                    <button type="submit" class="btn-submit" id="btn-register">Cadastrar</button>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <small style="color: var(--primary); cursor: pointer; font-weight:bold;" onclick="window.toggleAuthMode('login')">Já tem conta? Faça Login</small>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -856,6 +869,7 @@
         </div>
     </div>
 
+    <!-- Novo Pop-up Elegante de Detalhes do Dia -->
     <div class="modal-overlay" id="modal-agenda-day">
         <div class="modal">
             <div class="modal-header">
@@ -863,7 +877,8 @@
                 <button class="close-modal" onclick="document.getElementById('modal-agenda-day').style.display='none'"><i class="fas fa-times"></i></button>
             </div>
             <div id="modal-agenda-day-body" style="max-height: 50vh; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
-                </div>
+                <!-- Itens serão injetados via JS -->
+            </div>
             <div style="display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px;">
                 <button class="btn-submit" onclick="window.openAgendaChoice(window.agendaTargetDate)"><i class="fas fa-plus"></i> Novo Registro no Dia</button>
             </div>
@@ -1124,6 +1139,8 @@
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         window.currentUser = null;
+        window.currentUserDoc = null;
+        window.isRegistering = false;
 
         window.db = { contatos: [], vendas: [], fila: [], conversoes: [], suporte: [], leads: [], agenda: [] };
         window.currentTab = 'dashboard';
@@ -1161,18 +1178,32 @@
             if (!window.currentUser) return;
 
             try {
-                const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap, aSnap] = await Promise.all([
+                const dep = window.currentUserDoc ? window.currentUserDoc.departamento : 'Pendente';
+
+                // Buscar a agenda do próprio usuário (anotações e clientes que ele mesmo criou)
+                const agendaP1 = await dbFirestore.collection("agenda").where("userId", "==", window.currentUser.uid).get().catch(() => ({ docs: [] }));
+                let agendaDocsMap = new Map();
+                agendaP1.docs.forEach(d => agendaDocsMap.set(d.id, d.data()));
+
+                // Buscar a agenda de toda a equipe do mesmo departamento (apenas "cliente")
+                if(dep !== 'Pendente') {
+                    const agendaP2 = await dbFirestore.collection("agenda").where("tipo", "==", "cliente").where("departamento", "==", dep).get().catch(() => ({ docs: [] }));
+                    agendaP2.docs.forEach(d => {
+                        if(!agendaDocsMap.has(d.id)) agendaDocsMap.set(d.id, d.data());
+                    });
+                }
+
+                const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap] = await Promise.all([
                     dbFirestore.collection("contatos").get(), dbFirestore.collection("vendas").get(),
                     dbFirestore.collection("fila").get(), dbFirestore.collection("conversoes").get(),
-                    dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get(),
-                    dbFirestore.collection("agenda").where("userId", "==", window.currentUser.uid).get().catch(() => ({ docs: [] })) 
+                    dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get()
                 ]);
                 
                 window.db.contatos = cSnap.docs.map(d => d.data()); 
                 window.db.vendas = vSnap.docs.map(d => d.data());
                 window.db.fila = fSnap.docs.map(d => d.data()); 
                 window.db.conversoes = convSnap.docs.map(d => d.data());
-                window.db.agenda = aSnap.docs ? aSnap.docs.map(d => d.data()) : [];
+                window.db.agenda = Array.from(agendaDocsMap.values());
                 
                 window.db.suporte = supSnap ? supSnap.docs.map(d => {
                     let data = d.data();
@@ -1586,7 +1617,8 @@
                 tipo: tipo,
                 data: oldItem ? oldItem.data : window.agendaTargetDate,
                 concluido: oldItem ? oldItem.concluido : false,
-                userId: window.currentUser.uid // Vinculado ao usuário logado
+                userId: oldItem ? oldItem.userId : window.currentUser.uid,
+                departamento: oldItem ? oldItem.departamento : (window.currentUserDoc ? window.currentUserDoc.departamento : 'Pendente')
             };
 
             if(tipo === 'anotacao') {
@@ -2969,21 +3001,20 @@
                 return [dataFmt, hora, tipoFmt, descricao, st];
             });
 
-            // Tabela Principal
             doc.autoTable({
                 startY: 100, 
                 head: [['Data', 'Hora', 'Tipo', 'Descrição / Cliente', 'Status']], 
                 body: tableBody, 
                 theme: 'grid',
-                margin: { left: 14, right: 14 }, // Trava as margens da página
+                margin: { left: 14, right: 14 }, 
                 headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, 
                 alternateRowStyles: { fillColor: [248, 250, 252] },
-                styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85], overflow: 'linebreak' }, // Força a quebra
+                styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85], overflow: 'linebreak' },
                 columnStyles: { 
                     0: { cellWidth: 20 }, 
                     1: { cellWidth: 15 }, 
                     2: { cellWidth: 22 }, 
-                    3: { cellWidth: 100 }, // Limite exato para a descrição não vazar
+                    3: { cellWidth: 100 }, 
                     4: { cellWidth: 25, fontStyle: 'bold' } 
                 },
                 didParseCell: function (data) { 
@@ -3014,9 +3045,19 @@
 
         // --- SISTEMA DE LOGIN E ADMINISTRAÇÃO ---
 
+        window.toggleAuthMode = function(mode) {
+            if(mode === 'register') {
+                document.getElementById('card-login').style.display = 'none';
+                document.getElementById('card-register').style.display = 'block';
+            } else {
+                document.getElementById('card-register').style.display = 'none';
+                document.getElementById('card-login').style.display = 'block';
+            }
+        }
+
         window.loginEmail = async function() {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-password').value;
+            const email = document.getElementById('auth-email-login').value;
+            const pass = document.getElementById('auth-password-login').value;
             if(!email || !pass) return alert("Preencha e-mail e senha para entrar.");
             
             const btn = document.getElementById('btn-login');
@@ -3031,20 +3072,31 @@
         }
 
         window.registerEmail = async function() {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-password').value;
-            if(!email || !pass) return alert("Preencha e-mail e senha para se cadastrar.");
+            const email = document.getElementById('auth-email-reg').value;
+            const pass = document.getElementById('auth-password-reg').value;
+            const passConf = document.getElementById('auth-password-conf').value;
+            
+            if(!email || !pass || !passConf) return alert("Preencha todos os campos.");
+            if(pass !== passConf) return alert("As senhas não coincidem.");
             
             const btn = document.getElementById('btn-register');
             btn.innerText = 'Criando...'; btn.disabled = true;
 
             try {
+                window.isRegistering = true; // Bloqueia o login automático
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 await dbFirestore.collection('users').doc(cred.user.uid).set({ email: email, departamento: 'Pendente' });
-                alert("Conta criada com sucesso! Você já está logado.");
+                
+                // Desloga na mesma hora e pede pra ir pro login
+                await auth.signOut();
+                alert("Conta criada com sucesso! Faça login para continuar.");
+                window.toggleAuthMode('login');
+                document.getElementById('auth-email-login').value = email;
+                document.getElementById('auth-password-login').value = '';
+                
             } catch (error) {
                 if(error.code === 'auth/email-already-in-use') {
-                    alert("Este e-mail já está cadastrado. Por favor, clique em Entrar.");
+                    alert("Este e-mail já está cadastrado. Por favor, faça login.");
                 } else if(error.code === 'auth/weak-password') {
                     alert("A senha é muito fraca. Tente uma senha com pelo menos 6 caracteres.");
                 } else {
@@ -3052,6 +3104,7 @@
                 }
             }
             btn.innerText = 'Cadastrar'; btn.disabled = false;
+            window.isRegistering = false;
         }
 
         window.loginWithGoogle = async function() {
@@ -3066,8 +3119,8 @@
         window.logoutAuth = function() { auth.signOut(); }
 
         window.resetPassword = async function() {
-            const email = document.getElementById('auth-email').value;
-            if(!email) return alert("Preencha seu e-mail no campo acima e clique aqui novamente.");
+            const email = document.getElementById('auth-email-login').value;
+            if(!email) return alert("Preencha seu e-mail no campo de login e clique aqui novamente.");
             try {
                 await auth.sendPasswordResetEmail(email);
                 alert("E-mail de redefinição enviado com sucesso!");
@@ -3076,8 +3129,17 @@
 
         // Observador em Tempo Real (Mostra Tela / Esconde Tela)
         auth.onAuthStateChanged(async user => {
-            if (user) {
+            if (user && !window.isRegistering) {
                 window.currentUser = user;
+                
+                // Busca os detalhes do usuário para pegar o Departamento
+                const userDocSnap = await dbFirestore.collection('users').doc(user.uid).get();
+                if(userDocSnap.exists) {
+                    window.currentUserDoc = userDocSnap.data();
+                } else {
+                    window.currentUserDoc = { departamento: 'Pendente' };
+                }
+
                 document.getElementById('login-overlay').style.display = 'none';
                 
                 // Exibe menu admin apenas se o email estiver no admin-config.js
@@ -3095,10 +3157,11 @@
                     await batch.commit();
                 }
                 
-                // Inicia o carregamento dos dados agora que sabemos quem ele é
+                // Inicia o carregamento dos dados
                 loadDataFromFirebase();
-            } else {
+            } else if (!window.isRegistering) {
                 window.currentUser = null;
+                window.currentUserDoc = null;
                 document.getElementById('login-overlay').style.display = 'flex';
             }
         });
@@ -3150,7 +3213,7 @@
         }
 
         document.getElementById('main-fab').style.display = 'none';
-        window.onload = () => { window.initAppIntro(); }; // Não chamamos mais loadDataFromFirebase aqui, agora quem chama é o onAuthStateChanged
+        window.onload = () => { window.initAppIntro(); }; 
 
     </script>
 </body>
