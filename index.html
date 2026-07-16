@@ -294,11 +294,17 @@
         body.dark-mode .dash-nav span:hover { color: #f8fafc; }
         body.dark-mode .dash-nav span.active { color: #f8fafc; }
 
-/* Adaptações do Modo Escuro para Login */
-body.dark-mode .login-right { box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
-body.dark-mode .btn-google { background: #1e1e1e; border-color: #333; color: #f8fafc; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-body.dark-mode .btn-google:hover { background: #2a2a2a; }
-body.dark-mode .btn-google img { filter: brightness(0.9); }
+        /* Adaptações Totais do Modo Escuro para Login e Cadastro */
+        body.dark-mode .login-right { box-shadow: -10px 0 30px rgba(0,0,0,0.9); background-color: var(--surface); }
+        body.dark-mode .login-card h2 { color: var(--text-main); }
+        body.dark-mode .login-card p { color: var(--text-light); }
+        body.dark-mode .form-group label { color: var(--text-main); }
+        body.dark-mode .form-group input { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); }
+        body.dark-mode .form-group input::placeholder { color: var(--text-light); }
+        body.dark-mode .btn-google { background: #1e1e1e; border-color: #333; color: #f8fafc; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        body.dark-mode .btn-google:hover { background: #2a2a2a; }
+        body.dark-mode .btn-google img { filter: brightness(0.9); }
+        body.dark-mode .auth-divider { color: var(--text-light); }
 
         @media (max-width: 1024px) {
             .desempenho-grid { grid-template-columns: 1fr 1fr; }
@@ -467,9 +473,15 @@ body.dark-mode .btn-google img { filter: brightness(0.9); }
 
     </style>
 </head>
-<body>
+    <body>
+        <script>
+            /* Aplica o modo escuro instantaneamente para a tela de login não piscar branco */
+            if (localStorage.getItem('excellentDarkMode') === '1') {
+                document.body.classList.add('dark-mode');
+            }
+        </script>
 
-    <!-- Modais de Alerta e Confirmação Personalizados -->
+        <!-- Modais de Alerta e Confirmação Personalizados -->
     <div class="modal-overlay" id="modal-custom-alert" style="z-index: 1000000;">
         <div class="modal" style="max-width: 350px; text-align: center;">
             <div style="font-size: 3.5rem; color: var(--accent); margin-bottom: 15px;"><i class="fas fa-exclamation-circle"></i></div>
@@ -3679,11 +3691,11 @@ body.dark-mode .btn-google img { filter: brightness(0.9); }
         }
 
         document.getElementById('main-fab').style.display = 'none';
-        window.onload = () => { 
-            if (localStorage.getItem('excellentDarkMode') === '1') window.toggleDarkMode(true);
-            window.initAppIntro(); 
-        }; 
+            window.onload = () => { 
+                /* O modo escuro já foi carregado no topo, garantindo visual perfeito sem piscar */
+                window.initAppIntro(); 
+            }; 
 
-    </script>
+        </script>
 </body>
 </html>
