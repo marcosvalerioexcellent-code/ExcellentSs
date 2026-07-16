@@ -91,7 +91,8 @@
         @media (max-width: 768px) {
             #login-overlay { flex-direction: column; }
             .login-left { display: none; }
-            .login-right { width: 100%; padding: 20px; }
+            .login-right { width: 100%; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+            .login-card { margin: auto; }
         }
 
         /* Sidebar */
@@ -856,6 +857,7 @@
         <button type="button" class="bottom-nav-item" data-tab="fila" onclick="window.switchTab('fila', this)" aria-label="Fila de Projetos" title="Fila de Projetos"><i class="fas fa-tasks"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="suporte" onclick="window.switchTab('suporte', this)" aria-label="Suporte" title="Suporte"><i class="fas fa-headset"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="agenda" onclick="window.switchTab('agenda', this)" aria-label="Agenda" title="Agenda"><i class="fas fa-calendar-alt"></i></button>
+        <button type="button" class="bottom-nav-item" id="mobile-nav-admin" data-tab="admin" onclick="window.switchTab('admin', this)" style="display: none;" aria-label="Administração" title="Administração"><i class="fas fa-user-shield"></i></button>
     </nav>
 
 
@@ -1173,6 +1175,40 @@
             scales: { x: { grid: { display: false } }, y: { grid: { color: getGridColor() } } },
             elements: { point: { radius: 2, hoverRadius: 8, hoverBorderWidth: 3, hoverBorderColor: isDarkMode() ? '#121212' : '#ffffff' } } 
         });
+
+        // Controle de Inatividade (Logout após 10min)
+        const INACTIVITY_LIMIT = 10 * 60 * 1000;
+        
+        function checkInactivity() {
+            const lastActive = localStorage.getItem('excellentLastActiveTime');
+            if (lastActive && Date.now() - parseInt(lastActive) > INACTIVITY_LIMIT) {
+                auth.signOut().catch(()=>{});
+                localStorage.removeItem('excellentLastActiveTime');
+            } else {
+                localStorage.setItem('excellentLastActiveTime', Date.now().toString());
+            }
+        }
+        checkInactivity();
+
+        function resetActivityTimer() {
+            if (window.currentUser) {
+                localStorage.setItem('excellentLastActiveTime', Date.now().toString());
+            }
+        }
+        window.addEventListener('mousemove', resetActivityTimer);
+        window.addEventListener('keypress', resetActivityTimer);
+        window.addEventListener('click', resetActivityTimer);
+        window.addEventListener('scroll', resetActivityTimer);
+        window.addEventListener('beforeunload', resetActivityTimer);
+
+        setInterval(() => {
+            if (window.currentUser) {
+                const lastActive = localStorage.getItem('excellentLastActiveTime');
+                if (lastActive && Date.now() - parseInt(lastActive) > INACTIVITY_LIMIT) {
+                    auth.signOut();
+                }
+            }
+        }, 60000);
 
         async function loadDataFromFirebase() {
             if (!window.currentUser) return;
@@ -3145,11 +3181,13 @@
                 // Exibe menu admin apenas se o email estiver no admin-config.js
                 if (window.ADMIN_EMAILS && window.ADMIN_EMAILS.includes(user.email)) {
                     document.getElementById('nav-admin').style.display = 'flex';
+                    document.getElementById('mobile-nav-admin').style.display = 'inline-flex';
                 } else {
                     document.getElementById('nav-admin').style.display = 'none';
+                    document.getElementById('mobile-nav-admin').style.display = 'none';
                 }
 
-                // Migração da Andressa
+                // Migração de Segurança para Conta Primária
                 if (user.email === 'andressavalerioexcellent@yahoo.com') {
                     const snap = await dbFirestore.collection("agenda").get();
                     const batch = dbFirestore.batch();
@@ -3182,10 +3220,12 @@
                             <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 5px;">Setor: <span class="badge" style="background: var(--primary); color: white;">${u.departamento || 'Pendente'}</span></div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                            <select id="dep-${doc.id}" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border);">
-                                <option value="Tecnologia">Tecnologia</option><option value="Marketing">Marketing</option><option value="Gestão">Gestão</option>
+                            <select id="dep-${doc.id}" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border);" onchange="window.promoverUsuario('${doc.id}', this.value)">
+                                <option value="Pendente" ${u.departamento === 'Pendente' ? 'selected' : ''}>Selecionar Setor</option>
+                                <option value="Tecnologia" ${u.departamento === 'Tecnologia' ? 'selected' : ''}>Tecnologia</option>
+                                <option value="Marketing" ${u.departamento === 'Marketing' ? 'selected' : ''}>Marketing</option>
+                                <option value="Gestão" ${u.departamento === 'Gestão' ? 'selected' : ''}>Gestão</option>
                             </select>
-                            <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px;" onclick="window.promoverUsuario('${doc.id}')">Definir Setor</button>
                             <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px; background: var(--accent);" onclick="window.resetPasswordAdmin('${u.email}')" title="Enviar reset de senha"><i class="fas fa-key"></i></button>
                             <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px; background: var(--danger);" onclick="window.removerUsuario('${doc.id}', '${u.email}')" title="Remover Acesso"><i class="fas fa-trash"></i></button>
                         </div>
@@ -3195,10 +3235,13 @@
             } catch(e) { container.innerHTML = '<p style="color:red;">Erro ao buscar acessos.</p>'; }
         }
 
-        window.promoverUsuario = async function(uid) {
-            const dep = document.getElementById(`dep-${uid}`).value;
-            try { await dbFirestore.collection('users').doc(uid).update({ departamento: dep }); window.loadAdminUsers(); } 
-            catch(e) { alert("Erro: " + e.message); }
+        window.promoverUsuario = async function(uid, dep) {
+            try { 
+                await dbFirestore.collection('users').doc(uid).update({ departamento: dep }); 
+                window.loadAdminUsers(); // Recarrega para mostrar a badge atualizada
+            } catch(e) { 
+                alert("Erro: " + e.message); 
+            }
         }
 
         window.resetPasswordAdmin = async function(email) {
