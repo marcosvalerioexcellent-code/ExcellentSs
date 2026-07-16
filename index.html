@@ -522,6 +522,7 @@
             <li data-tab="fila" onclick="window.switchTab('fila', this)"><i class="fas fa-tasks"></i> Fila de Projetos</li>
             <li data-tab="suporte" onclick="window.switchTab('suporte', this)"><i class="fas fa-headset"></i> Suporte</li>
             <li data-tab="agenda" onclick="window.switchTab('agenda', this)"><i class="fas fa-calendar-alt"></i> Agenda</li>
+<li data-tab="contratacoes" onclick="window.switchTab('contratacoes', this)"><i class="fas fa-id-badge"></i> Contratações</li>
             <li data-tab="contratacoes" onclick="window.switchTab('contratacoes', this)"><i class="fas fa-id-badge"></i> Contratações</li>
 
             <li id="nav-admin" data-tab="admin" onclick="window.switchTab('admin', this)" style="display: none;"><i class="fas fa-user-shield"></i> Administração</li>
@@ -864,7 +865,7 @@
             <div id="subtab-avaliando" class="subtab-container">
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>Nome</th><th>Número</th><th>Vaga</th><th>Descrição</th><th>Status</th><th class="actions-header">Ações</th></tr></thead>
+                        <thead><tr><th>Nome</th><th>Número</th><th>Cidade</th><th>Vaga</th><th>Descrição</th><th>Status</th><th class="actions-header">Ações</th></tr></thead>
                         <tbody id="contratacoes-body"></tbody>
                     </table>
                 </div>
@@ -873,7 +874,7 @@
             <div id="subtab-efetivos" class="subtab-container" style="display: none;">
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>Nome</th><th>Número</th><th>Vaga</th><th>Cliente Associado</th><th>Projeto</th><th>Prazo</th><th>Restam</th><th>Valor</th><th class="actions-header">Ações</th></tr></thead>
+                        <thead><tr><th>Nome</th><th>Número</th><th>Cidade</th><th>Vaga</th><th>Cliente Associado</th><th>Projeto</th><th>Prazo</th><th>Restam</th><th>Valor</th><th class="actions-header">Ações</th></tr></thead>
                         <tbody id="efetivos-body"></tbody>
                     </table>
                 </div>
@@ -897,6 +898,7 @@
         <button type="button" class="bottom-nav-item" data-tab="fila" onclick="window.switchTab('fila', this)" aria-label="Fila de Projetos" title="Fila de Projetos"><i class="fas fa-tasks"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="suporte" onclick="window.switchTab('suporte', this)" aria-label="Suporte" title="Suporte"><i class="fas fa-headset"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="agenda" onclick="window.switchTab('agenda', this)" aria-label="Agenda" title="Agenda"><i class="fas fa-calendar-alt"></i></button>
+<button type="button" class="bottom-nav-item" data-tab="contratacoes" onclick="window.switchTab('contratacoes', this)" aria-label="Contratações" title="Contratações"><i class="fas fa-id-badge"></i></button>
         <button type="button" class="bottom-nav-item" data-tab="contratacoes" onclick="window.switchTab('contratacoes', this)" aria-label="Contratações" title="Contratações"><i class="fas fa-id-badge"></i></button>
 <button type="button" class="bottom-nav-item" id="mobile-nav-admin" data-tab="admin" onclick="window.switchTab('admin', this)" style="display: none;" aria-label="Administração" title="Administração"><i class="fas fa-user-shield"></i></button>
     </nav>
@@ -3444,6 +3446,404 @@
                     const link = document.createElement('a'); link.href = arq.base64; link.download = fileName;
                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
                 }
+/* Estilos adicionais para Contratações e Arquivos */
+        .file-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-color); margin-bottom: 10px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .file-list-info { display: flex; align-items: center; gap: 10px; flex-grow: 1; overflow: hidden; }
+        .file-list-info strong { color: var(--text-main); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-format { font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; background: var(--secondary); color: var(--primary); text-transform: uppercase; }
+        .file-actions button { background: none; border: none; cursor: pointer; color: var(--text-light); transition: 0.2s; font-size: 1.1rem; margin-left: 8px; padding: 5px; }
+        .file-actions button.view { color: var(--primary); }
+        .file-actions button.del { color: var(--danger); }
+        .file-actions button:hover { transform: scale(1.1); }
+        
+        .grid-botoes-arquivo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 15px; }
+        .btn-arquivo-grid { background: var(--surface); border: 2px solid var(--border); padding: 15px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 600; color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .btn-arquivo-grid i { font-size: 1.8rem; color: var(--accent); }
+        .btn-arquivo-grid:hover { border-color: var(--accent); background: rgba(217, 119, 6, 0.05); transform: translateY(-2px); }
+
+        /* Adaptação Fina do Login/Cadastro ao Modo Escuro */
+        body.dark-mode #login-overlay {
+            background: #050505 !important;
+        }
+        body.dark-mode .login-right {
+            background: #121212 !important;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7) !important;
+            border-left: 1px solid #1e1e1e;
+        }
+        body.dark-mode .login-card h2 {
+            color: #f8fafc !important;
+        }
+        body.dark-mode .login-card p {
+            color: #94a3b8 !important;
+        }
+        body.dark-mode .btn-google {
+            background: #1e1e1e !important;
+            border: 1px solid #2d2d2d !important;
+            color: #cbd5e1 !important;
+        }
+        body.dark-mode .btn-google:hover {
+            background: #2d2d2d !important;
+        }
+        body.dark-mode .auth-divider {
+            color: #64748b !important;
+        }
+        body.dark-mode .auth-divider::before, 
+        body.dark-mode .auth-divider::after {
+            border-bottom-color: #2d2d2d !important;
+        }
+        body.dark-mode .login-card form label {
+            color: #cbd5e1 !important;
+        }
+        body.dark-mode .login-card form input {
+            background-color: #1e1e1e !important;
+            border-color: #2d2d2d !important;
+            color: #f8fafc !important;
+        }
+        body.dark-mode .login-card form input:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15) !important;
+        }
+        body.dark-mode .login-card form input::placeholder {
+            color: #64748b !important;
+        }
+        body.dark-mode .login-card form small {
+            color: var(--accent) !important;
+        }
+            });
+        }
+// --- SISTEMA DE PERSISTÊNCIA DE TEMA & MODALS EXCLUSIVOS ---
+        (function() {
+            const savedTheme = localStorage.getItem('excellent_theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else if (savedTheme === 'light') {
+                document.body.classList.remove('dark-mode');
+            }
+        })();
+
+        // Overriding global alert seamlessly
+        window.alert = function(msg) {
+            const modal = document.getElementById('custom-alert-modal');
+            const label = document.getElementById('custom-alert-message');
+            if (label && modal) {
+                label.innerText = msg;
+                modal.style.display = 'flex';
+            } else {
+                console.log("Fallback Alert: " + msg);
+            }
+        };
+
+        window.closeCustomAlert = function() {
+            document.getElementById('custom-alert-modal').style.display = 'none';
+        };
+
+        window.confirmCallback = null;
+        window.customConfirm = function(msg, callback) {
+            document.getElementById('custom-confirm-message').innerText = msg;
+            window.confirmCallback = callback;
+            document.getElementById('custom-confirm-modal').style.display = 'flex';
+        };
+
+        window.closeCustomConfirm = function(approved) {
+            document.getElementById('custom-confirm-modal').style.display = 'none';
+            if (approved && typeof window.confirmCallback === 'function') {
+                window.confirmCallback();
+            }
+            window.confirmCallback = null;
+        };
+
+        // Redefine toggleDarkMode to save state
+        window.toggleDarkMode = function() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = isDarkMode();
+            localStorage.setItem('excellent_theme', isDark ? 'dark' : 'light');
+            document.getElementById('btn-dark-mode').innerHTML = isDark ? '<i class="fas fa-sun" style="color: #f59e0b;"></i>' : '<i class="fas fa-moon"></i>';
+            Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+            Chart.defaults.borderColor = getGridColor();
+            window.renderCurrentTab(); 
+        }
+
+        // --- SISTEMA DE CONTRATAÇÕES ---
+        window.db.contratacoes = [];
+
+        const originalLoadData = loadDataFromFirebase;
+        window.loadDataFromFirebase = async function() {
+            await originalLoadData();
+            try {
+                const contSnap = await dbFirestore.collection("contratacoes").get();
+                window.db.contratacoes = contSnap.docs.map(d => d.data());
+                if (window.currentTab === 'contratacoes') window.renderContratacoes();
+            } catch(e) { console.error("Erro ao carregar contratações", e); }
+        }
+
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(tabName, triggerEl) {
+            originalSwitchTab(tabName, triggerEl);
+            if (tabName === 'contratacoes') {
+                document.getElementById('page-title').innerText = 'Contratações e Time';
+                // Seleção da subcategoria por padrão ao clicar pela primeira vez
+                window.switchContratacoesTab('avaliando'); 
+                window.renderContratacoes();
+                document.getElementById('main-fab').style.display = 'flex';
+            }
+        }
+
+        window.switchContratacoesTab = function(tab) {
+            document.getElementById('subnav-avaliando').classList.toggle('active', tab === 'avaliando');
+            document.getElementById('subnav-efetivos').classList.toggle('active', tab === 'efetivos');
+            document.getElementById('subtab-avaliando').style.display = tab === 'avaliando' ? 'block' : 'none';
+            document.getElementById('subtab-efetivos').style.display = tab === 'efetivos' ? 'block' : 'none';
+        }
+
+        window.renderContratacoes = function() {
+            const tbodyCand = document.getElementById('contratacoes-body'); tbodyCand.innerHTML = '';
+            const tbodyEfet = document.getElementById('efetivos-body'); tbodyEfet.innerHTML = '';
+
+            window.db.contratacoes.forEach(c => {
+                const numEncoded = encodeURIComponent(c.numero || '');
+                const hasFiles = c.arquivos && c.arquivos.length > 0;
+                const clipClass = hasFiles ? 'attached' : '';
+                
+                if (c.status === 'Avaliando') {
+                    const viewAction = hasFiles ? `onclick="window.openButtonsView('${c.id}')"` : '';
+                    const rowClass = hasFiles ? 'row-clickable' : '';
+                    
+                    tbodyCand.innerHTML += `
+                    <tr class="${rowClass}" ${viewAction}>
+                        <td><strong>${c.nome || '-'}</strong></td><td>${c.numero || '-'}</td>
+                        <td>${c.cidade || '-'}</td>
+                        <td>${c.vaga || '-'}</td><td>${c.descricao || '-'}</td>
+                        <td><span class="badge" style="background: var(--accent); color: white;">Avaliando</span></td>
+                        <td class="actions">
+                            <button class="btn-whatsapp" title="WhatsApp" onclick="event.stopPropagation(); window.openSmartWhatsApp(decodeURIComponent('${numEncoded}'))"><i class="fab fa-whatsapp"></i></button>
+                            <button class="btn-clip ${clipClass}" onclick="event.stopPropagation(); window.openMultiAttachModal('${c.id}', 'avaliando')" title="Gerenciar Arquivos"><i class="fas fa-paperclip"></i></button>
+                            <button class="btn-edit" onclick="event.stopPropagation(); window.editItem('contratacoes', '${c.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button class="btn-delete" onclick="event.stopPropagation(); window.deleteItem('contratacoes', '${c.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                } else if (c.status === 'Efetivo') {
+                    const cliAssociado = window.db.contatos.find(ct => ct.id === c.clienteId) || { nome: '-' };
+                    
+                    let restamDiasText = '-';
+                    if (c.inicio && c.prazo) {
+                        const inicioDate = new Date(c.inicio + 'T00:00:00');
+                        const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + parseInt(c.prazo));
+                        const hoje = new Date(); hoje.setHours(0,0,0,0);
+                        const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
+                        restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
+                    }
+
+                    tbodyEfet.innerHTML += `
+                    <tr>
+                        <td><strong>${c.nome || '-'}</strong></td><td>${c.numero || '-'}</td>
+                        <td>${c.cidade || '-'}</td>
+                        <td>${c.vaga || '-'}</td><td>${cliAssociado.nome}</td>
+                        <td>${c.projeto || '-'}</td><td>${c.prazo ? c.prazo + ' dias' : '-'}</td>
+                        <td>${restamDiasText}</td><td><strong>${c.valor ? window.formatCurrency(c.valor) : '-'}</strong></td>
+                        <td class="actions">
+                            <button class="btn-whatsapp" title="WhatsApp" onclick="window.openSmartWhatsApp(decodeURIComponent('${numEncoded}'))"><i class="fab fa-whatsapp"></i></button>
+                            <button class="btn-clip ${clipClass}" onclick="window.openMultiAttachModal('${c.id}', 'efetivo')" title="Arquivos e Código"><i class="fas fa-paperclip"></i></button>
+                            <button class="btn-edit" onclick="window.editItem('contratacoes', '${c.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button class="btn-delete" onclick="window.deleteItem('contratacoes', '${c.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                }
+            });
+        }
+
+        const originalBuildForm = window.buildForm;
+        window.buildForm = function(type, data = null) {
+            if (type === 'contratacoes') {
+                const container = document.getElementById('modal-body');
+                let options = window.db.contatos.map(c => `<option value="${c.id}" ${data && data.clienteId===c.id?'selected':''}>${c.nome}</option>`).join('');
+                if(!options) options = `<option value="" disabled selected>Cadastre um cliente primeiro na aba Clientes</option>`;
+
+                container.innerHTML = `
+                <form onsubmit="window.handleFormSubmit(event, 'contratacoes')">
+                    <div class="form-group"><label>Nome do Colaborador/Candidato</label><input type="text" id="f-cont-nome" required value="${data ? data.nome : ''}"></div>
+                    <div class="form-group"><label>Número</label><input type="tel" id="f-cont-numero" required value="${data ? data.numero : ''}"></div>
+                    <div class="form-group"><label>Cidade</label><input type="text" id="f-cont-cidade" required value="${data ? data.cidade : ''}"></div>
+                    <div class="form-group"><label>Vaga</label><input type="text" id="f-cont-vaga" required value="${data ? data.vaga : ''}"></div>
+                    <div class="form-group"><label>Descrição / Observações</label><input type="text" id="f-cont-desc" required value="${data ? data.descricao : ''}"></div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="f-cont-status" onchange="document.getElementById('campos-efetivo').style.display = this.value === 'Efetivo' ? 'block' : 'none'">
+                            <option value="Avaliando" ${data && data.status==='Avaliando'?'selected':''}>Avaliando</option>
+                            <option value="Efetivo" ${data && data.status==='Efetivo'?'selected':''}>Efetivo</option>
+                        </select>
+                    </div>
+                    <div id="campos-efetivo" style="display: ${data && data.status === 'Efetivo' ? 'block' : 'none'}; border-top: 1px dashed var(--border); padding-top: 15px; margin-top: 10px;">
+                        <div class="form-group"><label>Cliente Associado</label><select id="f-cont-cliente">${options}</select></div>
+                        <div class="form-group"><label>Nome do Projeto</label><input type="text" id="f-cont-projeto" value="${data && data.projeto ? data.projeto : ''}"></div>
+                        <div class="form-group"><label>Data de Início</label><input type="date" id="f-cont-inicio" value="${data && data.inicio ? data.inicio : ''}"></div>
+                        <div class="form-group"><label>Prazo (em dias)</label><input type="number" id="f-cont-prazo" value="${data && data.prazo ? data.prazo : ''}"></div>
+                        <div class="form-group"><label>Valor / Custo (R$)</label><input type="number" step="0.01" id="f-cont-valor" value="${data && data.valor ? data.valor : ''}"></div>
+                    </div>
+                    <button type="submit" class="btn-submit">${data ? 'Salvar Alterações' : 'Cadastrar'}</button>
+                </form>`;
+            } else {
+                originalBuildForm(type, data);
+            }
+        }
+
+        const originalHandleForm = window.handleFormSubmit;
+        window.handleFormSubmit = async function(e, type) {
+            if (type === 'contratacoes') {
+                e.preventDefault(); const btn = e.target.querySelector('.btn-submit'); btn.innerText = 'Salvando...'; btn.disabled = true;
+                
+                let newItem = { id: window.editingId || window.generateId() };
+                newItem.nome = document.getElementById('f-cont-nome').value;
+                newItem.numero = document.getElementById('f-cont-numero').value;
+                newItem.cidade = document.getElementById('f-cont-cidade').value;
+                newItem.vaga = document.getElementById('f-cont-vaga').value;
+                newItem.descricao = document.getElementById('f-cont-desc').value;
+                newItem.status = document.getElementById('f-cont-status').value;
+
+                const oldItem = window.db.contratacoes.find(i => i.id === window.editingId);
+                newItem.arquivos = oldItem && oldItem.arquivos ? oldItem.arquivos : [];
+
+                if (newItem.status === 'Efetivo') {
+                    newItem.clienteId = document.getElementById('f-cont-cliente').value;
+                    newItem.projeto = document.getElementById('f-cont-projeto').value;
+                    newItem.inicio = document.getElementById('f-cont-inicio').value;
+                    newItem.prazo = document.getElementById('f-cont-prazo').value;
+                    newItem.valor = parseFloat(document.getElementById('f-cont-valor').value || 0);
+                }
+
+                try {
+                    await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
+                    if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } 
+                    else { window.db[type].push(newItem); }
+                    window.renderContratacoes(); window.closeModal();
+                } catch(err) { alert("Erro ao salvar."); btn.innerText = 'Tentar Novamente'; btn.disabled = false; }
+            } else {
+                originalHandleForm(e, type);
+            }
+        }
+
+        window.multiAttachContext = null;
+        window.multiAttachId = null;
+
+        window.openMultiAttachModal = function(id, context) {
+            window.multiAttachId = id; window.multiAttachContext = context;
+            document.getElementById('multi-file-name').value = '';
+            document.getElementById('multi-file-input').value = '';
+            
+            if (context === 'avaliando') { document.getElementById('multi-file-input').accept = "application/pdf, image/*"; } 
+            else { document.getElementById('multi-file-input').removeAttribute('accept'); }
+
+            window.renderMultiFileList();
+            document.getElementById('modal-multi-attach').style.display = 'flex';
+        }
+
+        window.renderMultiFileList = function() {
+            const container = document.getElementById('multi-file-list'); container.innerHTML = '';
+            const item = window.db.contratacoes.find(i => i.id === window.multiAttachId);
+            if (!item || !item.arquivos || item.arquivos.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-light); font-size: 0.85rem; text-align: center; padding: 15px;">Nenhum arquivo anexado ainda.</p>';
+                return;
+            }
+
+            item.arquivos.forEach((arq, index) => {
+                let ext = arq.type.split('/')[1] || 'FILE';
+                if(arq.type.includes('json')) ext = 'JSON'; if(arq.type.includes('html')) ext = 'HTML'; if(arq.type.includes('pdf')) ext = 'PDF';
+
+                container.innerHTML += `
+                <div class="file-list-item">
+                    <div class="file-list-info">
+                        <i class="fas fa-file-alt" style="color: var(--text-light);"></i>
+                        <strong>${arq.nome}</strong>
+                        <span class="btn-format">${ext}</span>
+                    </div>
+                    <div class="file-actions">
+                        <button class="view" onclick="window.viewMultiFile(${index})" title="Visualizar / Baixar"><i class="fas fa-eye"></i></button>
+                        <button class="del" onclick="window.deleteMultiFile(${index})" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        window.addMultiFile = function() {
+            const fileInput = document.getElementById('multi-file-input');
+            const nameInput = document.getElementById('multi-file-name').value;
+            
+            if (!fileInput.files.length) return alert('Selecione um arquivo.');
+            if (!nameInput) return alert('Dê um nome para o arquivo.');
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                const base64Str = e.target.result;
+                const item = window.db.contratacoes.find(i => i.id === window.multiAttachId);
+                if(!item.arquivos) item.arquivos = [];
+                
+                const newFile = { nome: nameInput, base64: base64Str, type: file.type || 'application/octet-stream' };
+                item.arquivos.push(newFile);
+
+                try {
+                    await dbFirestore.collection('contratacoes').doc(item.id).update({ arquivos: item.arquivos });
+                    document.getElementById('multi-file-name').value = '';
+                    document.getElementById('multi-file-input').value = '';
+                    window.renderMultiFileList();
+                    window.renderContratacoes();
+                } catch(error) {
+                    alert("Erro ao salvar! Provavelmente excedeu o limite de 1MB do banco de dados na nuvem.");
+                    item.arquivos.pop();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.deleteMultiFile = function(index) {
+            window.customConfirm("Tem certeza que deseja deletar este arquivo?", async () => {
+                const item = window.db.contratacoes.find(i => i.id === window.multiAttachId);
+                item.arquivos.splice(index, 1);
+                try {
+                    await dbFirestore.collection('contratacoes').doc(item.id).update({ arquivos: item.arquivos });
+                    window.renderMultiFileList(); window.renderContratacoes();
+                } catch(e) { alert("Erro ao deletar."); }
+            });
+        }
+
+        window.openButtonsView = function(id) {
+            const item = window.db.contratacoes.find(i => i.id === id);
+            if(!item || !item.arquivos || item.arquivos.length === 0) return;
+            
+            window.multiAttachId = id;
+            const container = document.getElementById('modal-view-buttons-body'); container.innerHTML = '';
+            document.getElementById('view-buttons-title').innerHTML = `Arquivos de ${item.nome}`;
+
+            item.arquivos.forEach((arq, index) => {
+                let icon = 'fa-file-pdf'; if(arq.type.includes('image')) icon = 'fa-file-image';
+                container.innerHTML += `
+                <div class="btn-arquivo-grid" onclick="window.viewMultiFile(${index})">
+                    <i class="fas ${icon}"></i>
+                    <span>${arq.nome}</span>
+                </div>`;
+            });
+            document.getElementById('modal-view-buttons').style.display = 'flex';
+        }
+
+        window.viewMultiFile = function(index) {
+            const item = window.db.contratacoes.find(i => i.id === window.multiAttachId);
+            const arq = item.arquivos[index];
+            const parts = arq.base64.split(',');
+            const fileName = `${arq.nome.replace(/[^a-z0-9]/gi, '_')}`;
+
+            window.showResponsivePdf({
+                dataUrl: arq.base64,
+                modalId: 'modal-view-pdf',
+                iframeId: 'pdf-viewer-frame',
+                mobileViewerId: 'pdf-mobile-viewer',
+                downloadButtonId: 'btn-download-pdf-viewer',
+                titleId: 'view-pdf-title',
+                titleHtml: `<i class="fas fa-file" style="color: var(--accent);"></i> ${arq.nome}`,
+                fileName: fileName,
+                downloadAction: function() {
+                    const link = document.createElement('a'); link.href = arq.base64; link.download = fileName;
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                }
             });
         }
         // --- SISTEMA DE LOGIN E ADMINISTRAÇÃO ---
@@ -3623,8 +4023,70 @@
         }
 
         document.getElementById('main-fab').style.display = 'none';
-        window.onload = () => { window.initAppIntro(); }; 
+        window.onload = () => { 
+            window.initAppIntro(); 
+            // Garante sincronia visual do ícone do Modo Escuro de acordo com o tema persistente
+            const isDark = isDarkMode();
+            const btn = document.getElementById('btn-dark-mode');
+            if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun" style="color: #f59e0b;"></i>' : '<i class="fas fa-moon"></i>';
+        }; 
 
     </script>
+<div class="modal-overlay" id="modal-multi-attach" style="z-index: 100000;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-paperclip" style="color: var(--accent);"></i> Gerenciar Arquivos</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-multi-attach').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-multi-attach-body">
+                <div class="form-group">
+                    <label>Nomeie o Documento (Ex: Currículo, Teste Prático)</label>
+                    <input type="text" id="multi-file-name" placeholder="Nome do arquivo..." autocomplete="off">
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                    <div style="flex-grow: 1;">
+                        <label>Selecionar Arquivo</label>
+                        <input type="file" id="multi-file-input">
+                    </div>
+                    <button class="btn-submit" style="width: auto; margin-top: 0;" onclick="window.addMultiFile()">Adicionar</button>
+                </div>
+                <small style="color: var(--text-light); display: block; margin-bottom: 15px;">Atenção: O limite total do banco de dados na nuvem é 1MB por pessoa.</small>
+                
+                <h3 style="font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Arquivos Anexados</h3>
+                <div id="multi-file-list" style="max-height: 200px; overflow-y: auto;">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-view-buttons" style="z-index: 100000;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="view-buttons-title">Arquivos do Candidato</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-view-buttons').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-view-buttons-body" class="grid-botoes-arquivo">
+                </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="custom-alert-modal" style="z-index: 110000;">
+        <div class="modal" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px;"><i class="fas fa-info-circle" style="font-size: 3rem; color: var(--accent);"></i></div>
+            <p id="custom-alert-message" style="margin-bottom: 20px; color: var(--text-main); font-weight: 500; font-size: 0.95rem; line-height: 1.5;"></p>
+            <button class="btn-submit" onclick="window.closeCustomAlert()" style="margin: 0 auto; max-width: 150px;">Entendi</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="custom-confirm-modal" style="z-index: 110000;">
+        <div class="modal" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px;"><i class="fas fa-question-circle" style="font-size: 3rem; color: var(--danger);"></i></div>
+            <p id="custom-confirm-message" style="margin-bottom: 20px; color: var(--text-main); font-weight: 500; font-size: 0.95rem; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="window.closeCustomConfirm(false)" style="flex:1; padding:11px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color: var(--text-main); cursor:pointer; font-weight: 600;">Cancelar</button>
+                <button onclick="window.closeCustomConfirm(true)" style="flex:1; padding:11px; border-radius:6px; border:none; background:var(--danger); color:white; cursor:pointer; font-weight: 600;">Confirmar</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
