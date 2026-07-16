@@ -3269,7 +3269,7 @@
                     <tr class="${rowClick}" ${viewAction}>
                         <td><strong>${c.nome || '-'}</strong></td><td>${c.numero || '-'}</td>
                         <td>${c.vaga || '-'}</td><td>${c.descricao || '-'}</td>
-                        <td><span class="badge" style="background: var(--accent); color: white;">Avaliando</span></td>
+                        <td><span class="badge" style="background: var(--accent); color: white; cursor: pointer; display: flex; align-items: center; gap: 5px; width: fit-content;" onclick="event.stopPropagation(); window.promoverParaEfetivo('${c.id}')" title="Promover para Efetivo (Time)">Avaliando <i class="fas fa-share-square"></i></span></td>
                         <td class="actions">
                             <button class="btn-whatsapp" title="WhatsApp" onclick="event.stopPropagation(); window.openSmartWhatsApp(decodeURIComponent('${numEncoded}'))"><i class="fab fa-whatsapp"></i></button>
                             <button class="btn-clip ${clipClass}" onclick="event.stopPropagation(); window.openMultiAttachModal('${c.id}', 'avaliando')" title="Gerenciar Arquivos"><i class="fas fa-paperclip"></i></button>
@@ -3299,10 +3299,30 @@
                         <td class="actions">
                             <button class="btn-whatsapp" title="WhatsApp" onclick="window.openSmartWhatsApp(decodeURIComponent('${numEncoded}'))"><i class="fab fa-whatsapp"></i></button>
                             <button class="btn-clip ${clipClass}" onclick="window.openMultiAttachModal('${c.id}', 'efetivo')" title="Arquivos e Código"><i class="fas fa-paperclip"></i></button>
+                            <button class="btn-clip ${clipClass}" style="color: var(--primary);" onclick="window.openButtonsView('${c.id}')" title="Ver Documentos de Contratação"><i class="fas fa-id-card"></i></button>
                             <button class="btn-edit" onclick="window.editItem('contratacoes', '${c.id}')" title="Editar"><i class="fas fa-pen"></i></button>
                             <button class="btn-delete" onclick="window.deleteItem('contratacoes', '${c.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>`;
+                }
+            });
+        }
+
+        window.promoverParaEfetivo = async function(id) {
+            window.customConfirm("Deseja promover este candidato a Efetivo?\nEle será movido para o Time e você poderá preencher os demais dados editando-o lá.", async () => {
+                const item = window.db.contratacoes.find(i => i.id === id);
+                if (!item) return;
+                
+                item.status = 'Efetivo';
+                
+                try {
+                    await dbFirestore.collection('contratacoes').doc(id).update({ status: 'Efetivo' });
+                    window.renderContratacoes();
+                    window.switchContratacoesTab('efetivos');
+                } catch(e) { 
+                    alert("Erro ao promover para efetivo."); 
+                    item.status = 'Avaliando'; 
+                    window.renderContratacoes();
                 }
             });
         }
