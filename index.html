@@ -3510,15 +3510,31 @@
             window.isRegistering = false;
         }
 
-        window.loginWithGoogle = async function() {
-            try {
-                const res = await auth.signInWithPopup(googleProvider);
-                const userRef = dbFirestore.collection('users').doc(res.user.uid);
-                const doc = await userRef.get();
-                if (!doc.exists) await userRef.set({ email: res.user.email, departamento: 'Pendente' });
-            } catch (error) { alert("Erro Google Sign-In: " + error.message); }
+        window.loginWithGoogle = function() {
+    const btnGoogle = document.querySelector('.btn-google');
+    if(btnGoogle) {
+        btnGoogle.disabled = true;
+        btnGoogle.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecionando...';
+    }
+    // Redireciona a página inteira para o login oficial do Google
+    auth.signInWithRedirect(googleProvider);
+}
+// Captura o retorno do redirecionamento do Google quando a página recarrega
+auth.getRedirectResult().then(async (result) => {
+    if (result && result.user) {
+        // O usuário acabou de voltar do Google. Vamos garantir que ele está no banco.
+        const userRef = dbFirestore.collection('users').doc(result.user.uid);
+        const doc = await userRef.get();
+        if (!doc.exists) {
+            await userRef.set({ email: result.user.email, departamento: 'Pendente' });
         }
-
+    }
+}).catch((error) => {
+    // Ignora erros de cancelamento normais, mas avisa se der problema real
+    if (error.code !== 'auth/redirect-cancelled-by-user') {
+        console.error("Erro Google Sign-In: ", error.message);
+    }
+});
         window.logoutAuth = function() { auth.signOut(); }
 
         window.resetPassword = async function() {
