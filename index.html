@@ -3562,13 +3562,11 @@ auth.getRedirectResult().then(async (result) => {
                 document.getElementById('login-overlay').style.display = 'none';
                 
                 // Exibe menu admin apenas se o email estiver no admin-config.js
-                if (window.ADMIN_EMAILS && window.ADMIN_EMAILS.includes(user.email)) {
-                    document.getElementById('nav-admin').style.display = 'flex';
-                    document.getElementById('mobile-nav-admin').style.display = 'inline-flex';
-                } else {
-                    document.getElementById('nav-admin').style.display = 'none';
-                    document.getElementById('mobile-nav-admin').style.display = 'none';
-                }
+                const navAdmin = document.getElementById('nav-admin');
+                const mobileNavAdmin = document.getElementById('mobile-nav-admin');
+                const isAdmin = window.ADMIN_EMAILS && window.ADMIN_EMAILS.includes(user.email);
+                if (navAdmin) navAdmin.style.display = isAdmin ? 'flex' : 'none';
+                if (mobileNavAdmin) mobileNavAdmin.style.display = isAdmin ? 'inline-flex' : 'none';
 
                 // Migração de Segurança para Conta Primária
                 if (user.email === 'andressavalerioexcellent@yahoo.com') {
