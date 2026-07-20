@@ -235,6 +235,16 @@
         .planner-item.type-cliente { border-left-color: var(--agenda-cliente); }
         .planner-item strong { display: block; margin-bottom: 3px; color: var(--text-main); font-size: 0.85rem;}
         
+        /* Sistema de Urgência - Agenda */
+        .urgencia-alta { background-color: #ef4444 !important; color: white !important; border-left: none !important; }
+        .urgencia-alta strong, .urgencia-alta span { color: white !important; }
+        .urgencia-moderada { background-color: #f97316 !important; color: white !important; border-left: none !important; }
+        .urgencia-moderada strong, .urgencia-moderada span { color: white !important; }
+        .urgencia-baixa { background-color: #e2e8f0 !important; color: #334155 !important; border-left: none !important; }
+        .urgencia-baixa strong, .urgencia-baixa span { color: #334155 !important; }
+        body.dark-mode .urgencia-baixa { background-color: #ffffff !important; color: #121212 !important; }
+        body.dark-mode .urgencia-baixa strong, body.dark-mode .urgencia-baixa span { color: #121212 !important; }
+        
         .agenda-list-container { background: var(--surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 25px; }
         .agenda-list-container h3 { font-size: 1.1rem; margin-bottom: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
         
@@ -1516,14 +1526,22 @@
                 return;
             }
 
-            // Ordenar itens (clientes com hora primeiro)
-            items.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
+            // Ordenar itens por urgência primeiro, depois por hora
+            const urgenciaValor = { 'Alta': 1, 'Moderada': 2, 'Baixa': 3 };
+            items.sort((a,b) => {
+                const uA = urgenciaValor[a.urgencia || 'Baixa'];
+                const uB = urgenciaValor[b.urgencia || 'Baixa'];
+                if (uA !== uB) return uA - uB;
+                return (a.hora || '24:00').localeCompare(b.hora || '24:00');
+            });
 
             let html = '';
             items.forEach(it => {
+                const urgClass = it.urgencia ? 'urgencia-' + it.urgencia.toLowerCase() : '';
+                
                 if(it.tipo === 'anotacao') {
                     html += `
-                    <div class="day-detail-item anotacao">
+                    <div class="day-detail-item anotacao ${urgClass}">
                         <div class="day-detail-info">
                             <strong>Anotação</strong>
                             <span>${it.descricao}</span>
@@ -1535,7 +1553,7 @@
                     </div>`;
                 } else {
                     html += `
-                    <div class="day-detail-item cliente">
+                    <div class="day-detail-item cliente ${urgClass}">
                         <div class="day-detail-info">
                             <strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>
                             <span>${it.assunto}</span>
@@ -1575,13 +1593,20 @@
                 if(itemsDay.length === 0){
                     itemsHtml = '<p style="color: var(--text-light); font-size: 0.8rem; text-align: center; margin-top: 15px;">Livre</p>';
                 } else {
-                    itemsDay.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
+                    const urgenciaValor = { 'Alta': 1, 'Moderada': 2, 'Baixa': 3 };
+                    itemsDay.sort((a,b) => {
+                        const uA = urgenciaValor[a.urgencia || 'Baixa'];
+                        const uB = urgenciaValor[b.urgencia || 'Baixa'];
+                        if (uA !== uB) return uA - uB;
+                        return (a.hora || '24:00').localeCompare(b.hora || '24:00');
+                    });
                     
                     itemsDay.forEach(it => {
+                        const urgClass = it.urgencia ? 'urgencia-' + it.urgencia.toLowerCase() : '';
                         if(it.tipo === 'anotacao'){
-                            itemsHtml += `<div class="planner-item type-anotacao">${it.descricao}</div>`;
+                            itemsHtml += `<div class="planner-item type-anotacao ${urgClass}">${it.descricao}</div>`;
                         } else {
-                            itemsHtml += `<div class="planner-item type-cliente"><strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>${it.assunto}</div>`;
+                            itemsHtml += `<div class="planner-item type-cliente ${urgClass}"><strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>${it.assunto}</div>`;
                         }
                     });
                 }
@@ -1608,7 +1633,13 @@
                 return;
             }
 
-            items.sort((a,b) => (a.hora || '24:00').localeCompare(b.hora || '24:00'));
+            const urgenciaValor = { 'Alta': 1, 'Moderada': 2, 'Baixa': 3 };
+            items.sort((a,b) => {
+                const uA = urgenciaValor[a.urgencia || 'Baixa'];
+                const uB = urgenciaValor[b.urgencia || 'Baixa'];
+                if (uA !== uB) return uA - uB;
+                return (a.hora || '24:00').localeCompare(b.hora || '24:00');
+            });
 
             items.forEach(it => {
                 const isDone = it.concluido ? 'checked' : '';
@@ -1690,6 +1721,9 @@
                     document.getElementById('f-ag-assunto').value = item.assunto;
                     document.getElementById('f-ag-hora').value = item.hora || '';
                 }
+                if(document.getElementById('f-ag-urgencia')) {
+                    document.getElementById('f-ag-urgencia').value = item.urgencia || 'Baixa';
+                }
             }, 50);
         }
 
@@ -1711,7 +1745,16 @@
                 `;
             }
             
-            html += `<button type="submit" class="btn-submit">${window.editingId ? 'Salvar Alterações' : 'Adicionar à Agenda'}</button></form>`;
+            html += `
+                <div class="form-group">
+                    <label>Urgência</label>
+                    <select id="f-ag-urgencia" required style="cursor: pointer;">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Moderada">Moderada</option>
+                        <option value="Alta">Alta</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">${window.editingId ? 'Salvar Alterações' : 'Adicionar à Agenda'}</button></form>`;
             document.getElementById('modal-body').innerHTML = html;
             document.getElementById('modal-overlay').style.display = 'flex';
         }
@@ -1741,6 +1784,7 @@
                 newItem.assunto = document.getElementById('f-ag-assunto').value;
                 newItem.hora = document.getElementById('f-ag-hora').value;
             }
+            newItem.urgencia = document.getElementById('f-ag-urgencia') ? document.getElementById('f-ag-urgencia').value : 'Baixa';
 
             try {
                 if (isEditing) {
@@ -3510,15 +3554,31 @@
             window.isRegistering = false;
         }
 
-        window.loginWithGoogle = async function() {
-            try {
-                const res = await auth.signInWithPopup(googleProvider);
-                const userRef = dbFirestore.collection('users').doc(res.user.uid);
-                const doc = await userRef.get();
-                if (!doc.exists) await userRef.set({ email: res.user.email, departamento: 'Pendente' });
-            } catch (error) { alert("Erro Google Sign-In: " + error.message); }
+        window.loginWithGoogle = function() {
+    const btnGoogle = document.querySelector('.btn-google');
+    if(btnGoogle) {
+        btnGoogle.disabled = true;
+        btnGoogle.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecionando...';
+    }
+    // Redireciona a página inteira para o login oficial do Google
+    auth.signInWithRedirect(googleProvider);
+}
+// Captura o retorno do redirecionamento do Google quando a página recarrega
+auth.getRedirectResult().then(async (result) => {
+    if (result && result.user) {
+        // O usuário acabou de voltar do Google. Vamos garantir que ele está no banco.
+        const userRef = dbFirestore.collection('users').doc(result.user.uid);
+        const doc = await userRef.get();
+        if (!doc.exists) {
+            await userRef.set({ email: result.user.email, departamento: 'Pendente' });
         }
-
+    }
+}).catch((error) => {
+    // Ignora erros de cancelamento normais, mas avisa se der problema real
+    if (error.code !== 'auth/redirect-cancelled-by-user') {
+        console.error("Erro Google Sign-In: ", error.message);
+    }
+});
         window.logoutAuth = function() { auth.signOut(); }
 
         window.resetPassword = async function() {
