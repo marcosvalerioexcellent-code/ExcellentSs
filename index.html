@@ -1269,8 +1269,12 @@
         function checkInactivity() {
             const lastActive = localStorage.getItem('excellentLastActiveTime');
             if (lastActive && Date.now() - parseInt(lastActive) > INACTIVITY_LIMIT) {
-                auth.signOut().catch(()=>{});
                 localStorage.removeItem('excellentLastActiveTime');
+                auth.signOut().then(() => {
+                    window.location.reload();
+                }).catch(() => {
+                    window.location.reload();
+                });
             } else {
                 localStorage.setItem('excellentLastActiveTime', Date.now().toString());
             }
@@ -1292,7 +1296,12 @@
             if (window.currentUser) {
                 const lastActive = localStorage.getItem('excellentLastActiveTime');
                 if (lastActive && Date.now() - parseInt(lastActive) > INACTIVITY_LIMIT) {
-                    auth.signOut();
+                    localStorage.removeItem('excellentLastActiveTime');
+                    auth.signOut().then(() => {
+                        window.location.reload();
+                    }).catch(() => {
+                        window.location.reload();
+                    });
                 }
             }
         }, 60000);
