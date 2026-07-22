@@ -883,7 +883,7 @@
             <div id="subtab-efetivos" class="subtab-container" style="display: none;">
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>Nome</th><th>Número</th><th>Vaga</th><th>Cliente Associado</th><th>Projeto</th><th>Prazo</th><th>Restam</th><th>Valor</th><th class="actions-header">Ações</th></tr></thead>
+                        <thead><tr><th>Nome</th><th>Número</th><th>Vaga</th><th class="actions-header">Ações</th></tr></thead>
                         <tbody id="efetivos-body"></tbody>
                     </table>
                 </div>
@@ -3289,18 +3289,27 @@
             } catch(e) { console.error("Erro ao carregar contratações", e); }
         }
 
+        // Garantir que a renderização nativa atualize a tela de contratações ao deletar/editar
+        const originalRenderCurrentTab = window.renderCurrentTab;
+        window.renderCurrentTab = function() {
+            originalRenderCurrentTab();
+            if (window.currentTab === 'contratacoes') window.renderContratacoes();
+        }
+
         // Adicionar o título na função switchTab
         const originalSwitchTab = window.switchTab;
         window.switchTab = function(tabName, triggerEl) {
             originalSwitchTab(tabName, triggerEl);
             if (tabName === 'contratacoes') {
                 document.getElementById('page-title').innerText = 'Contratações e Time';
+                window.switchContratacoesTab(window.currentContratacoesTab || 'avaliando');
                 window.renderContratacoes();
                 document.getElementById('main-fab').style.display = 'flex';
             }
         }
 
         window.switchContratacoesTab = function(tab) {
+            window.currentContratacoesTab = tab;
             document.getElementById('subnav-avaliando').classList.toggle('active', tab === 'avaliando');
             document.getElementById('subnav-efetivos').classList.toggle('active', tab === 'efetivos');
             document.getElementById('subtab-avaliando').style.display = tab === 'avaliando' ? 'block' : 'none';
@@ -3334,27 +3343,13 @@
                         </td>
                     </tr>`;
                 } else if (c.status === 'Efetivo') {
-                    const cliAssociado = window.db.contatos.find(ct => ct.id === c.clienteId) || { nome: '-' };
-                    
-                    // Cálculo de dias restantes (mesma lógica da fila)
-                    let restamDiasText = '-'; let sinalClass = 'signal-green';
-                    if (c.inicio && c.prazo) {
-                        const inicioDate = new Date(c.inicio + 'T00:00:00');
-                        const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + parseInt(c.prazo));
-                        const hoje = new Date(); hoje.setHours(0,0,0,0);
-                        const restamDias = Math.ceil((fimDate - hoje) / (1000 * 60 * 60 * 24));
-                        restamDiasText = restamDias < 0 ? `Atrasado (${Math.abs(restamDias)}d)` : `${restamDias} dias`;
-                    }
-
                     tbodyEfet.innerHTML += `
                     <tr>
                         <td><strong>${c.nome || '-'}</strong></td><td>${c.numero || '-'}</td>
-                        <td>${c.vaga || '-'}</td><td>${cliAssociado.nome}</td>
-                        <td>${c.projeto || '-'}</td><td>${c.prazo ? c.prazo + ' dias' : '-'}</td>
-                        <td>${restamDiasText}</td><td><strong>${c.valor ? window.formatCurrency(c.valor) : '-'}</strong></td>
+                        <td>${c.vaga || '-'}</td>
                         <td class="actions">
                             <button class="btn-whatsapp" title="WhatsApp" onclick="window.openSmartWhatsApp(decodeURIComponent('${numEncoded}'))"><i class="fab fa-whatsapp"></i></button>
-                            <button class="btn-clip ${clipClass}" onclick="window.openMultiAttachModal('${c.id}', 'efetivo')" title="Arquivos e Código"><i class="fas fa-paperclip"></i></button>
+                            <button class="btn-phone" title="Ligar" onclick="window.openSmartPhoneDial(decodeURIComponent('${numEncoded}'))"><i class="fas fa-phone"></i></button>
                             <button class="btn-edit" onclick="window.editItem('contratacoes', '${c.id}')" title="Editar"><i class="fas fa-pen"></i></button>
                             <button class="btn-delete" onclick="window.deleteItem('contratacoes', '${c.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
                         </td>
