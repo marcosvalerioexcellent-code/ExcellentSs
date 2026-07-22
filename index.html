@@ -1148,6 +1148,21 @@
                 </div>
         </div>
     </div>
+
+    <!-- Novo Pop-up de Permissões -->
+    <div class="modal-overlay" id="modal-permissions">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-sliders-h" style="color: var(--accent);"></i> Permissões de Acesso</h2>
+                <button class="close-modal" onclick="document.getElementById('modal-permissions').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 15px;">Ative ou desative os módulos que este usuário pode visualizar no menu.</p>
+            <div id="modal-permissions-body">
+                <!-- Chavinhas serão injetadas aqui -->
+            </div>
+            <button class="btn-submit" onclick="window.savePermissions()" style="margin-top: 20px;"><i class="fas fa-save"></i> Salvar Permissões</button>
+        </div>
+    </div>
     <script>
         const isDarkMode = () => document.body.classList.contains('dark-mode');
         const getGridColor = () => isDarkMode() ? '#334155' : '#e2e8f0';
@@ -3594,7 +3609,7 @@
             try {
                 window.isRegistering = true; // Bloqueia o login automático
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                await dbFirestore.collection('users').doc(cred.user.uid).set({ email: email, departamento: 'Pendente' });
+                await dbFirestore.collection('users').doc(cred.user.uid).set({ email: email, departamento: 'Pendente', permissions: { agenda: true } });
                 
                 // Desloga na mesma hora e pede pra ir pro login
                 await auth.signOut();
@@ -3621,7 +3636,7 @@
                 const res = await auth.signInWithPopup(googleProvider);
                 const userRef = dbFirestore.collection('users').doc(res.user.uid);
                 const doc = await userRef.get();
-                if (!doc.exists) await userRef.set({ email: res.user.email, departamento: 'Pendente' });
+                if (!doc.exists) await userRef.set({ email: res.user.email, departamento: 'Pendente', permissions: { agenda: true } });
             } catch (error) { alert("Erro Google Sign-In: " + error.message); }
         }
 
@@ -3645,11 +3660,13 @@
                 const userDocSnap = await dbFirestore.collection('users').doc(user.uid).get();
                 if(userDocSnap.exists) {
                     window.currentUserDoc = userDocSnap.data();
+                    if(!window.currentUserDoc.permissions) window.currentUserDoc.permissions = { agenda: true };
                 } else {
-                    window.currentUserDoc = { departamento: 'Pendente' };
+                    window.currentUserDoc = { departamento: 'Pendente', permissions: { agenda: true } };
                 }
 
                 document.getElementById('login-overlay').style.display = 'none';
+                window.applyUserPermissions(); // Executa o bloqueio de acessos
                 
                 // Exibe menu admin apenas se o email estiver no admin-config.js
                 if (window.ADMIN_EMAILS && window.ADMIN_EMAILS.includes(user.email)) {
@@ -3693,6 +3710,7 @@
                             <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 5px;">Setor: <span class="badge" style="background: var(--primary); color: white;">${u.departamento || 'Pendente'}</span></div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 12px; background: var(--success);" onclick="window.openPermissionsModal('${doc.id}')" title="Gerenciar Permissões"><i class="fas fa-sliders-h"></i></button>
                             <select id="dep-${doc.id}" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border);" onchange="window.promoverUsuario('${doc.id}', this.value)">
                                 <option value="Pendente" ${u.departamento === 'Pendente' ? 'selected' : ''}>Selecionar Setor</option>
                                 <option value="Tecnologia" ${u.departamento === 'Tecnologia' ? 'selected' : ''}>Tecnologia</option>
@@ -3726,6 +3744,121 @@
             if(!confirm(`Bloquear e remover o acesso de ${email}?\n(O banco de dados suspenderá a conta e negará visualizações)`)) return;
             try { await dbFirestore.collection('users').doc(uid).delete(); window.loadAdminUsers(); } 
             catch(e) { alert("Erro: " + e.message); }
+        }
+
+        // --- SISTEMA DE PERMISSÕES E ACESSOS ---
+        window.applyUserPermissions = function() {
+            const isAdmin = window.ADMIN_EMAILS.includes(window.currentUser.email);
+            const perms = window.currentUserDoc.permissions || {};
+            
+            const tabs = ['dashboard', 'conversoes', 'clientes', 'leads', 'vendas', 'fila', 'suporte', 'agenda', 'contratacoes'];
+            let firstAvailableTab = null;
+
+            tabs.forEach(tab => {
+                const hasAccess = isAdmin || perms[tab];
+                
+                const sideNav = document.querySelector(`.sidebar .nav-links li[data-tab="${tab}"]`);
+                if (sideNav) sideNav.style.display = hasAccess ? 'flex' : 'none';
+                
+                const mobNav = document.querySelector(`.mobile-bottom-nav button[data-tab="${tab}"]`);
+                if (mobNav) mobNav.style.display = hasAccess ? 'inline-flex' : 'none';
+
+                if (hasAccess && !firstAvailableTab) firstAvailableTab = tab;
+            });
+
+            // Se o usuário não for admin e tentar entrar numa aba sem permissão, joga ele para a primeira disponível
+            if (!isAdmin && !perms[window.currentTab]) {
+                if (firstAvailableTab) {
+                    const el = document.querySelector(`.sidebar .nav-links li[data-tab="${firstAvailableTab}"]`);
+                    window.switchTab(firstAvailableTab, el);
+                } else {
+                    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                    document.getElementById('page-title').innerText = 'Acesso Restrito';
+                }
+            }
+        }
+
+        window.currentEditingUserPermsId = null;
+
+        window.openPermissionsModal = async function(uid) {
+            window.currentEditingUserPermsId = uid;
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            try {
+                const doc = await dbFirestore.collection('users').doc(uid).get();
+                const u = doc.data();
+                const isAdmin = window.ADMIN_EMAILS.includes(u.email);
+                const perms = u.permissions || { agenda: true };
+                
+                if(isAdmin) {
+                    alert('Este usuário é um Administrador Global (via código). Ele já possui acesso irrevogável a todas as telas.');
+                    btn.innerHTML = originalHtml;
+                    return;
+                }
+
+                const tabsInfo = [
+                    { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-line' },
+                    { id: 'conversoes', name: 'Conversões', icon: 'fa-funnel-dollar' },
+                    { id: 'clientes', name: 'Clientes', icon: 'fa-users' },
+                    { id: 'leads', name: 'Contatos', icon: 'fa-address-book' },
+                    { id: 'vendas', name: 'Financeiro', icon: 'fa-wallet' },
+                    { id: 'fila', name: 'Fila de Projetos', icon: 'fa-tasks' },
+                    { id: 'suporte', name: 'Suporte', icon: 'fa-headset' },
+                    { id: 'agenda', name: 'Agenda', icon: 'fa-calendar-alt' },
+                    { id: 'contratacoes', name: 'Contratações', icon: 'fa-id-badge' }
+                ];
+
+                let html = '<div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px; max-height: 50vh; overflow-y: auto; padding-right: 5px;">';
+                tabsInfo.forEach(tab => {
+                    const isChecked = perms[tab.id] ? 'checked' : '';
+                    html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color);">
+                        <div style="display: flex; align-items: center; gap: 12px; font-weight: 600; color: var(--text-main); font-size: 0.95rem;">
+                            <i class="fas ${tab.icon}" style="color: var(--text-light); width: 20px; text-align: center;"></i> ${tab.name}
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="perm-${tab.id}" ${isChecked}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>`;
+                });
+                html += '</div>';
+                
+                document.getElementById('modal-permissions-body').innerHTML = html;
+                document.getElementById('modal-permissions').style.display = 'flex';
+            } catch(e) {
+                alert('Erro ao carregar permissões.');
+            } finally {
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        window.savePermissions = async function() {
+            if (!window.currentEditingUserPermsId) return;
+            const btn = document.querySelector('#modal-permissions .btn-submit');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...'; 
+            btn.disabled = true;
+
+            const tabs = ['dashboard', 'conversoes', 'clientes', 'leads', 'vendas', 'fila', 'suporte', 'agenda', 'contratacoes'];
+            const newPerms = {};
+            
+            tabs.forEach(tab => {
+                const cb = document.getElementById(`perm-${tab}`);
+                if (cb) newPerms[tab] = cb.checked;
+            });
+
+            try {
+                await dbFirestore.collection('users').doc(window.currentEditingUserPermsId).update({ permissions: newPerms });
+                document.getElementById('modal-permissions').style.display = 'none';
+                alert('Permissões atualizadas com sucesso! As alterações serão aplicadas no próximo login do usuário.');
+            } catch(e) {
+                alert('Erro ao salvar permissões: ' + e.message);
+            } finally {
+                btn.innerHTML = '<i class="fas fa-save"></i> Salvar Permissões'; 
+                btn.disabled = false;
+            }
         }
 
         document.getElementById('main-fab').style.display = 'none';
