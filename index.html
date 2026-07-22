@@ -235,6 +235,12 @@
         .planner-item.type-cliente { border-left-color: var(--agenda-cliente); }
         .planner-item strong { display: block; margin-bottom: 3px; color: var(--text-main); font-size: 0.85rem;}
         
+        /* Configurações Agenda Contratações (Verde) */
+        .calendar-day.has-contratacao { background-color: var(--success); border: none; }
+        .calendar-day.has-contratacao .day-num { color: #ffffff; }
+        .day-detail-item.contratacao { border-left-color: var(--success); }
+        .planner-item.type-contratacao { border-left-color: var(--success); }
+
         /* Sistema de Urgência - Agenda */
         .urgencia-alta { background-color: #ef4444 !important; color: white !important; border-left: none !important; }
         .urgencia-alta strong, .urgencia-alta span { color: white !important; }
@@ -842,6 +848,7 @@
                     <option value="ambos">Todos</option>
                     <option value="cliente">Somente Clientes</option>
                     <option value="anotacao">Somente Anotações</option>
+                    <option value="contratacao">Somente Contratações</option>
                 </select>
             </div>
             
@@ -942,12 +949,15 @@
         <div class="modal" style="max-width: 420px; text-align: center;">
             <h2 style="margin-bottom: 10px; color: var(--text-main); justify-content: center;">O que registrar?</h2>
             <p style="margin-bottom: 25px; color: var(--text-light); font-size: 0.9rem;">Selecione o tipo de registro para <strong id="agenda-choice-date"></strong></p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <button class="modal-agenda-choice-btn btn-choice-anotacao" onclick="window.openAgendaForm('anotacao')">
                     <i class="fas fa-sticky-note" style="font-size: 1.8rem;"></i> Anotação
                 </button>
                 <button class="modal-agenda-choice-btn btn-choice-cliente" onclick="window.openAgendaForm('cliente')">
                     <i class="fas fa-user-tie" style="font-size: 1.8rem;"></i> Cliente
+                </button>
+                <button class="modal-agenda-choice-btn" id="btn-choice-contratacao" onclick="window.openAgendaForm('contratacao')" style="display: none; border-color: rgba(16, 185, 129, 0.3); color: var(--success);">
+                    <i class="fas fa-handshake" style="font-size: 1.8rem;"></i> Contratação
                 </button>
             </div>
             <button onclick="document.getElementById('modal-agenda-choice').style.display='none'" style="margin-top: 25px; background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.95rem; text-decoration: underline;">Cancelar</button>
@@ -1332,10 +1342,15 @@
                 let agendaDocsMap = new Map();
                 agendaP1.docs.forEach(d => agendaDocsMap.set(d.id, d.data()));
 
-                // Buscar a agenda de toda a equipe do mesmo departamento (apenas "cliente")
+                // Buscar a agenda de toda a equipe do mesmo departamento (apenas "cliente" e "contratacao")
                 if(dep !== 'Pendente') {
                     const agendaP2 = await dbFirestore.collection("agenda").where("tipo", "==", "cliente").where("departamento", "==", dep).get().catch(() => ({ docs: [] }));
                     agendaP2.docs.forEach(d => {
+                        if(!agendaDocsMap.has(d.id)) agendaDocsMap.set(d.id, d.data());
+                    });
+                    
+                    const agendaP3 = await dbFirestore.collection("agenda").where("tipo", "==", "contratacao").where("departamento", "==", dep).get().catch(() => ({ docs: [] }));
+                    agendaP3.docs.forEach(d => {
                         if(!agendaDocsMap.has(d.id)) agendaDocsMap.set(d.id, d.data());
                     });
                 }
@@ -1518,12 +1533,13 @@
                 const itemsDay = window.db.agenda.filter(i => i.data === dataStr && !i.concluido);
                 const hasAnot = itemsDay.some(i => i.tipo === 'anotacao');
                 const hasCli = itemsDay.some(i => i.tipo === 'cliente');
+                const hasCont = itemsDay.some(i => i.tipo === 'contratacao');
                 
                 let extraClass = '';
-                if(hasAnot && hasCli) extraClass = 'has-ambos';
+                if(hasCont) extraClass = 'has-contratacao'; // Se tiver contratação, prevalece a cor verde
+                else if(hasAnot && hasCli) extraClass = 'has-ambos';
                 else if(hasAnot) extraClass = 'has-anotacao';
                 else if(hasCli) extraClass = 'has-cliente';
-
                 body.innerHTML += `
                     <div class="calendar-day ${extraClass}" onclick="window.openAgendaDayDetails('${dataStr}')">
                         <span class="day-num">${d}</span>
@@ -1575,11 +1591,23 @@
                             <button class="btn-del" onclick="window.deleteAgendaItem('${it.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>`;
-                } else {
+                } else if(it.tipo === 'cliente') {
                     html += `
                     <div class="day-detail-item cliente ${urgClass}">
                         <div class="day-detail-info">
                             <strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>
+                            <span>${it.assunto}</span>
+                        </div>
+                        <div class="reorg-actions">
+                            <button class="btn-reschedule" onclick="window.editAgendaItem('${it.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button class="btn-del" onclick="window.deleteAgendaItem('${it.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="day-detail-item contratacao ${urgClass}">
+                        <div class="day-detail-info">
+                            <strong>${it.hora ? it.hora + ' - ' : ''}Contratação: ${it.nome}</strong>
                             <span>${it.assunto}</span>
                         </div>
                         <div class="reorg-actions">
@@ -1612,6 +1640,7 @@
                 let itemsDay = window.db.agenda.filter(it => it.data === dataStr && !it.concluido);
                 if(filter === 'cliente') itemsDay = itemsDay.filter(it => it.tipo === 'cliente');
                 if(filter === 'anotacao') itemsDay = itemsDay.filter(it => it.tipo === 'anotacao');
+                if(filter === 'contratacao') itemsDay = itemsDay.filter(it => it.tipo === 'contratacao');
 
                 let itemsHtml = '';
                 if(itemsDay.length === 0){
@@ -1629,8 +1658,10 @@
                         const urgClass = it.urgencia ? 'urgencia-' + it.urgencia.toLowerCase() : '';
                         if(it.tipo === 'anotacao'){
                             itemsHtml += `<div class="planner-item type-anotacao ${urgClass}">${it.descricao}</div>`;
-                        } else {
+                        } else if(it.tipo === 'cliente') {
                             itemsHtml += `<div class="planner-item type-cliente ${urgClass}"><strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>${it.assunto}</div>`;
+                        } else {
+                            itemsHtml += `<div class="planner-item type-contratacao ${urgClass}"><strong>${it.hora ? it.hora + ' - ' : ''}${it.nome}</strong>${it.assunto}</div>`;
                         }
                     });
                 }
@@ -1668,8 +1699,11 @@
             items.forEach(it => {
                 const isDone = it.concluido ? 'checked' : '';
                 const doneClass = it.concluido ? 'done' : '';
-                const title = it.tipo === 'anotacao' ? it.descricao : `${it.hora ? it.hora + ' - ' : ''}Cliente: ${it.nome} (${it.assunto})`;
-                const badge = it.tipo === 'anotacao' ? `<span class="badge-mini" style="background: var(--agenda-anotacao);">Anotação</span>` : `<span class="badge-mini" style="background: var(--agenda-cliente);">Cliente</span>`;
+                const prefix = it.tipo === 'cliente' ? 'Cliente: ' : (it.tipo === 'contratacao' ? 'Contratação: ' : '');
+                const title = it.tipo === 'anotacao' ? it.descricao : `${it.hora ? it.hora + ' - ' : ''}${prefix}${it.nome} (${it.assunto})`;
+                let badge = `<span class="badge-mini" style="background: var(--success);">Contratação</span>`;
+                if(it.tipo === 'anotacao') badge = `<span class="badge-mini" style="background: var(--agenda-anotacao);">Anotação</span>`;
+                if(it.tipo === 'cliente') badge = `<span class="badge-mini" style="background: var(--agenda-cliente);">Cliente</span>`;
 
                 body.innerHTML += `
                     <div class="checklist-item ${doneClass}">
@@ -1702,7 +1736,8 @@
             items.sort((a,b) => new Date(a.data) - new Date(b.data));
 
             items.forEach(it => {
-                const title = it.tipo === 'anotacao' ? it.descricao : `Cliente: ${it.nome} (${it.assunto})`;
+                const prefix = it.tipo === 'cliente' ? 'Cliente: ' : (it.tipo === 'contratacao' ? 'Contratação: ' : '');
+                const title = it.tipo === 'anotacao' ? it.descricao : `${prefix}${it.nome} (${it.assunto})`;
                 const fmtDate = window.formatDate(it.data);
                 
                 body.innerHTML += `
@@ -1724,6 +1759,14 @@
             const ptBrDate = window.formatDate(dataStr);
             document.getElementById('agenda-choice-date').innerText = ptBrDate;
             document.getElementById('modal-agenda-day').style.display = 'none'; // Esconde o dia
+            
+            // Controle Admin para exibir o botão de Contratações na Agenda
+            if (window.ADMIN_EMAILS && window.ADMIN_EMAILS.includes(window.currentUser.email)) {
+                document.getElementById('btn-choice-contratacao').style.display = 'flex';
+            } else {
+                document.getElementById('btn-choice-contratacao').style.display = 'none';
+            }
+            
             document.getElementById('modal-agenda-choice').style.display = 'flex';
         }
 
@@ -1755,7 +1798,11 @@
             document.getElementById('modal-agenda-choice').style.display = 'none';
             if(!window.editingId) window.editingId = null; // Garante reset
             
-            document.getElementById('modal-title').innerHTML = tipo === 'anotacao' ? '<i class="fas fa-sticky-note" style="color: var(--agenda-anotacao);"></i> ' + (window.editingId ? 'Editar Anotação' : 'Nova Anotação') : '<i class="fas fa-user-tie" style="color: var(--agenda-cliente);"></i> ' + (window.editingId ? 'Editar Cliente' : 'Novo Cliente');
+            let titleHtml = '';
+            if (tipo === 'anotacao') titleHtml = '<i class="fas fa-sticky-note" style="color: var(--agenda-anotacao);"></i> ' + (window.editingId ? 'Editar Anotação' : 'Nova Anotação');
+            else if (tipo === 'cliente') titleHtml = '<i class="fas fa-user-tie" style="color: var(--agenda-cliente);"></i> ' + (window.editingId ? 'Editar Cliente' : 'Novo Cliente');
+            else titleHtml = '<i class="fas fa-handshake" style="color: var(--success);"></i> ' + (window.editingId ? 'Editar Contratação' : 'Nova Contratação');
+            document.getElementById('modal-title').innerHTML = titleHtml;
             
             let html = `<form onsubmit="window.saveAgendaItem(event, '${tipo}')">`;
             
@@ -1873,7 +1920,7 @@
             window.reorgTargetId = id;
             
             document.getElementById('f-reorg-data').value = item.data;
-            if(item.tipo === 'cliente') {
+            if(item.tipo === 'cliente' || item.tipo === 'contratacao') {
                 document.getElementById('f-reorg-hora-group').style.display = 'block';
                 document.getElementById('f-reorg-hora').value = item.hora || '';
                 document.getElementById('f-reorg-hora').required = true;
@@ -1895,7 +1942,7 @@
             let updatePayload = { data: newData };
             item.data = newData;
 
-            if(item.tipo === 'cliente') {
+            if(item.tipo === 'cliente' || item.tipo === 'contratacao') {
                 const novaHora = document.getElementById('f-reorg-hora').value;
                 updatePayload.hora = novaHora;
                 item.hora = novaHora;
@@ -3186,6 +3233,7 @@
 
             const clientes = dados.filter(a => a.tipo === 'cliente').sort(sortAgenda);
             const anotacoes = dados.filter(a => a.tipo === 'anotacao').sort(sortAgenda);
+            const contratacoesPdf = dados.filter(a => a.tipo === 'contratacao').sort(sortAgenda);
 
             let currentY = 100;
 
@@ -3251,6 +3299,38 @@
                     theme: 'grid',
                     margin: { left: 14, right: 14 }, 
                     headStyles: { fillColor: [217, 119, 6], textColor: 255, fontStyle: 'bold' }, 
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85], overflow: 'linebreak' },
+                    columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 15 }, 2: { cellWidth: 18 }, 3: { cellWidth: 104 }, 4: { cellWidth: 25, fontStyle: 'bold' } },
+                    didParseCell: parseCellColor
+                });
+                currentY = doc.lastAutoTable.finalY + 15;
+            }
+
+            // Tabela de Contratações
+            if (contratacoesPdf.length > 0) {
+                if (currentY > 250) { doc.addPage(); currentY = 20; }
+                
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(16, 185, 129); // Verde
+                doc.text("Agendamentos - Contratações", 14, currentY);
+                
+                const tableContBody = contratacoesPdf.map(a => [
+                    window.formatDate(a.data), 
+                    a.hora || '-', 
+                    a.urgencia || 'Baixa',
+                    `${a.nome} (${a.assunto})`, 
+                    a.concluido ? 'Concluído' : 'Pendente'
+                ]);
+
+                doc.autoTable({
+                    startY: currentY + 5, 
+                    head: [['Data', 'Hora', 'Urg.', 'Candidato / Info', 'Status']], 
+                    body: tableContBody, 
+                    theme: 'grid',
+                    margin: { left: 14, right: 14 }, 
+                    headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' }, 
                     alternateRowStyles: { fillColor: [248, 250, 252] },
                     styles: { font: 'helvetica', fontSize: 9, textColor: [51, 65, 85], overflow: 'linebreak' },
                     columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 15 }, 2: { cellWidth: 18 }, 3: { cellWidth: 104 }, 4: { cellWidth: 25, fontStyle: 'bold' } },
