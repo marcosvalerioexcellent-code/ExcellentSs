@@ -2458,7 +2458,19 @@
 
         window.renderClientes = function() {
             const tbody = document.getElementById('clientes-body'); tbody.innerHTML = '';
-            window.db.contatos.forEach(c => {
+            
+            // Lógica de Ordenação por Potencial (Alto > Médio > Baixo)
+            const valorPotencial = { 'Alto': 1, 'Médio': 2, 'Baixo': 3 };
+            const clientesOrdenados = [...window.db.contatos].sort((a, b) => {
+                const pA = valorPotencial[a.potencial] || 4; // Se estiver vazio, joga pro final
+                const pB = valorPotencial[b.potencial] || 4;
+                if (pA !== pB) return pA - pB;
+                
+                // Desempate por ordem alfabética caso o potencial seja o mesmo
+                return (a.nome || '').localeCompare(b.nome || '');
+            });
+            
+            clientesOrdenados.forEach(c => {
                 const numeroEncoded = encodeURIComponent(c.numero || '');
                 tbody.innerHTML += `<tr><td><strong>${c.nome || '-'}</strong></td><td>${c.numero || '-'}</td><td>${c.potencial || '-'}</td><td class="actions"><button class="btn-whatsapp" title="Abrir WhatsApp" onclick="window.openSmartWhatsApp(decodeURIComponent('${numeroEncoded}'))"><i class="fab fa-whatsapp"></i></button><button class="btn-phone" title="Ligar" onclick="window.openSmartPhoneDial(decodeURIComponent('${numeroEncoded}'))"><i class="fas fa-phone"></i></button><button class="btn-edit" title="Editar" onclick="window.editItem('contatos', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" title="Excluir" onclick="window.deleteItem('contatos', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
             });
@@ -3067,7 +3079,13 @@
                          <div class="form-group"><label>Atuação</label><input type="text" id="f-lead-atuacao" required value="${data && data.atuacao ? data.atuacao : ''}"></div>
                          <div class="form-group"><label>Descrição</label><input type="text" id="f-lead-descricao" required value="${data && data.descricao ? data.descricao : ''}"></div>
                          <div class="form-group"><label>Status</label>
-                            <select id="f-lead-status"><option value="Interessado" ${data && data.status==='Interessado'?'selected':''}>Interessado</option><option value="Desinteressado" ${data && data.status==='Desinteressado'?'selected':''}>Desinteressado</option><option value="Sem Resposta" ${data && data.status==='Sem Resposta'?'selected':''}>Sem Resposta</option><option value="Aguardando" ${data && data.status==='Aguardando'?'selected':''}>Aguardando</option></select>
+                            <select id="f-lead-status">
+                                <option value="Interessado" ${data && data.status==='Interessado'?'selected':''}>Interessado</option>
+                                <option value="Desinteressado" ${data && data.status==='Desinteressado'?'selected':''}>Desinteressado</option>
+                                <option value="Sem Resposta" ${data && data.status==='Sem Resposta'?'selected':''}>Sem Resposta</option>
+                                <option value="Aguardando" ${data && data.status==='Aguardando'?'selected':''}>Aguardando</option>
+                                <option value="Fechou" style="color: var(--success); font-weight: bold;">Fechou (Mover p/ Clientes)</option>
+                            </select>
                          </div>
                          <div class="form-group"><label>Follow-up</label><input type="date" id="f-lead-followup" value="${data && data.followup ? data.followup : ''}"><small style="color: var(--text-light); display: block; margin-top: 6px;">Data para retornar a conversa com esse contato.</small></div>`;
             } else if (type === 'vendas') { 
@@ -3137,7 +3155,27 @@
             }
 
             try {
-                await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
+                // Automação: Se for Contato (lead) e o status for "Fechou", move para Clientes
+                if (type === 'leads' && newItem.status === 'Fechou') {
+                    const novoCliente = {
+                        id: window.generateId(),
+                        nome: newItem.nome,
+                        numero: newItem.numero,
+                        potencial: 'Alto' // Define potencial inicial como Alto
+                    };
+                    
+                    // Salva na coleção contatos (Clientes)
+                    await dbFirestore.collection('contatos').doc(novoCliente.id).set(novoCliente);
+                    
+                    // Se estava editando um contato (lead) existente, apaga ele da aba Contatos
+                    if (window.editingId) {
+                        await dbFirestore.collection('leads').doc(window.editingId).delete();
+                    }
+                } else {
+                    // Comportamento normal para todos os outros salvamentos do sistema
+                    await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
+                }
+                
                 window.closeModal();
             } catch (error) { alert("Falha na ligação à base de dados cloud."); submitBtn.innerText = 'Tentar Novamente'; submitBtn.disabled = false; }
         }
