@@ -1920,14 +1920,10 @@
             try {
                 if (isEditing) {
                     await dbFirestore.collection('agenda').doc(targetId).update(newItem);
-                    const index = window.db.agenda.findIndex(i => i.id === targetId);
-                    if (index > -1) window.db.agenda[index] = newItem;
                 } else {
                     await dbFirestore.collection('agenda').doc(newItem.id).set(newItem);
-                    window.db.agenda.push(newItem);
                 }
 
-                window.renderAgenda();
                 window.closeModal();
                 window.editingId = null;
 
