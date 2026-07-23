@@ -1111,6 +1111,7 @@
             <div class="modal-header">
                 <h2 id="view-pdf-title"><i class="fas fa-file-pdf" style="color: var(--accent);"></i> Visualizar Relatório</h2>
                 <div style="display: flex; align-items: center; gap: 20px;">
+                    <button id="btn-email-pdf-viewer" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer; transition: 0.2s;" title="Enviar por E-mail" onmouseover="this.style.color='var(--success)'" onmouseout="this.style.color='var(--text-main)'"><i class="fas fa-envelope"></i></button>
                     <button id="btn-download-pdf-viewer" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer; transition: 0.2s;" title="Baixar PDF" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-main)'"><i class="fas fa-download"></i></button>
                     <button class="close-modal" onclick="document.getElementById('modal-view-pdf').style.display='none'"><i class="fas fa-times"></i></button>
                 </div>
@@ -2629,9 +2630,10 @@
 
         window.showResponsivePdf = function(options) {
             const modal = document.getElementById(options.modalId);
-            const iframe = document.getElementById(options.iframeId);
+           const iframe = document.getElementById(options.iframeId);
             const mobileViewer = document.getElementById(options.mobileViewerId);
             const btnDownload = document.getElementById(options.downloadButtonId);
+            const btnEmail = document.getElementById('btn-email-pdf-viewer'); // Novo botão
             const titleEl = options.titleId ? document.getElementById(options.titleId) : null;
             const fileName = options.fileName || 'documento.pdf';
             const pdfBlob = options.blob || window.dataURLToPdfBlob(options.dataUrl);
@@ -2657,6 +2659,30 @@
                 link.click();
                 document.body.removeChild(link);
             };
+
+            if (btnEmail) {
+                btnEmail.onclick = async function() {
+                    const userEmail = window.currentUser ? window.currentUser.email : 'o e-mail do seu cadastro';
+                    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Relatório Excellent Services',
+                                text: `Segue em anexo o relatório gerado pelo sistema. Enviar para: ${userEmail}`
+                            });
+                        } catch (error) {
+                            console.log('Compartilhamento cancelado.', error);
+                        }
+                    } else {
+                        // Fallback de segurança para navegadores que bloqueiam a API de Compartilhamento
+                        alert(`Seu navegador não suporta anexar arquivos automaticamente.\nO PDF será baixado e o seu aplicativo de e-mail será aberto. Anexe-o manualmente para: ${userEmail}`);
+                        btnDownload.click();
+                        window.location.href = `mailto:${userEmail}?subject=Relatório Excellent Services&body=Segue o relatório em anexo.`;
+                    }
+                };
+            }
 
             if (window.isMobilePdfDevice()) {
                 iframe.removeAttribute('src');
