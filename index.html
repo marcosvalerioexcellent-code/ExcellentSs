@@ -1331,83 +1331,111 @@
             }
         }, 60000);
 
+        window.activeListeners = [];
+
         async function loadDataFromFirebase() {
             if (!window.currentUser) return;
+
+            document.getElementById('db-status-text').innerText = 'Sincronizando...';
+            document.getElementById('db-status').classList.remove('online');
 
             try {
                 const dep = window.currentUserDoc ? window.currentUserDoc.departamento : 'Pendente';
 
-                // Buscar a agenda do próprio usuário (anotações e clientes que ele mesmo criou)
-                const agendaP1 = await dbFirestore.collection("agenda").where("userId", "==", window.currentUser.uid).get().catch(() => ({ docs: [] }));
+                // Limpa listeners antigos para não duplicar se a função for chamada novamente
+                window.activeListeners.forEach(unsub => unsub());
+                window.activeListeners = [];
+
                 let agendaDocsMap = new Map();
-                agendaP1.docs.forEach(d => agendaDocsMap.set(d.id, d.data()));
+                let initialLoads = 0;
+                const totalLoads = (dep !== 'Pendente') ? 9 : 7; // Coleções totais
 
-                // Buscar a agenda de toda a equipe do mesmo departamento (apenas "cliente" e "contratacao")
-                if(dep !== 'Pendente') {
-                    const agendaP2 = await dbFirestore.collection("agenda").where("tipo", "==", "cliente").where("departamento", "==", dep).get().catch(() => ({ docs: [] }));
-                    agendaP2.docs.forEach(d => {
-                        if(!agendaDocsMap.has(d.id)) agendaDocsMap.set(d.id, d.data());
-                    });
-                    
-                    const agendaP3 = await dbFirestore.collection("agenda").where("tipo", "==", "contratacao").where("departamento", "==", dep).get().catch(() => ({ docs: [] }));
-                    agendaP3.docs.forEach(d => {
-                        if(!agendaDocsMap.has(d.id)) agendaDocsMap.set(d.id, d.data());
-                    });
-                }
-
-                const [cSnap, vSnap, fSnap, convSnap, supSnap, lSnap] = await Promise.all([
-                    dbFirestore.collection("contatos").get(), dbFirestore.collection("vendas").get(),
-                    dbFirestore.collection("fila").get(), dbFirestore.collection("conversoes").get(),
-                    dbFirestore.collection("suporte").get(), dbFirestore.collection("leads").get()
-                ]);
-                
-                window.db.contatos = cSnap.docs.map(d => d.data()); 
-                window.db.vendas = vSnap.docs.map(d => d.data());
-                window.db.fila = fSnap.docs.map(d => d.data()); 
-                window.db.conversoes = convSnap.docs.map(d => d.data());
-                window.db.agenda = Array.from(agendaDocsMap.values());
-                
-                window.db.suporte = supSnap ? supSnap.docs.map(d => {
-                    let data = d.data();
-                    if (data.status !== 'Concluído' && data.inicio && data.prazo) {
-                        const inicioDate = new Date(data.inicio + 'T00:00:00');
-                        const fimDate = new Date(inicioDate);
-                        fimDate.setDate(fimDate.getDate() + parseInt(data.prazo));
-                        const hoje = new Date(); hoje.setHours(0,0,0,0);
-                        if (hoje >= fimDate) { 
-                            data.status = 'Concluído';
-                            data.dataConclusao = fimDate.toISOString().split('T')[0];
-                            dbFirestore.collection('suporte').doc(data.id).update({
-                                status: 'Concluído',
-                                dataConclusao: data.dataConclusao
-                            }).catch(e => console.error(e));
+                const checkInitialLoad = () => {
+                    initialLoads++;
+                    if(initialLoads === totalLoads) {
+                        document.getElementById('db-status').classList.add('online'); 
+                        document.getElementById('db-status-text').innerText = 'Online (Tempo Real)';
+                        
+                        const yearSelect = document.getElementById('agenda-year');
+                        if(yearSelect && yearSelect.options.length === 0) {
+                            for(let y = 2026; y <= 2036; y++){
+                                let opt = document.createElement('option');
+                                opt.value = y; opt.innerText = y;
+                                yearSelect.appendChild(opt);
+                            }
+                            window.currentAgendaYear = new Date().getFullYear();
+                            window.currentAgendaMonth = new Date().getMonth();
+                            if(window.currentAgendaYear < 2026) window.currentAgendaYear = 2026;
+                            document.getElementById('agenda-year').value = window.currentAgendaYear;
+                            document.getElementById('agenda-month').value = window.currentAgendaMonth;
                         }
+                        window.renderCurrentTab();
+                    } else if (initialLoads > totalLoads) {
+                        // Atualização em tempo real (alguém mudou algo)
+                        window.renderCurrentTab();
                     }
-                    return data;
-                }) : []; 
-                
-                window.db.leads = lSnap ? lSnap.docs.map(d => d.data()) : [];
+                };
 
-                document.getElementById('db-status').classList.add('online'); document.getElementById('db-status-text').innerText = 'Online';
+                const listenCol = (colName, dbKey, mapper = d => d.data()) => {
+                    const unsub = dbFirestore.collection(colName).onSnapshot(snap => {
+                        window.db[dbKey] = snap.docs.map(mapper);
+                        checkInitialLoad();
+                    }, err => console.error(`Erro ${colName}:`, err));
+                    window.activeListeners.push(unsub);
+                };
+
+                // Cria ouvintes de tempo real para todas as tabelas
+                listenCol("contatos", "contatos");
+                listenCol("vendas", "vendas");
+                listenCol("fila", "fila");
+                listenCol("conversoes", "conversoes");
+                listenCol("leads", "leads");
+                listenCol("contratacoes", "contratacoes");
+
+                const unsubSup = dbFirestore.collection("suporte").onSnapshot(snap => {
+                    window.db.suporte = snap.docs.map(d => {
+                        let data = d.data();
+                        if (data.status !== 'Concluído' && data.inicio && data.prazo) {
+                            const inicioDate = new Date(data.inicio + 'T00:00:00');
+                            const fimDate = new Date(inicioDate);
+                            fimDate.setDate(fimDate.getDate() + parseInt(data.prazo));
+                            const hoje = new Date(); hoje.setHours(0,0,0,0);
+                            if (hoje >= fimDate) { 
+                                data.status = 'Concluído';
+                                data.dataConclusao = fimDate.toISOString().split('T')[0];
+                                dbFirestore.collection('suporte').doc(data.id).update({
+                                    status: 'Concluído',
+                                    dataConclusao: data.dataConclusao
+                                }).catch(()=>{});
+                            }
+                        }
+                        return data;
+                    });
+                    checkInitialLoad();
+                });
+                window.activeListeners.push(unsubSup);
+
+                const processAgendaSnap = (snap) => {
+                    snap.docChanges().forEach(change => {
+                        if (change.type === "removed") agendaDocsMap.delete(change.doc.id);
+                        else agendaDocsMap.set(change.doc.id, change.doc.data());
+                    });
+                    window.db.agenda = Array.from(agendaDocsMap.values());
+                    checkInitialLoad();
+                };
+
+                window.activeListeners.push(dbFirestore.collection("agenda").where("userId", "==", window.currentUser.uid).onSnapshot(processAgendaSnap));
                 
-                // Init Agenda Year Filter
-                const yearSelect = document.getElementById('agenda-year');
-                if(yearSelect) {
-                    yearSelect.innerHTML = '';
-                    for(let y = 2026; y <= 2036; y++){
-                        let opt = document.createElement('option');
-                        opt.value = y; opt.innerText = y;
-                        yearSelect.appendChild(opt);
-                    }
-                    window.currentAgendaYear = new Date().getFullYear();
-                    window.currentAgendaMonth = new Date().getMonth();
-                    if(window.currentAgendaYear < 2026) window.currentAgendaYear = 2026;
-                    document.getElementById('agenda-year').value = window.currentAgendaYear;
-                    document.getElementById('agenda-month').value = window.currentAgendaMonth;
+                if(dep !== 'Pendente') {
+                    window.activeListeners.push(dbFirestore.collection("agenda").where("tipo", "==", "cliente").where("departamento", "==", dep).onSnapshot(processAgendaSnap));
+                    window.activeListeners.push(dbFirestore.collection("agenda").where("tipo", "==", "contratacao").where("departamento", "==", dep).onSnapshot(processAgendaSnap));
                 }
 
-                window.renderCurrentTab();
-            } catch (error) { console.error(error); document.getElementById('db-status-text').innerText = 'Erro de Conexão'; document.getElementById('db-status-text').style.color = 'var(--danger)'; }
+            } catch (error) { 
+                console.error(error); 
+                document.getElementById('db-status-text').innerText = 'Erro de Conexão'; 
+                document.getElementById('db-status-text').style.color = 'var(--danger)'; 
+            }
         }
 
         window.generateId = function() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
@@ -1784,7 +1812,14 @@
                 if(item.tipo === 'anotacao') {
                     document.getElementById('f-ag-desc').value = item.descricao;
                 } else {
-                    document.getElementById('f-ag-nome').value = item.nome;
+                    const nomeField = document.getElementById('f-ag-nome');
+                    // Se for um Select (Contratação) e o nome não estiver mais lá, ele adiciona de volta para não quebrar a edição
+                    if(nomeField && nomeField.tagName === 'SELECT') {
+                        let exists = Array.from(nomeField.options).some(o => o.value === item.nome);
+                        if (!exists && item.nome) nomeField.add(new Option(item.nome, item.nome));
+                    }
+                    if(nomeField) nomeField.value = item.nome;
+                    
                     document.getElementById('f-ag-assunto').value = item.assunto;
                     document.getElementById('f-ag-hora').value = item.hora || '';
                 }
@@ -1808,10 +1843,21 @@
             
             if(tipo === 'anotacao') {
                 html += `<div class="form-group"><label>Descrição</label><textarea id="f-ag-desc" rows="4" required placeholder="O que você precisa lembrar?"></textarea></div>`;
-            } else {
+            } else if (tipo === 'cliente') {
                 html += `
                     <div class="form-group"><label>Nome do Cliente</label><input type="text" id="f-ag-nome" required></div>
                     <div class="form-group"><label>Assunto</label><input type="text" id="f-ag-assunto" required></div>
+                    <div class="form-group"><label>Horário</label><input type="time" id="f-ag-hora" required></div>
+                `;
+            } else {
+                // Monta a lista dropdown puxando dinamicamente os Candidatos em Avaliação
+                let options = window.db.contratacoes.filter(c => c.status === 'Avaliando').map(c => `<option value="${c.nome}">${c.nome} (${c.vaga})</option>`).join('');
+                if (!options) options = `<option value="" disabled selected>Nenhum candidato em avaliação</option>`;
+                else options = `<option value="" disabled selected>Selecione um candidato</option>` + options;
+                
+                html += `
+                    <div class="form-group"><label>Candidato (Avaliando)</label><select id="f-ag-nome" required>${options}</select></div>
+                    <div class="form-group"><label>Assunto / Etapa</label><input type="text" id="f-ag-assunto" required placeholder="Ex: Entrevista Inicial, Teste Prático..."></div>
                     <div class="form-group"><label>Horário</label><input type="time" id="f-ag-hora" required></div>
                 `;
             }
@@ -1842,7 +1888,8 @@
             const newItem = {
                 id: targetId,
                 tipo: tipo,
-                data: oldItem ? oldItem.data : window.agendaTargetDate,
+                // Fallback de segurança para não dar erro se a variável de data sumir
+                data: oldItem ? oldItem.data : (window.agendaTargetDate || new Date().toISOString().split('T')[0]),
                 concluido: oldItem ? oldItem.concluido : false,
                 userId: oldItem ? oldItem.userId : window.currentUser.uid,
                 departamento: oldItem ? oldItem.departamento : (window.currentUserDoc ? window.currentUserDoc.departamento : 'Pendente')
@@ -1875,7 +1922,8 @@
                 window.openAgendaDayDetails(newItem.data);
 
             } catch(error) {
-                alert("Erro ao salvar na agenda.");
+                console.error("Erro detalhado do Firebase na Agenda:", error);
+                alert("Erro ao salvar na agenda. Verifique sua conexão e tente novamente.");
                 btn.innerText = window.editingId ? 'Salvar Alterações' : 'Adicionar à Agenda'; 
                 btn.disabled = false;
             }
@@ -3355,19 +3403,8 @@
             });
             document.getElementById('modal-pdf-agenda').style.display = 'none';
         }
-// Inicializar variável no banco de dados local
+// Variável local já recebe os dados de contratações no listener em tempo real principal
         window.db.contratacoes = [];
-
-        // Modificar a função nativa loadDataFromFirebase para incluir as contratações
-        const originalLoadData = loadDataFromFirebase;
-        window.loadDataFromFirebase = async function() {
-            await originalLoadData();
-            try {
-                const contSnap = await dbFirestore.collection("contratacoes").get();
-                window.db.contratacoes = contSnap.docs.map(d => d.data());
-                if (window.currentTab === 'contratacoes') window.renderContratacoes();
-            } catch(e) { console.error("Erro ao carregar contratações", e); }
-        }
 
         // Garantir que a renderização nativa atualize a tela de contratações ao deletar/editar
         const originalRenderCurrentTab = window.renderCurrentTab;
