@@ -3138,14 +3138,13 @@
 
             try {
                 await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
-                if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } else { window.db[type].push(newItem); }
-                window.renderCurrentTab(); window.closeModal();
+                window.closeModal();
             } catch (error) { alert("Falha na ligação à base de dados cloud."); submitBtn.innerText = 'Tentar Novamente'; submitBtn.disabled = false; }
         }
 
         window.editItem = function(type, id) { const item = window.db[type].find(i => i.id === id); window.editingId = id; document.getElementById('modal-title').innerText = 'Editar Registro'; window.buildForm(type, item); document.getElementById('modal-overlay').style.display = 'flex'; }
         window.deleteItem = function(type, id) { const container = document.getElementById('modal-body'); document.getElementById('modal-title').innerText = 'Confirmar Exclusão'; container.innerHTML = `<p style="margin-bottom: 20px; color: var(--text-main);">Tem certeza que deseja apagar? A base de dados na nuvem será sincronizada imediatamente.</p><div style="display: flex; gap: 10px;"><button onclick="window.closeModal()" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color: var(--text-main); cursor:pointer;">Cancelar</button><button id="btn-confirm-del" onclick="window.confirmDelete('${type}', '${id}')" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--danger); color:white; cursor:pointer;">Sim, Eliminar</button></div>`; document.getElementById('modal-overlay').style.display = 'flex'; }
-        window.confirmDelete = async function(type, id) { const btn = document.getElementById('btn-confirm-del'); btn.innerText = 'A eliminar...'; btn.disabled = true; try { await dbFirestore.collection(type).doc(id).delete(); window.db[type] = window.db[type].filter(i => i.id !== id); window.renderCurrentTab(); window.closeModal(); } catch (error) { alert("Erro de comunicação com o servidor."); btn.innerText = 'Sim, Eliminar'; btn.disabled = false; } }
+        window.confirmDelete = async function(type, id) { const btn = document.getElementById('btn-confirm-del'); btn.innerText = 'A eliminar...'; btn.disabled = true; try { await dbFirestore.collection(type).doc(id).delete(); window.closeModal(); } catch (error) { alert("Erro de comunicação com o servidor."); btn.innerText = 'Sim, Eliminar'; btn.disabled = false; } }
 
 
         window.finishAppIntro = function() {
@@ -3546,9 +3545,7 @@
 
                 try {
                     await dbFirestore.collection(type).doc(newItem.id).set(newItem, { merge: true });
-                    if (window.editingId) { const index = window.db[type].findIndex(i => i.id === window.editingId); window.db[type][index] = newItem; } 
-                    else { window.db[type].push(newItem); }
-                    window.renderContratacoes(); window.closeModal();
+                    window.closeModal();
                 } catch(err) { alert("Erro ao salvar."); btn.innerText = 'Tentar Novamente'; btn.disabled = false; }
             } else {
                 originalHandleForm(e, type);
