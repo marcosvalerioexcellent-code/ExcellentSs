@@ -1416,21 +1416,17 @@
                 window.activeListeners.push(unsubSup);
 
                 const processAgendaSnap = (snap) => {
-                    snap.docChanges().forEach(change => {
-                        if (change.type === "removed") {
-                            agendaDocsMap.delete(change.doc.id);
-                        } else {
-                            agendaDocsMap.set(change.doc.id, change.doc.data());
+                    // Limpa o mapa para garantir que pegamos exatamente o estado atual da nuvem sem sobras
+                    agendaDocsMap.clear();
+                    
+                    // Adiciona todos os documentos atuais de forma limpa
+                    snap.docs.forEach(doc => {
+                        if (doc.data() && doc.data().id) {
+                            agendaDocsMap.set(doc.data().id, doc.data());
                         }
                     });
                     
-                    // Garante unicidade absoluta baseada estritamente no ID do documento
-                    const uniqueMap = new Map();
-                    Array.from(agendaDocsMap.values()).forEach(item => {
-                        if (item && item.id) uniqueMap.set(item.id, item);
-                    });
-                    
-                    window.db.agenda = Array.from(uniqueMap.values());
+                    window.db.agenda = Array.from(agendaDocsMap.values());
                     checkInitialLoad();
                 };
 
