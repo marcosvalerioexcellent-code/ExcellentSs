@@ -1416,13 +1416,20 @@
                 window.activeListeners.push(unsubSup);
 
                 const processAgendaSnap = (snap) => {
-                    // Limpa o mapa para garantir que pegamos exatamente o estado atual da nuvem sem sobras
-                    agendaDocsMap.clear();
-                    
-                    // Adiciona todos os documentos atuais de forma limpa
+                    // Atualiza ou insere os documentos sem apagar os que vieram de outras consultas simultâneas
                     snap.docs.forEach(doc => {
-                        if (doc.data() && doc.data().id) {
-                            agendaDocsMap.set(doc.data().id, doc.data());
+                        const data = doc.data();
+                        if (data && data.id) {
+                            agendaDocsMap.set(data.id, data);
+                        }
+                    });
+                    
+                    // Se algum documento foi removido na nuvem, removemos do mapa também
+                    snap.docChanges().forEach(change => {
+                        if (change.type === "removed") {
+                            const data = change.doc.data();
+                            if (data && data.id) agendaDocsMap.delete(data.id);
+                            agendaDocsMap.delete(change.doc.id);
                         }
                     });
                     
