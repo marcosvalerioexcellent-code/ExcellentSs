@@ -779,13 +779,13 @@
                     </div>
                 </div>
 
-                <div class="desempenho-grid">
+                <div class="charts-container">
                     <div class="chart-box">
                         <h3><i class="fas fa-chart-pie" style="color:#ef4444;"></i> Despesas por Categoria</h3>
                         <div class="chart-wrapper" style="height: 300px;"><canvas id="drePieChart"></canvas></div>
                     </div>
-                    <div class="chart-box" style="grid-column: span 2;">
-                        <h3><i class="fas fa-chart-bar" style="color:var(--success);"></i> Receitas x Despesas (Mensal)</h3>
+                    <div class="chart-box">
+                        <h3><i class="fas fa-chart-line" style="color:var(--success);"></i> Receitas x Despesas (Mensal)</h3>
                         <div class="chart-wrapper" style="height: 300px;"><canvas id="dreBarChart"></canvas></div>
                     </div>
                 </div>
@@ -2401,9 +2401,9 @@
             const ctxPie = document.getElementById('drePieChart').getContext('2d');
             if(drePieInstance) drePieInstance.destroy();
             drePieInstance = new Chart(ctxPie, {
-                type: 'doughnut',
+                type: 'pie',
                 data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 2, borderColor: isDarkMode() ? '#1e1e1e' : '#ffffff' }] },
-                options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, cutout: '60%' }
+                options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } } }
             });
 
             const sortedKeys = Object.keys(monthlyData).sort();
@@ -2414,13 +2414,26 @@
 
             const ctxBar = document.getElementById('dreBarChart').getContext('2d');
             if(dreBarInstance) dreBarInstance.destroy();
+            
+            const optDualLine = getLineChartOptions();
+            optDualLine.plugins.legend = { display: false };
+            optDualLine.plugins.tooltip = { 
+                padding: 12, backgroundColor: getTooltipBg(), bodySpacing: 6, titleFont: {size: 13},
+                callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` }
+            };
+            
+            let gradRec = ctxBar.createLinearGradient(0, 0, 0, 250);
+            gradRec.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); gradRec.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            let gradDes = ctxBar.createLinearGradient(0, 0, 0, 250);
+            gradDes.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); gradDes.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+
             dreBarInstance = new Chart(ctxBar, {
-                type: 'bar',
+                type: 'line',
                 data: { labels: labelsMes, datasets: [
-                    { label: 'Receitas', data: dadosRec, backgroundColor: '#10b981', borderRadius: 4 },
-                    { label: 'Despesas', data: dadosDes, backgroundColor: '#ef4444', borderRadius: 4 }
+                    { label: 'Receitas', data: dadosRec, borderColor: '#10b981', backgroundColor: gradRec, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#10b981' },
+                    { label: 'Despesas', data: dadosDes, borderColor: '#ef4444', backgroundColor: gradDes, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: '#ef4444' }
                 ]},
-                options: { maintainAspectRatio: false, responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, scales: { y: { grid: { color: getGridColor() } }, x: { grid: { display: false } } } }
+                options: optDualLine
             });
 
             const ctxLine = document.getElementById('dreLineChart').getContext('2d');
