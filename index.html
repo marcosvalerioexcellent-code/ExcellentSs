@@ -577,6 +577,7 @@
                     <span id="subnav-kpi" onclick="window.switchDashSubTab('kpi')">KPI</span>
                     <span id="subnav-desempenho" onclick="window.switchDashSubTab('desempenho')">Desempenho</span>
                     <span id="subnav-campanhas" onclick="window.switchDashSubTab('campanhas')">Campanhas Ads</span>
+                    <span id="subnav-dre" onclick="window.switchDashSubTab('dre')">DRE (Resultado)</span>
                 </div>
                 <button class="btn-export" onclick="window.openDashPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório</button>
             </div>
@@ -757,9 +758,55 @@
 
             </div>
 
+            <!-- NOVA ABA DRE -->
+            <div id="subtab-dre" class="subtab-container" style="display: none;">
+                <div class="dashboard-cards">
+                    <div class="card income">
+                        <h3>Receita Operacional Bruta</h3>
+                        <p id="dre-receita">R$ 0,00</p>
+                    </div>
+                    <div class="card expense">
+                        <h3>Despesas Operacionais / Custos</h3>
+                        <p id="dre-despesas">R$ 0,00</p>
+                    </div>
+                    <div class="card" style="border-left-color: var(--accent);">
+                        <h3>Lucro Líquido do Exercício</h3>
+                        <p id="dre-lucro">R$ 0,00</p>
+                    </div>
+                    <div class="card" style="border-left-color: #8b5cf6;">
+                        <h3>Margem de Lucro Líquida</h3>
+                        <p id="dre-margem">0,00%</p>
+                    </div>
+                </div>
+
+                <div class="desempenho-grid">
+                    <div class="chart-box">
+                        <h3><i class="fas fa-chart-pie" style="color:#ef4444;"></i> Despesas por Categoria</h3>
+                        <div class="chart-wrapper" style="height: 300px;"><canvas id="drePieChart"></canvas></div>
+                    </div>
+                    <div class="chart-box" style="grid-column: span 2;">
+                        <h3><i class="fas fa-chart-bar" style="color:var(--success);"></i> Receitas x Despesas (Mensal)</h3>
+                        <div class="chart-wrapper" style="height: 300px;"><canvas id="dreBarChart"></canvas></div>
+                    </div>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3><i class="fas fa-chart-line" style="color:var(--accent);"></i> Evolução do Lucro Líquido</h3>
+                        <div class="chart-wrapper" style="height: 280px;"><canvas id="dreLineChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <section id="conversoes" class="tab-content">
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                    <input type="text" id="filter-conversoes" placeholder="Pesquisar conversões..." oninput="window.renderConversoes()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 300px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s; background-color: var(--surface); color: var(--text-main);">
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Data</th><th>Ligações</th><th>Reuniões</th><th>Propostas</th><th>Fechamentos</th><th class="actions-header">Ações</th></tr></thead>
@@ -769,6 +816,12 @@
         </section>
 
         <section id="clientes" class="tab-content">
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                    <input type="text" id="filter-clientes" placeholder="Pesquisar clientes..." oninput="window.renderClientes()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 300px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s; background-color: var(--surface); color: var(--text-main);">
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Nome</th><th>Número</th><th>Potencial</th><th class="actions-header">Ações</th></tr></thead>
@@ -796,7 +849,13 @@
         <section id="vendas" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="vendas-counters"></div>
-                <button class="btn-export" onclick="window.openPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório Tabela</button>
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; position: relative;">
+                        <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                        <input type="text" id="filter-vendas" placeholder="Pesquisar finanças..." oninput="window.renderVendas()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 250px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s; background-color: var(--surface); color: var(--text-main);">
+                    </div>
+                    <button class="btn-export" onclick="window.openPdfModal()"><i class="fas fa-file-pdf"></i> Exportar Relatório Tabela</button>
+                </div>
             </div>
             <div class="table-container">
                 <table>
@@ -807,6 +866,12 @@
         </section>
 
         <section id="fila" class="tab-content">
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                    <input type="text" id="filter-fila" placeholder="Pesquisar projetos..." oninput="window.renderFila()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 300px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s; background-color: var(--surface); color: var(--text-main);">
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Projeto</th><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th>Nota</th><th class="actions-header">Ações</th></tr></thead>
@@ -816,6 +881,12 @@
         </section>
 
         <section id="suporte" class="tab-content">
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                    <input type="text" id="filter-suporte" placeholder="Pesquisar suportes..." oninput="window.renderSuporte()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 300px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s; background-color: var(--surface); color: var(--text-main);">
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Cliente</th><th>Início</th><th>Prazo</th><th>Restam</th><th>Status</th><th>Sinal</th><th class="actions-header">Ações</th></tr></thead>
@@ -879,10 +950,14 @@
         </section>
         
 <section id="contratacoes" class="tab-content">
-            <div class="dash-nav">
+            <div class="dash-nav" style="align-items: center;">
                 <div class="dash-nav-tabs">
                     <span id="subnav-avaliando" class="active" onclick="window.switchContratacoesTab('avaliando')">Avaliando (Candidatos)</span>
                     <span id="subnav-efetivos" onclick="window.switchContratacoesTab('efetivos')">Efetivos (Time)</span>
+                </div>
+                <div style="display: flex; align-items: center; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; color: var(--text-light);"></i>
+                    <input type="text" id="filter-contratacoes" placeholder="Pesquisar equipe..." oninput="window.renderContratacoes()" style="padding: 10px 15px 10px 35px; border-radius: 6px; border: 1px solid var(--border); width: 250px; outline: none; font-size: 0.95rem; box-shadow: var(--shadow); transition: 0.2s; background-color: var(--surface); color: var(--text-main);">
                 </div>
             </div>
 
@@ -1022,6 +1097,9 @@
                         </label>
                         <label class="filter-checkbox-label">
                             <input type="checkbox" id="chk-pdf-ads" checked> 4. Campanhas Ads (Tráfego e Visibilidade)
+                        </label>
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="chk-pdf-dre" checked> 5. DRE (Demonstração do Resultado do Exercício)
                         </label>
                     </div>
 
@@ -1282,6 +1360,9 @@
         let adsGastoInstance = null; let adsCliquesInstance = null; let adsImpressoesInstance = null;
         let adsGastoMesInstance = null; let adsCliquesMesInstance = null; let adsImpressoesMesInstance = null;
         let adsCompGastoInstance = null; let adsCompCliquesInstance = null; let adsCompImpressoesInstance = null;
+        
+        // Memória do DRE
+        let drePieInstance = null; let dreBarInstance = null; let dreLineInstance = null;
 
         const getLineChartOptions = () => ({
             maintainAspectRatio: false, responsive: true,
@@ -2262,7 +2343,95 @@
                 window.renderFinancialCharts();
             } else if (window.currentSubTab === 'kpi') { window.renderKpiDashboard(); } 
             else if (window.currentSubTab === 'campanhas') { window.renderAdsDashboard(); } 
+            else if (window.currentSubTab === 'dre') { window.renderDREDashboard(); }
             else { window.renderPerformanceDashboard(); }
+        }
+
+        window.renderDREDashboard = function() {
+            let receita = 0; let despesas = 0;
+            const despesasPorCat = {};
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            
+            const monthlyData = {};
+            const today = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                monthlyData[key] = { label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`, rec: 0, des: 0, lucro: 0 };
+            }
+
+            window.db.vendas.forEach(v => {
+                if(!window.dateInRange(v.data)) return;
+                const valor = parseFloat(v.valor) || 0;
+                let keyMes = '';
+                if(v.data) {
+                    const [y, m] = v.data.split('-');
+                    keyMes = `${y}-${m}`;
+                }
+
+                if(v.tipo === 'Entrada') {
+                    receita += valor;
+                    if(monthlyData[keyMes]) { monthlyData[keyMes].rec += valor; monthlyData[keyMes].lucro += valor; }
+                } else {
+                    despesas += valor;
+                    const desc = v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros';
+                    despesasPorCat[desc] = (despesasPorCat[desc] || 0) + valor;
+                    if(monthlyData[keyMes]) { monthlyData[keyMes].des += valor; monthlyData[keyMes].lucro -= valor; }
+                }
+            });
+
+            const lucro = receita - despesas;
+            const margem = receita > 0 ? (lucro / receita) * 100 : 0;
+
+            document.getElementById('dre-receita').innerText = window.formatCurrency(receita);
+            document.getElementById('dre-despesas').innerText = window.formatCurrency(despesas);
+            
+            const elLucro = document.getElementById('dre-lucro');
+            elLucro.innerText = window.formatCurrency(lucro);
+            elLucro.style.color = lucro >= 0 ? 'var(--success)' : 'var(--danger)';
+            
+            const elMargem = document.getElementById('dre-margem');
+            elMargem.innerText = margem.toFixed(2) + '%';
+            elMargem.style.color = margem >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            const pieLabels = Object.keys(despesasPorCat);
+            const pieData = Object.values(despesasPorCat);
+            const pieColors = pieLabels.map(l => window.stringToColor(l));
+
+            const ctxPie = document.getElementById('drePieChart').getContext('2d');
+            if(drePieInstance) drePieInstance.destroy();
+            drePieInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 2, borderColor: isDarkMode() ? '#1e1e1e' : '#ffffff' }] },
+                options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, cutout: '60%' }
+            });
+
+            const sortedKeys = Object.keys(monthlyData).sort();
+            const labelsMes = sortedKeys.map(k => monthlyData[k].label);
+            const dadosRec = sortedKeys.map(k => monthlyData[k].rec);
+            const dadosDes = sortedKeys.map(k => monthlyData[k].des);
+            const dadosLucro = sortedKeys.map(k => monthlyData[k].lucro);
+
+            const ctxBar = document.getElementById('dreBarChart').getContext('2d');
+            if(dreBarInstance) dreBarInstance.destroy();
+            dreBarInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: { labels: labelsMes, datasets: [
+                    { label: 'Receitas', data: dadosRec, backgroundColor: '#10b981', borderRadius: 4 },
+                    { label: 'Despesas', data: dadosDes, backgroundColor: '#ef4444', borderRadius: 4 }
+                ]},
+                options: { maintainAspectRatio: false, responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } } }, scales: { y: { grid: { color: getGridColor() } }, x: { grid: { display: false } } } }
+            });
+
+            const ctxLine = document.getElementById('dreLineChart').getContext('2d');
+            if(dreLineInstance) dreLineInstance.destroy();
+            let gradLine = ctxLine.createLinearGradient(0, 0, 0, 250);
+            gradLine.addColorStop(0, 'rgba(217, 119, 6, 0.2)'); gradLine.addColorStop(1, 'rgba(217, 119, 6, 0.0)');
+            dreLineInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: { labels: labelsMes, datasets: [{ label: 'Lucro Líquido', data: dadosLucro, borderColor: '#d97706', backgroundColor: gradLine, fill: true, tension: 0.4, borderWidth: 3 }] },
+                options: getLineChartOptions()
+            });
         }
 
         window.renderFinancialCharts = function() {
@@ -2461,16 +2630,20 @@
 
         window.renderConversoes = function() {
             const tbody = document.getElementById('conversoes-body'); tbody.innerHTML = '';
-            const sorted = [...window.db.conversoes].sort((a,b) => new Date(b.data) - new Date(a.data));
+            const filterText = (document.getElementById('filter-conversoes')?.value || '').toLowerCase();
+            const filtered = window.db.conversoes.filter(c => `${window.formatDate(c.data)} ${c.ligacoes} ${c.reunioes} ${c.propostas} ${c.fechamentos}`.toLowerCase().includes(filterText));
+            const sorted = [...filtered].sort((a,b) => new Date(b.data) - new Date(a.data));
             sorted.forEach(c => { tbody.innerHTML += `<tr><td><strong>${window.formatDate(c.data)}</strong></td><td>${c.ligacoes}</td><td>${c.reunioes}</td><td>${c.propostas}</td><td>${c.fechamentos}</td><td class="actions"><button class="btn-edit" onclick="window.editItem('conversoes', '${c.id}')"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="window.deleteItem('conversoes', '${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`; });
         }
 
         window.renderClientes = function() {
             const tbody = document.getElementById('clientes-body'); tbody.innerHTML = '';
+            const filterText = (document.getElementById('filter-clientes')?.value || '').toLowerCase();
             
             // Lógica de Ordenação por Potencial (Alto > Médio > Baixo)
-            const valorPotencial = { 'Alto': 1, 'Médio': 2, 'Baixo': 3 };
-            const clientesOrdenados = [...window.db.contatos].sort((a, b) => {
+            const valorPotencial = { 'Alto': 1, 'Médio': 2, 'Baixa': 3 };
+            const clientesFiltrados = window.db.contatos.filter(c => `${c.nome} ${c.numero} ${c.potencial}`.toLowerCase().includes(filterText));
+            const clientesOrdenados = [...clientesFiltrados].sort((a, b) => {
                 const pA = valorPotencial[a.potencial] || 4; // Se estiver vazio, joga pro final
                 const pB = valorPotencial[b.potencial] || 4;
                 if (pA !== pB) return pA - pB;
@@ -2502,7 +2675,9 @@
 
         window.renderVendas = function() {
             const tbody = document.getElementById('vendas-body'); tbody.innerHTML = '';
-            const sorted = [...window.db.vendas].sort((a,b) => new Date(b.data) - new Date(a.data));
+            const filterText = (document.getElementById('filter-vendas')?.value || '').toLowerCase();
+            const filtered = window.db.vendas.filter(v => `${window.formatDate(v.data)} ${v.descricao} ${v.tipo} ${window.formatCurrency(v.valor)}`.toLowerCase().includes(filterText));
+            const sorted = [...filtered].sort((a,b) => new Date(b.data) - new Date(a.data));
             let entradas = 0; let saidas = 0;
             sorted.forEach(v => {
                 if(v.tipo === 'Entrada') entradas += parseFloat(v.valor); else saidas += parseFloat(v.valor);
@@ -2516,9 +2691,11 @@
 
         window.renderFila = function() {
             const tbody = document.getElementById('fila-body'); tbody.innerHTML = '';
+            const filterText = (document.getElementById('filter-fila')?.value || '').toLowerCase();
             window.db.fila.forEach(f => {
                 const cliente = window.db.contatos.find(c => c.id === f.clienteId) || { nome: 'Desconhecido', numero: '-' };
                 const status = f.status || 'Pendente'; const dataConclusao = f.dataConclusao || null;
+                if (filterText && !`${f.projeto} ${cliente.nome} ${window.formatDate(f.inicio)} ${f.prazo} ${status} ${f.nota}`.toLowerCase().includes(filterText)) return;
                 const inicioDate = new Date(f.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + parseInt(f.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
                 const notaDisplay = (f.nota !== undefined && f.nota !== null && f.nota !== '') ? f.nota : '-';
                 let restamDiasText = '-'; let sinalClass = 'signal-green';
@@ -2539,9 +2716,11 @@
 
         window.renderSuporte = function() {
             const tbody = document.getElementById('suporte-body'); tbody.innerHTML = '';
+            const filterText = (document.getElementById('filter-suporte')?.value || '').toLowerCase();
             window.db.suporte.forEach(s => {
                 const cliente = window.db.contatos.find(c => c.id === s.clienteId) || { nome: 'Desconhecido', numero: '-' };
                 const status = s.status || 'Pendente'; const dataConclusao = s.dataConclusao || null;
+                if (filterText && !`${cliente.nome} ${window.formatDate(s.inicio)} ${s.prazo} ${status}`.toLowerCase().includes(filterText)) return;
                 const inicioDate = new Date(s.inicio + 'T00:00:00'); const fimDate = new Date(inicioDate); fimDate.setDate(fimDate.getDate() + parseInt(s.prazo)); const hoje = new Date(); hoje.setHours(0,0,0,0);
                 let restamDiasText = '-'; let sinalClass = 'signal-green';
 
@@ -2730,9 +2909,9 @@
 
             const incFin = document.getElementById('chk-pdf-fin').checked; const incKpi = document.getElementById('chk-pdf-kpi').checked;
             const incDes = document.getElementById('chk-pdf-des').checked; const incAds = document.getElementById('chk-pdf-ads').checked;
+            const incDre = document.getElementById('chk-pdf-dre') ? document.getElementById('chk-pdf-dre').checked : false;
 
-            if(!incFin && !incKpi && !incDes && !incAds) { alert('Selecione pelo menos um módulo para exportar.'); btn.innerHTML = originalText; btn.disabled = false; return; }
-
+            if(!incFin && !incKpi && !incDes && !incAds && !incDre) { alert('Selecione pelo menos um módulo para exportar.'); btn.innerHTML = originalText; btn.disabled = false; return; }
             window.pdfFilterStart = document.getElementById('pdf-dash-start').value;
             window.pdfFilterEnd = document.getElementById('pdf-dash-end').value;
 
@@ -2748,7 +2927,7 @@
             const containers = document.querySelectorAll('.subtab-container');
             containers.forEach(el => { el.style.display = 'block'; });
 
-            window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); await window.renderAdsDashboard();
+            window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); window.renderDREDashboard(); await window.renderAdsDashboard();
             
             Object.values(Chart.instances).forEach(chart => {
                 chart.setActiveElements([]);
@@ -3000,6 +3179,43 @@
                 addDualCharts('adsComparativoImpressoesChart', 'Comparativo: Impressões Diárias', null, null, 75, 45);
             }
 
+            if (incDre) {
+                addSectionHeader("5. DRE (Demonstração do Resultado do Exercício)");
+                
+                let receita = 0; let despesas = 0;
+                window.db.vendas.forEach(v => { 
+                    if(!window.dateInRange(v.data)) return;
+                    const vlr = parseFloat(v.valor || 0);
+                    if (v.tipo === 'Entrada') receita += vlr; else despesas += vlr;
+                });
+                const lucro = receita - despesas;
+                const margem = receita > 0 ? ((lucro/receita)*100).toFixed(2) : 0;
+
+                let analiseDre = `A Demonstração do Resultado do Exercício aponta uma Receita Operacional Bruta de ${window.formatCurrency(receita)}, confrontada por Custos/Despesas de ${window.formatCurrency(despesas)}. O Lucro Líquido consolidado no período fechou em ${window.formatCurrency(lucro)}, resultando em uma Margem de Lucro Líquida de ${margem}%. `;
+                
+                if (lucro < 0) analiseDre += `Cenário Deficitário: A operação encontra-se em prejuízo. É imperativa uma auditoria rigorosa no quadro de despesas apresentadas no gráfico de categorias para corte imediato de gastos não essenciais.`;
+                else if (margem > 20) analiseDre += `Cenário Altamente Lucrativo: A margem sustentada está excelente. A operação demonstra forte capacidade de retenção de valor após a liquidação dos custos.`;
+                else analiseDre += `Cenário Estável: A empresa obteve lucro, mas a margem sugere cautela. Avalie políticas de precificação ou redução de custos invisíveis para ampliar o ganho real.`;
+
+                addParagraph(analiseDre);
+
+                checkSpaceForBoxes();
+                doc.setFillColor(248, 250, 252); doc.roundedRect(14, yPos, 44, 20, 3, 3, 'FD'); doc.roundedRect(60, yPos, 44, 20, 3, 3, 'FD'); doc.roundedRect(106, yPos, 44, 20, 3, 3, 'FD'); doc.roundedRect(152, yPos, 44, 20, 3, 3, 'FD');
+                
+                doc.setFontSize(7); doc.setTextColor(100, 116, 139); doc.setFont("helvetica", "bold");
+                doc.text("RECEITA BRUTA", 17, yPos + 7); doc.text("DESPESAS/CUSTOS", 63, yPos + 7); doc.text("LUCRO LÍQUIDO", 109, yPos + 7); doc.text("MARGEM LÍQUIDA", 155, yPos + 7);
+                
+                doc.setFontSize(9); doc.setTextColor(...primaryColor);
+                doc.text(window.formatCurrency(receita), 17, yPos + 14); 
+                doc.setTextColor(239, 68, 68); doc.text(window.formatCurrency(despesas), 63, yPos + 14); 
+                doc.setTextColor(lucro >= 0 ? 16 : 239, lucro >= 0 ? 185 : 68, lucro >= 0 ? 129 : 68); doc.text(window.formatCurrency(lucro), 109, yPos + 14);
+                doc.text(`${margem}%`, 155, yPos + 14);
+                yPos += 28;
+
+                addDualCharts('drePieChart', 'Despesas por Categoria', 'dreBarChart', 'Receitas x Despesas', 85, 55);
+                addDualCharts('dreLineChart', 'Evolução do Lucro Líquido', null, null, 85, 55);
+            }
+
             containers.forEach(el => { el.style.display = 'none'; });
             document.getElementById(`subtab-${window.currentSubTab}`).style.display = 'block';
             Chart.defaults.animation = true; 
@@ -3013,7 +3229,7 @@
                 Chart.defaults.borderColor = '#334155';
             }
 
-            window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); window.renderAdsDashboard();
+            window.renderFinancialCharts(); window.renderKpiDashboard(); window.renderPerformanceDashboard(); window.renderAdsDashboard(); window.renderDREDashboard();
 
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
@@ -3517,8 +3733,12 @@
         window.renderContratacoes = function() {
             const tbodyCand = document.getElementById('contratacoes-body'); tbodyCand.innerHTML = '';
             const tbodyEfet = document.getElementById('efetivos-body'); tbodyEfet.innerHTML = '';
+            const filterText = (document.getElementById('filter-contratacoes')?.value || '').toLowerCase();
 
             window.db.contratacoes.forEach(c => {
+                const cliAssociadoNome = c.clienteId ? (window.db.contatos.find(ct => ct.id === c.clienteId)?.nome || '-') : '-';
+                if (filterText && !`${c.nome} ${c.numero} ${c.vaga} ${c.descricao} ${c.status} ${c.projeto} ${cliAssociadoNome}`.toLowerCase().includes(filterText)) return;
+                
                 const numEncoded = encodeURIComponent(c.numero || '');
                 const hasFiles = c.arquivos && c.arquivos.length > 0;
                 const clipClass = hasFiles ? 'attached' : '';
