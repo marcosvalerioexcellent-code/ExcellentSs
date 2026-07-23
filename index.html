@@ -1416,9 +1416,11 @@
                 window.activeListeners.push(unsubSup);
 
                 const processAgendaSnap = (snap) => {
+                    snap.docs.forEach(doc => {
+                        agendaDocsMap.set(doc.id, doc.data());
+                    });
                     snap.docChanges().forEach(change => {
                         if (change.type === "removed") agendaDocsMap.delete(change.doc.id);
-                        else agendaDocsMap.set(change.doc.id, change.doc.data());
                     });
                     window.db.agenda = Array.from(agendaDocsMap.values());
                     checkInitialLoad();
