@@ -1416,13 +1416,21 @@
                 window.activeListeners.push(unsubSup);
 
                 const processAgendaSnap = (snap) => {
-                    snap.docs.forEach(doc => {
-                        agendaDocsMap.set(doc.id, doc.data());
-                    });
                     snap.docChanges().forEach(change => {
-                        if (change.type === "removed") agendaDocsMap.delete(change.doc.id);
+                        if (change.type === "removed") {
+                            agendaDocsMap.delete(change.doc.id);
+                        } else {
+                            agendaDocsMap.set(change.doc.id, change.doc.data());
+                        }
                     });
-                    window.db.agenda = Array.from(agendaDocsMap.values());
+                    
+                    // Garante unicidade absoluta baseada estritamente no ID do documento
+                    const uniqueMap = new Map();
+                    Array.from(agendaDocsMap.values()).forEach(item => {
+                        if (item && item.id) uniqueMap.set(item.id, item);
+                    });
+                    
+                    window.db.agenda = Array.from(uniqueMap.values());
                     checkInitialLoad();
                 };
 
