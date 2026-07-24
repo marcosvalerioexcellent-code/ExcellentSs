@@ -562,7 +562,7 @@
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div class="system-status"><span class="status-dot" id="db-status"></span> <span id="db-status-text">Conectando...</span></div>
                 
-                <button class="fab" onclick="window.openSettingsModal()" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem; margin-right: 5px;" title="Configurações de Categorias"><i class="fas fa-cog"></i></button>
+                <button class="fab" id="btn-categoria-settings" onclick="window.openSettingsModal()" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem; margin-right: 5px; display: none;" title="Configurações de Categorias"><i class="fas fa-cog"></i></button>
                 <button class="fab" id="btn-dark-mode" onclick="window.toggleDarkMode()" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem; margin-right: 5px;" title="Alternar Tema"><i class="fas fa-moon"></i></button>
                 
                 <button onclick="window.toggleFullScreen()" class="fab" style="width: 40px; height: 40px; background-color: var(--surface); color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 1.1rem;" title="Tela Cheia"><i class="fas fa-expand" id="fullscreen-icon"></i></button>
@@ -4239,6 +4239,10 @@
 
                 if (hasAccess && !firstAvailableTab) firstAvailableTab = tab;
             });
+
+            // Engrenagem de Configurações de Categorias (Financeiro): só aparece para quem tem acesso ao Financeiro
+            const btnCategoriaSettings = document.getElementById('btn-categoria-settings');
+            if (btnCategoriaSettings) btnCategoriaSettings.style.display = (isAdmin || perms['vendas']) ? 'inline-flex' : 'none';
 
             // Se o usuário não for admin e tentar entrar numa aba sem permissão, joga ele para a primeira disponível
             if (!isAdmin && !perms[window.currentTab]) {
