@@ -2360,10 +2360,11 @@
             }
             window.db.vendas.forEach(v => {
                 if (!window.dateInRange(v.data)) return;
+                if (!v.data) return;
                 const [year, month] = v.data.split('-'); const key = `${year}-${month}`;
-                const desc = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros');
+                if (!aggregates[key]) return; // fora da janela dos últimos 6 meses exibida no gráfico
                 const valor = parseFloat(v.valor) || 0;
-                    if (v.tipo === 'Entrada') aggregates[key].entrada += valor; else aggregates[key].saida += valor;
+                if (v.tipo === 'Entrada') aggregates[key].entrada += valor; else aggregates[key].saida += valor;
             });
             const sortedKeys = Object.keys(aggregates).sort();
             return { keys: sortedKeys, labels: sortedKeys.map(k => aggregates[k].label), entradas: sortedKeys.map(k => aggregates[k].entrada), saidas: sortedKeys.map(k => aggregates[k].saida) };
