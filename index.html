@@ -2415,8 +2415,9 @@
                     if(monthlyData[keyMes]) { monthlyData[keyMes].rec += valor; monthlyData[keyMes].lucro += valor; }
                 } else {
                     despesas += valor;
-                    const desc = v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros';
-                    despesasPorCat[desc] = (despesasPorCat[desc] || 0) + valor;
+                    // Puxa pela nova Categoria. Se for um registro antigo sem categoria, usa a descrição como backup.
+                    const cat = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros');
+                    despesasPorCat[cat] = (despesasPorCat[cat] || 0) + valor;
                     if(monthlyData[keyMes]) { monthlyData[keyMes].des += valor; monthlyData[keyMes].lucro -= valor; }
                 }
             });
@@ -2506,10 +2507,11 @@
 
             window.db.vendas.forEach(v => {
                 if (!window.dateInRange(v.data)) return;
-                const desc = v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros'; 
+                // Busca a Categoria primeiro. Se for registro antigo sem categoria, usa a descrição.
+                const cat = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros');
                 const valor = parseFloat(v.valor) || 0;
-                if(v.tipo === 'Entrada') { aggEntradas[desc] = (aggEntradas[desc] || 0) + valor; catEntradas.add(desc); } 
-                else { aggSaidas[desc] = (aggSaidas[desc] || 0) + valor; catSaidas.add(desc); }
+                if(v.tipo === 'Entrada') { aggEntradas[cat] = (aggEntradas[cat] || 0) + valor; catEntradas.add(cat); } 
+                else { aggSaidas[cat] = (aggSaidas[cat] || 0) + valor; catSaidas.add(cat); }
             });
 
             const topEntradas = Object.entries(aggEntradas).sort((a,b) => b[1] - a[1]).slice(0, 8);
