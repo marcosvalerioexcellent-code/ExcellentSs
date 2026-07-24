@@ -2415,8 +2415,8 @@
                     if(monthlyData[keyMes]) { monthlyData[keyMes].rec += valor; monthlyData[keyMes].lucro += valor; }
                 } else {
                     despesas += valor;
-                    // Puxa pela nova Categoria. Se for um registro antigo sem categoria, usa a descrição como backup.
-                    const cat = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros');
+                    // Puxa exclusivamente pela Categoria. Sem categoria = agrupado como 'Sem Categoria'.
+                    const cat = v.categoria && v.categoria.trim() !== '' ? v.categoria : 'Sem Categoria';
                     despesasPorCat[cat] = (despesasPorCat[cat] || 0) + valor;
                     if(monthlyData[keyMes]) { monthlyData[keyMes].des += valor; monthlyData[keyMes].lucro -= valor; }
                 }
@@ -2507,8 +2507,8 @@
 
             window.db.vendas.forEach(v => {
                 if (!window.dateInRange(v.data)) return;
-                // Busca a Categoria primeiro. Se for registro antigo sem categoria, usa a descrição.
-                const cat = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros');
+                // Agrupa exclusivamente pela Categoria. Sem categoria = agrupado como 'Sem Categoria'.
+                const cat = v.categoria && v.categoria.trim() !== '' ? v.categoria : 'Sem Categoria';
                 const valor = parseFloat(v.valor) || 0;
                 if(v.tipo === 'Entrada') { aggEntradas[cat] = (aggEntradas[cat] || 0) + valor; catEntradas.add(cat); } 
                 else { aggSaidas[cat] = (aggSaidas[cat] || 0) + valor; catSaidas.add(cat); }
@@ -2532,12 +2532,12 @@
             const arrDescE = Array.from(catEntradas); const arrDescS = Array.from(catSaidas);
 
             const stackDataE = arrDescE.map(desc => {
-                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { const catV = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros'); if(v.data && v.data.startsWith(k) && v.tipo === 'Entrada' && catV === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
+                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { const catV = v.categoria && v.categoria.trim() !== '' ? v.categoria : 'Sem Categoria'; if(v.data && v.data.startsWith(k) && v.tipo === 'Entrada' && catV === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
                 return { label: desc, backgroundColor: window.stringToColor(desc), data: dataArr };
             }).filter(d => d.data.some(val => val > 0));
 
             const stackDataS = arrDescS.map(desc => {
-                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { const catV = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros'); if(v.data && v.data.startsWith(k) && v.tipo === 'Saída' && catV === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
+                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { const catV = v.categoria && v.categoria.trim() !== '' ? v.categoria : 'Sem Categoria'; if(v.data && v.data.startsWith(k) && v.tipo === 'Saída' && catV === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
                 return { label: desc, backgroundColor: window.stringToColor(desc), data: dataArr };
             }).filter(d => d.data.some(val => val > 0));
 
@@ -3085,7 +3085,7 @@
                 window.db.vendas.forEach(v => { 
                     if(!window.dateInRange(v.data)) return;
                     const vlr = parseFloat(v.valor || 0); 
-                    const desc = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros');
+                    const desc = v.categoria && v.categoria.trim() !== '' ? v.categoria : 'Sem Categoria';
                     if (v.tipo === 'Entrada') entradas += vlr; else { saidas += vlr; aggSaidas[desc] = (aggSaidas[desc] || 0) + vlr; }
                 });
                 const saldo = entradas - saidas;
