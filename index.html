@@ -2531,12 +2531,12 @@
             const arrDescE = Array.from(catEntradas); const arrDescS = Array.from(catSaidas);
 
             const stackDataE = arrDescE.map(desc => {
-                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { if(v.data && v.data.startsWith(k) && v.tipo === 'Entrada' && (v.descricao||'Outros') === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
+                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { const catV = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros'); if(v.data && v.data.startsWith(k) && v.tipo === 'Entrada' && catV === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
                 return { label: desc, backgroundColor: window.stringToColor(desc), data: dataArr };
             }).filter(d => d.data.some(val => val > 0));
 
             const stackDataS = arrDescS.map(desc => {
-                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { if(v.data && v.data.startsWith(k) && v.tipo === 'Saída' && (v.descricao||'Outros') === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
+                const dataArr = data.keys.map(k => { let sum = 0; window.db.vendas.forEach(v => { const catV = v.categoria && v.categoria.trim() !== '' ? v.categoria : (v.descricao && v.descricao.trim() !== '' ? v.descricao : 'Outros'); if(v.data && v.data.startsWith(k) && v.tipo === 'Saída' && catV === desc && window.dateInRange(v.data)) sum += parseFloat(v.valor); }); return sum; });
                 return { label: desc, backgroundColor: window.stringToColor(desc), data: dataArr };
             }).filter(d => d.data.some(val => val > 0));
 
@@ -3108,7 +3108,7 @@
                 yPos += 28;
 
                 addDualCharts('lineChart', 'Evolução Financeira', 'mixedChart', 'Entradas x Saídas', 85, 55);
-                addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Descrição)', 'topSaidasChart', 'Top 8 Saídas (Por Descrição)', 85, 55);
+                addDualCharts('topEntradasChart', 'Top 8 Entradas (Por Categoria)', 'topSaidasChart', 'Top 8 Saídas (Por Categoria)', 85, 55);
                 addDualCharts('stackEntradasChart', 'Composição Mensal (Entradas)', 'stackSaidasChart', 'Composição Mensal (Saídas)', 85, 55);
             }
 
