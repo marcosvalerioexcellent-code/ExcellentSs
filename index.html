@@ -383,34 +383,30 @@
             pointer-events: none;
         }
 
-        #intro-video {
-            width: 100%;
+        #intro-logo {
+            width: 96px;
+            height: 96px;
+            object-fit: contain;
+            margin-bottom: 22px;
+        }
+
+        .intro-loading-track {
+            width: 160px;
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.16);
+            overflow: hidden;
+        }
+
+        .intro-loading-bar {
+            width: 0%;
             height: 100%;
-            object-fit: cover;
-            object-position: center center;
-            background: #0f172a;
+            border-radius: 4px;
+            background: var(--accent, #d97706);
+            transition: width 2s linear;
         }
 
-        .intro-tap-message {
-            position: absolute;
-            left: 50%;
-            bottom: calc(82px + env(safe-area-inset-bottom));
-            transform: translateX(-50%);
-            width: calc(100% - 44px);
-            max-width: 360px;
-            text-align: center;
-            color: #fff;
-            background: rgba(15, 23, 42, 0.62);
-            border: 1px solid rgba(255,255,255,0.16);
-            border-radius: 14px;
-            padding: 12px 14px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-
-        #app-intro.needs-tap .intro-tap-message { display: block; }
+        #app-intro.loading .intro-loading-bar { width: 100%; }
 
         /* Barra inferior mobile */
         .mobile-bottom-nav { display: none; }
@@ -528,11 +524,9 @@
         </div>
     </div>
 
-    <div id="app-intro" aria-label="Abertura do aplicativo">
-        <video id="intro-video" playsinline preload="auto">
-            <source src="splash.mp4" type="video/mp4">
-        </video>
-        <div class="intro-tap-message">Toque na tela para iniciar a abertura com som</div>
+    <div id="app-intro" aria-label="Abertura do aplicativo" style="flex-direction: column;">
+        <img id="intro-logo" src="favicon.png" alt="Excellent Services">
+        <div class="intro-loading-track"><div class="intro-loading-bar"></div></div>
     </div>
 
     <nav class="sidebar" id="sidebar">
@@ -3501,41 +3495,29 @@
 
         window.finishAppIntro = function() {
             const intro = document.getElementById('app-intro');
-            const video = document.getElementById('intro-video');
             if (!intro) return;
 
             try { sessionStorage.setItem('exsIntroSeenThisSession', '1'); } catch(e) {}
-            if (video) {
-                try { video.pause(); } catch(e) {}
-            }
 
             intro.classList.add('fade-out');
             document.body.classList.remove('show-intro');
 
             setTimeout(() => {
                 intro.style.display = 'none';
+                intro.classList.remove('loading');
             }, 500);
         }
 
         window.initAppIntro = function() {
+            const intro = document.getElementById('app-intro');
+
             if (window.innerWidth > 768) {
                 document.body.classList.remove('show-intro');
-                const intro = document.getElementById('app-intro');
-                const video = document.getElementById('intro-video');
-                
-                if (video) {
-                    video.pause();
-                    video.muted = true;
-                    video.removeAttribute('src'); 
-                }
-                
                 if (intro) intro.style.display = 'none';
                 return;
             }
 
-            const intro = document.getElementById('app-intro');
-            const video = document.getElementById('intro-video');
-            if (!intro || !video) return;
+            if (!intro) return;
 
             let alreadySeen = false;
             try { alreadySeen = sessionStorage.getItem('exsIntroSeenThisSession') === '1'; } catch(e) {}
@@ -3549,33 +3531,12 @@
             document.body.classList.add('show-intro');
             intro.style.display = 'flex';
 
-            let finished = false;
-            const finishOnce = () => {
-                if (finished) return;
-                finished = true;
-                window.finishAppIntro();
-            };
-
-            video.addEventListener('ended', finishOnce, { once: true });
-            video.addEventListener('error', () => setTimeout(finishOnce, 300), { once: true });
-
-            setTimeout(finishOnce, 12000);
-
-            const tryPlay = () => {
-                const playPromise = video.play();
-                if (playPromise && typeof playPromise.catch === 'function') {
-                    playPromise.catch(() => {
-                        intro.classList.add('needs-tap');
-                    });
-                }
-            };
-
-            intro.addEventListener('click', () => {
-                intro.classList.remove('needs-tap');
-                tryPlay();
+            // Pequeno delay para garantir que a transição CSS da barra seja acionada
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => intro.classList.add('loading'));
             });
 
-            tryPlay();
+            setTimeout(() => window.finishAppIntro(), 2000);
         }
 
         window.openAgendaPdfModal = function() { 
